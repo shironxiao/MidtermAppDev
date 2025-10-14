@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">My Application</string>
+    <string name="cnsc_logo">CNSC Logo</string>
+    <string name="camarines_norte_state_college">CAMARINES NORTE STATE COLLEGE</string>
+    <string name="student">Student</string>
+    <string name="admin">Admin</string>
+    <string name="student_id">Student ID</string>
+    <string name="account_login">Account Login</string>
+    <string name="password">Password</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="sign_in">Sign In</string>
+    <string name="don_t_have_an_account_sign_up">Don\'t have an account? Sign Up</string>
+    <string name="enter_student_id">Enter Student ID</string>
+    <string name="enter_password">Enter Password</string>
+    <string name="create_an_account">Create an Account</string>
+    <string name="username">Username</string>
+    <string name="input_username">Input Username</string>
+    <string name="your_student_id">Your Student ID</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="toggle_password_visibility">Toggle password visibility</string>
+    <string name="input_student_id">Input Student ID</string>
+    <string name="input_password">Input Password</string>
+    <string name="re_enter_your_password">Re-Enter your Password</string>
+    <string name="back_to_login">Back to Login</string>
+    <string name="email">Email</string>
+    <string name="input_email">Input Email</string>
+    <string name="you_are_logged_in">You are logged in!</string>
+    <string name="tvpassword">PASSWORD</string>
+    <string name="email_address">EMAIL ADDRESS</string>
+    <string name="your_profile">Your Profile</string>
+    <string name="student_id_">STUDENT ID</string>
+    <string name="log_out">Log Out</string>
+    <string name="email_address_create">Email Address</string>
+</resources>
