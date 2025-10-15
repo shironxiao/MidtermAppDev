@@ -6,6 +6,8 @@
     android:background="@android:color/white">
 
     <!-- Title Bar -->
+
+    <!-- Category Section -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
@@ -24,7 +26,6 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Category Section -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

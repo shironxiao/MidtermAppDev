@@ -1,28 +1,20 @@
-package com.itemfinder.midtermappdev.HomeAndReport;
+package com.itemfinder.midtermappdev.Find;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 
-import com.itemfinder.midtermappdev.Find.Item;
-import com.itemfinder.midtermappdev.Find.ItemAdapter;
 import com.itemfinder.midtermappdev.R;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SearchFragment extends Fragment {
+public class Finditem extends AppCompatActivity {
 
     RecyclerView recyclerView;
     ItemAdapter itemAdapter;
@@ -31,20 +23,13 @@ public class SearchFragment extends Fragment {
 
     Button btnAll, btnAcademic, btnWriting, btnPersonal, btnClothing, btnGadgets, btnIDs;
 
-    public SearchFragment() {
-        // Required empty public constructor
-    }
-
-    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_search, container, false);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.find_item);
 
-        // Initialize RecyclerView
-        recyclerView = view.findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // Initialize lists
         itemList = new ArrayList<>();
@@ -64,25 +49,19 @@ public class SearchFragment extends Fragment {
         recyclerView.setAdapter(itemAdapter);
 
         // Find buttons
-        btnAll = view.findViewById(R.id.btnAll);
-        btnAcademic = view.findViewById(R.id.btnAcademic);
-        btnWriting = view.findViewById(R.id.btnWriting);
-        btnPersonal = view.findViewById(R.id.btnPersonal);
-        btnClothing = view.findViewById(R.id.btnClothing);
-        btnGadgets = view.findViewById(R.id.btnGadgets);
-        btnIDs = view.findViewById(R.id.btnIDs);
+        btnAll = findViewById(R.id.btnAll);
+        btnAcademic = findViewById(R.id.btnAcademic);
+        btnWriting = findViewById(R.id.btnWriting);
+        btnPersonal = findViewById(R.id.btnPersonal);
+        btnClothing = findViewById(R.id.btnClothing);
+        btnGadgets = findViewById(R.id.btnGadgets);
+        btnIDs = findViewById(R.id.btnIDs);
 
         // Default highlight "All"
         resetCategoryButtons();
         highlightButton(btnAll);
 
         // Set listeners
-        setupButtonListeners();
-
-        return view;
-    }
-
-    private void setupButtonListeners() {
         btnAll.setOnClickListener(v -> {
             showAllItems();
             resetCategoryButtons();
