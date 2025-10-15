@@ -1,4 +1,4 @@
-package com.itemfinder.midtermappdev;
+package com.itemfinder.midtermappdev.LoginAndProfile;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.itemfinder.midtermappdev.R;
 
 import java.util.regex.Pattern;
 

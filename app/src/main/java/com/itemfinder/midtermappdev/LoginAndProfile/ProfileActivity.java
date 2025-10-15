@@ -1,4 +1,4 @@
-package com.itemfinder.midtermappdev;
+package com.itemfinder.midtermappdev.LoginAndProfile;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.itemfinder.midtermappdev.R;
 
 public class ProfileActivity extends AppCompatActivity {
 

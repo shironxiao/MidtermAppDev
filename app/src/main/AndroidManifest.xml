@@ -20,7 +20,7 @@
 
         <!-- Main App Entry -->
         <activity
-            android:name=".MainActivity"
+            android:name=".LoginAndProfile.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,9 +29,9 @@
         </activity>
 
         <!-- Add your activities -->
-        <activity android:name=".LoginActivity" android:exported="true" />
-        <activity android:name=".RegisterActivity" android:exported="true" />
-        <activity android:name=".ProfileActivity" android:exported="true" />
+        <activity android:name=".LoginAndProfile.LoginActivity" android:exported="true" />
+        <activity android:name=".LoginAndProfile.RegisterActivity" android:exported="true" />
+        <activity android:name=".LoginAndProfile.ProfileActivity" android:exported="true" />
 
         <!-- Firebase and Google Services -->
 

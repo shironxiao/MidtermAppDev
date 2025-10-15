@@ -1,4 +1,4 @@
-package com.itemfinder.midtermappdev;
+package com.itemfinder.midtermappdev.LoginAndProfile;
 
 import android.os.Bundle;
 import android.text.InputFilter;
@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.itemfinder.midtermappdev.R;
 
 import java.util.HashMap;
 import java.util.Map;
