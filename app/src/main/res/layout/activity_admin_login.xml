@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:padding="24dp"
+    tools:context=".AdminLoginActivity">
+
+    <!-- App Logo -->
+    <ImageView
+        android:id="@+id/img_logo"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_marginTop="40dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/cnsc_logo"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:ignore="ContentDescription" />
+
+    <!-- School Name -->
+    <TextView
+        android:id="@+id/tv_institution"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:text="@string/camarines_norte_state_college"
+        android:textColor="@android:color/black"
+        android:textSize="20sp"
+        app:layout_constraintTop_toBottomOf="@id/img_logo"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/admin_login_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Admin Login"
+        android:textColor="@android:color/black"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/tv_institution"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:ignore="HardcodedText" />
+
+    <!-- Form Container -->
+    <LinearLayout
+        android:id="@+id/admin_form"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp"
+        android:background="@drawable/form_background"
+        android:orientation="vertical"
+        android:padding="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/admin_login_title">
+
+        <!-- Username Label -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="@string/username"
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
+
+        <!-- Username Input -->
+        <EditText
+            android:id="@+id/et_admin_username"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/input_field_bg"
+            android:hint="@string/enter_username"
+            android:inputType="text"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            tools:ignore="Autofill,TextContrastCheck,VisualLintTextFieldSize" />
+
+        <!-- Password Label -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="12dp"
+            android:text="@string/password"
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
+
+        <!-- Password Input with Toggle -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp">
+
+            <EditText
+                android:id="@+id/et_admin_password"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/input_field_bg"
+                android:hint="@string/enter_password"
+                android:inputType="textPassword"
+                android:paddingStart="12dp"
+                android:paddingEnd="40dp"
+                android:textColor="@android:color/black"
+                android:textSize="16sp"
+                tools:ignore="Autofill,TextContrastCheck,VisualLintTextFieldSize" />
+
+            <ImageButton
+                android:id="@+id/btn_toggle_admin_password"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="4dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="@string/toggle_password_visibility"
+                android:src="@drawable/ic_visibility_off_24"
+                tools:ignore="TouchTargetSizeCheck" />
+        </RelativeLayout>
+
+        <!-- Login Button -->
+        <Button
+            android:id="@+id/btn_admin_login"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/button_background"
+            android:text="Login"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            tools:ignore="HardcodedText,VisualLintButtonSize" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

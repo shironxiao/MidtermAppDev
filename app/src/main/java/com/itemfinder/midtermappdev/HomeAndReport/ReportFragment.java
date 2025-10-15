@@ -114,9 +114,12 @@ public class ReportFragment extends Fragment {
 
     private void setupSpinners() {
         String[] categories = {
-                "Select Category", "Electronics", "Documents", "Bags & Wallets", "Keys",
-                "Clothing & Accessories", "Books & Stationery", "Jewelry", "Sports Equipment",
-                "Personal Items", "Other"
+                "Select Category",
+                "Academic Materials",
+                "Writing & Drawing Tools",
+                "Personal Belongings",
+                "Gadgets & Electronics",
+                "IDs & Cards"
         };
         ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(
                 requireContext(), android.R.layout.simple_spinner_item, categories

@@ -33,6 +33,7 @@
         <activity android:name=".LoginAndProfile.LoginActivity" android:exported="true" />
         <activity android:name=".LoginAndProfile.RegisterActivity" android:exported="true" />
         <activity android:name=".LoginAndProfile.ProfileActivity" android:exported="true" />
+        <activity android:name=".LoginAndProfile.AdminLoginActivity" android:exported="true" />
         <activity
             android:name=".HomeAndReport.HomeAndReportMainActivity"
             android:exported="false" />

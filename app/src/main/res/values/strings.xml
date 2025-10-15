@@ -65,6 +65,11 @@
     <string name="where_to_claim_the_item">Where to claim the item?</string>
     <string name="will_be_provided_by_admin">Will be provided by admin</string>
     <string name="claim">Claim</string>
+
+    <string name="admin_password">My Application</string>
+    <string name="admin_username">My Application</string>
+    <string name="enter_username">Enter username</string>
+
         <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
     private void onAdminButtonClicked() {
         try {
             // Navigate to Admin Login Activity
-            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            Intent intent = new Intent(MainActivity.this, AdminLoginActivity.class);
             startActivity(intent);
 
             // Add transition animation
