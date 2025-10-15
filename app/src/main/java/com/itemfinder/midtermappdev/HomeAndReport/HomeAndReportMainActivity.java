@@ -8,12 +8,21 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.example.homeproj.databinding.ActivityMainBinding;
+import com.itemfinder.midtermappdev.databinding.ActivityMainBinding;
+import com.itemfinder.midtermappdev.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class HomeAndReportMainActivity extends AppCompatActivity {
 
     ActivityMainBinding binding;
+
+    // Store logged-in user data
+    private String userId;
+    private String studentId;
+    private String fullName;
+    private String email;
+    private String phoneNumber;
+    private String course;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,6 +30,9 @@ public class HomeAndReportMainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         EdgeToEdge.enable(this);
         setContentView(binding.getRoot());
+
+        // Get user data from intent
+        getUserDataFromIntent();
 
         replaceFragment(new HomeFragment());
 
@@ -42,6 +54,23 @@ public class HomeAndReportMainActivity extends AppCompatActivity {
         });
     }
 
+    private void getUserDataFromIntent() {
+        userId = getIntent().getStringExtra("userId");
+        studentId = getIntent().getStringExtra("studentId");
+        fullName = getIntent().getStringExtra("fullName");
+        email = getIntent().getStringExtra("email");
+        phoneNumber = getIntent().getStringExtra("phoneNumber");
+        course = getIntent().getStringExtra("course");
+    }
+
+    // Getters for fragments to access user data
+    public String getUserId() { return userId; }
+    public String getStudentId() { return studentId; }
+    public String getFullName() { return fullName; }
+    public String getEmail() { return email; }
+    public String getPhoneNumber() { return phoneNumber; }
+    public String getCourse() { return course; }
+
     public void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -51,24 +80,20 @@ public class HomeAndReportMainActivity extends AppCompatActivity {
 
     public void switchToHomeTab() {
         BottomNavigationView bottomNavigationView = findViewById(R.id.navigationView);
-        bottomNavigationView.setSelectedItemId(R.id.navigationView); // change ID if different
+        bottomNavigationView.setSelectedItemId(R.id.home);
 
-        // Optional: manually replace the fragment if needed
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_layout, new HomeFragment())
                 .commit();
     }
 
-
     public void showReportSubmittedNotification(String message) {
-        // Find the current HomeFragment
         HomeFragment homeFragment = (HomeFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.frame_layout);
 
         if (homeFragment != null) {
             homeFragment.addNotification(message);
         } else {
-            // If HomeFragment isn’t active, reload it
             homeFragment = new HomeFragment();
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.frame_layout, homeFragment)
@@ -76,6 +101,4 @@ public class HomeAndReportMainActivity extends AppCompatActivity {
             homeFragment.addNotification(message);
         }
     }
-
-
 }

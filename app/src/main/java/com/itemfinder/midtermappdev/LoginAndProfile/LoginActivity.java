@@ -17,8 +17,10 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.itemfinder.midtermappdev.HomeAndReport.HomeAndReportMainActivity;
 import com.itemfinder.midtermappdev.R;
 
 import java.util.regex.Pattern;
@@ -42,7 +44,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Initialize Firebase Auth and Firestore
+        // Initialize Firestore
         db = FirebaseFirestore.getInstance();
 
         initializeViews();
@@ -51,7 +53,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void initializeViews() {
         etStudentId = findViewById(R.id.et_student_id);
-        etPin = findViewById(R.id.et_password); // Using existing password field for PIN
+        etPin = findViewById(R.id.et_password);
         btnTogglePin = findViewById(R.id.btn_toggle_password);
         btnSignIn = findViewById(R.id.btn_sign_in);
         tvNoAccount = findViewById(R.id.tv_no_account);
@@ -61,18 +63,20 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void setupPinField() {
-        // Configure PIN input (4 digits only) - VISIBLE by default
+        // Configure PIN input (4 digits only)
         etPin.setInputType(InputType.TYPE_CLASS_NUMBER);
         etPin.setFilters(new InputFilter[]{new InputFilter.LengthFilter(4)});
+
+        // Set PIN hidden by default
+        etPin.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        btnTogglePin.setImageResource(R.drawable.ic_visibility_off_24);
+        isPinVisible = false;
     }
 
     private void setupListeners() {
         btnSignIn.setOnClickListener(v -> loginUser());
-        etPin.setTransformationMethod(PasswordTransformationMethod.getInstance());
-        btnTogglePin.setImageResource(R.drawable.ic_visibility_off_24);
 
         btnTogglePin.setOnClickListener(v -> togglePinVisibility());
-
 
         tvNoAccount.setOnClickListener(v -> navigateToRegistration());
     }
@@ -105,8 +109,8 @@ public class LoginActivity extends AppCompatActivity {
         // Show loading state
         showProgress();
 
-        // First, get the email associated with this student ID
-        getUserEmailByStudentId(studentId, pin);
+        // Authenticate user
+        authenticateUser(studentId, pin);
     }
 
     private boolean validateInput(String studentId, String pin) {
@@ -141,32 +145,79 @@ public class LoginActivity extends AppCompatActivity {
         return isValid;
     }
 
-    private void getUserEmailByStudentId(String studentId, String pin) {
-        Log.d(TAG, "Searching for student ID: " + studentId);
+    private void authenticateUser(String studentId, String pin) {
+        Log.d(TAG, "Authenticating student ID: " + studentId);
 
         // Query Firestore to find user with this student ID
         db.collection("users")
                 .whereEqualTo("studentId", studentId)
                 .get()
                 .addOnCompleteListener(task -> {
+                    hideProgress();
+
                     if (task.isSuccessful() && !task.getResult().isEmpty()) {
+                        // Student ID found, now verify PIN
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             String storedPin = document.getString("pin");
+
                             if (storedPin != null && storedPin.equals(pin)) {
-                                // Login successful — navigate to profile
-                                Intent intent = new Intent(LoginActivity.this, ProfileActivity.class);
-                                intent.putExtra("studentId", studentId);
-                                startActivity(intent);
-                                finish();
+                                // Login successful - Get all user data
+                                Log.d(TAG, "Login successful for: " + studentId);
+
+                                // Retrieve user data from document
+                                String userId = document.getId();
+                                String fullName = document.getString("fullName");
+                                String email = document.getString("email");
+                                String phoneNumber = document.getString("phoneNumber");
+                                String course = document.getString("course");
+
+                                Toast.makeText(LoginActivity.this,
+                                        "Welcome back, " + fullName + "!", Toast.LENGTH_SHORT).show();
+
+                                // Navigate to home with user data
+                                navigateToHome(userId, studentId, fullName, email, phoneNumber, course);
+                                return;
                             } else {
-                                Toast.makeText(this, "Incorrect PIN", Toast.LENGTH_SHORT).show();
+                                // Incorrect PIN
+                                Log.d(TAG, "Incorrect PIN for: " + studentId);
+                                Toast.makeText(LoginActivity.this,
+                                        "Incorrect PIN", Toast.LENGTH_SHORT).show();
+                                etPin.setError("Incorrect PIN");
+                                etPin.requestFocus();
+                                return;
                             }
                         }
                     } else {
-                        Toast.makeText(this, "Student ID not found", Toast.LENGTH_SHORT).show();
+                        // Student ID not found
+                        Log.d(TAG, "Student ID not found: " + studentId);
+                        Toast.makeText(LoginActivity.this,
+                                "Student ID not found", Toast.LENGTH_SHORT).show();
+                        etStudentId.setError("Student ID not registered");
+                        etStudentId.requestFocus();
                     }
+                })
+                .addOnFailureListener(e -> {
+                    hideProgress();
+                    Log.e(TAG, "Login error: " + e.getMessage());
+                    Toast.makeText(LoginActivity.this,
+                            "Login failed. Please try again.", Toast.LENGTH_SHORT).show();
                 });
+    }
 
+    private void navigateToHome(String userId, String studentId, String fullName,
+                                String email, String phoneNumber, String course) {
+        Intent intent = new Intent(LoginActivity.this, HomeAndReportMainActivity.class);
+
+        // Pass all user data to the main activity
+        intent.putExtra("userId", userId);
+        intent.putExtra("studentId", studentId);
+        intent.putExtra("fullName", fullName);
+        intent.putExtra("email", email);
+        intent.putExtra("phoneNumber", phoneNumber);
+        intent.putExtra("course", course);
+
+        startActivity(intent);
+        finish(); // Prevent going back to login with back button
     }
 
     @SuppressLint("SetTextI18n")
@@ -175,15 +226,14 @@ public class LoginActivity extends AppCompatActivity {
         btnSignIn.setText("Signing in...");
     }
 
+    @SuppressLint("SetTextI18n")
+    private void hideProgress() {
+        btnSignIn.setEnabled(true);
+        btnSignIn.setText("Sign In");
+    }
+
     private void navigateToRegistration() {
         Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
         startActivity(intent);
-    }
-
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-
     }
 }
