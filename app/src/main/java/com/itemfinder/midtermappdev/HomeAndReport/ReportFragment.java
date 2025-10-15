@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,11 +34,14 @@ import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.itemfinder.midtermappdev.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class ReportFragment extends Fragment {
 
@@ -227,33 +231,63 @@ public class ReportFragment extends Fragment {
 
         Toast.makeText(requireContext(), "Submitting report...", Toast.LENGTH_SHORT).show();
 
-        // (Optional) Debug output
-        System.out.println("Category: " + category);
-        System.out.println("Item Name: " + itemName);
-        System.out.println("Description: " + description);
-        System.out.println("Location: " + location);
-        System.out.println("Date Found: " + dateFound);
-        System.out.println("Contact: " + contact);
-        System.out.println("Anonymous: " + isAnonymous);
-        System.out.println("Image URI: " + (selectedImageUri != null ? selectedImageUri.toString() : "No image"));
-
-        Toast.makeText(requireContext(), "Report submitted successfully!", Toast.LENGTH_LONG).show();
-
-        // Show in-app notification
-        addNotification("Your found item report has been submitted.");
-
-        // Show system notification
-        showSubmissionNotification();
-
-        // Navigate back to HomeFragment
+        // Get current user ID from activity
+        String userId = null;
         if (getActivity() instanceof HomeAndReportMainActivity) {
-            HomeAndReportMainActivity main = (HomeAndReportMainActivity) getActivity();
-            main.replaceFragment(new HomeFragment());
-
-            // Explicitly highlight Home in BottomNavigationView
-            BottomNavigationView bottomNav = main.findViewById(R.id.navigationView);
-            bottomNav.setSelectedItemId(R.id.home);
+            userId = ((HomeAndReportMainActivity) getActivity()).getUserId();
         }
+
+        if (userId == null) {
+            Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Create report data
+        Map<String, Object> reportData = new HashMap<>();
+        reportData.put("userId", userId);
+        reportData.put("category", category);
+        reportData.put("itemName", itemName);
+        reportData.put("description", description);
+        reportData.put("location", location);
+        reportData.put("dateFound", dateFound);
+        reportData.put("contact", isAnonymous ? "Anonymous" : contact);
+        reportData.put("isAnonymous", isAnonymous);
+        reportData.put("status", "pending");
+        reportData.put("imageUri", selectedImageUri != null ? selectedImageUri.toString() : null);
+        reportData.put("submittedAt", System.currentTimeMillis());
+
+        // Save to user's foundItems collection
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("users")
+                .document(userId)
+                .collection("foundItems")
+                .add(reportData)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d("ReportFragment", "Report saved with ID: " + documentReference.getId());
+                    Toast.makeText(requireContext(), "Report submitted successfully!", Toast.LENGTH_LONG).show();
+
+                    // Show in-app notification
+                    addNotification("Your found item report has been submitted.");
+
+                    // Show system notification
+                    showSubmissionNotification();
+
+                    // Navigate back to HomeFragment
+                    if (getActivity() instanceof HomeAndReportMainActivity) {
+                        HomeAndReportMainActivity main = (HomeAndReportMainActivity) getActivity();
+                        main.replaceFragment(new HomeFragment());
+
+                        // Explicitly highlight Home in BottomNavigationView
+                        BottomNavigationView bottomNav = main.findViewById(R.id.navigationView);
+                        bottomNav.setSelectedItemId(R.id.home);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ReportFragment", "Error saving report", e);
+                    Toast.makeText(requireContext(),
+                            "Failed to submit report: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                });
     }
 
 

@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -153,32 +154,45 @@ public class LoginActivity extends AppCompatActivity {
                 .whereEqualTo("studentId", studentId)
                 .get()
                 .addOnCompleteListener(task -> {
-                    hideProgress();
-
                     if (task.isSuccessful() && !task.getResult().isEmpty()) {
                         // Student ID found, now verify PIN
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             String storedPin = document.getString("pin");
+                            String email = document.getString("email");
 
-                            if (storedPin != null && storedPin.equals(pin)) {
-                                // Login successful - Get all user data
-                                Log.d(TAG, "Login successful for: " + studentId);
+                            if (storedPin != null && storedPin.equals(pin) && email != null) {
+                                // PIN matches, now sign in with Firebase Auth
+                                String firebasePassword = convertPinToPassword(pin);
 
-                                // Retrieve user data from document
-                                String userId = document.getId();
-                                String fullName = document.getString("fullName");
-                                String email = document.getString("email");
-                                String phoneNumber = document.getString("phoneNumber");
-                                String course = document.getString("course");
+                                FirebaseAuth.getInstance()
+                                        .signInWithEmailAndPassword(email, firebasePassword)
+                                        .addOnSuccessListener(authResult -> {
+                                            // Login successful - Get all user data
+                                            String userId = authResult.getUser().getUid();
+                                            String fullName = document.getString("fullName");
+                                            String phoneNumber = document.getString("phoneNumber");
+                                            String course = document.getString("course");
 
-                                Toast.makeText(LoginActivity.this,
-                                        "Welcome back, " + fullName + "!", Toast.LENGTH_SHORT).show();
+                                            Log.d(TAG, "Login successful for: " + studentId);
+                                            hideProgress();
 
-                                // Navigate to home with user data
-                                navigateToHome(userId, studentId, fullName, email, phoneNumber, course);
+                                            Toast.makeText(LoginActivity.this,
+                                                    "Welcome back, " + (fullName != null && !fullName.isEmpty() ? fullName : studentId) + "!",
+                                                    Toast.LENGTH_SHORT).show();
+
+                                            // Navigate to home with user data
+                                            navigateToHome(userId, studentId, fullName, email, phoneNumber, course);
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            hideProgress();
+                                            Log.e(TAG, "Firebase Auth login failed: " + e.getMessage());
+                                            Toast.makeText(LoginActivity.this,
+                                                    "Login failed. Please try again.", Toast.LENGTH_SHORT).show();
+                                        });
                                 return;
                             } else {
                                 // Incorrect PIN
+                                hideProgress();
                                 Log.d(TAG, "Incorrect PIN for: " + studentId);
                                 Toast.makeText(LoginActivity.this,
                                         "Incorrect PIN", Toast.LENGTH_SHORT).show();
@@ -189,6 +203,7 @@ public class LoginActivity extends AppCompatActivity {
                         }
                     } else {
                         // Student ID not found
+                        hideProgress();
                         Log.d(TAG, "Student ID not found: " + studentId);
                         Toast.makeText(LoginActivity.this,
                                 "Student ID not found", Toast.LENGTH_SHORT).show();
@@ -202,6 +217,11 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(LoginActivity.this,
                             "Login failed. Please try again.", Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    // Convert 4-digit PIN to 6-character password (same as registration)
+    private String convertPinToPassword(String fourDigitPin) {
+        return "pin" + fourDigitPin;
     }
 
     private void navigateToHome(String userId, String studentId, String fullName,

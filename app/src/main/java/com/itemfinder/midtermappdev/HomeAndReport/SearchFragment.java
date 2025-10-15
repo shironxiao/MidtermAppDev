@@ -10,11 +10,15 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.itemfinder.midtermappdev.Find.Item;
 import com.itemfinder.midtermappdev.Find.ItemAdapter;
 import com.itemfinder.midtermappdev.R;
@@ -50,16 +54,10 @@ public class SearchFragment extends Fragment {
         itemList = new ArrayList<>();
         filteredList = new ArrayList<>();
 
-        // Sample data
-        itemList.add(new Item("Notebook", "Academic Materials", "Library", "Available", "2025-10-01"));
-        itemList.add(new Item("Ballpen", "Writing & Drawing Tools", "Room 101", "Lost", "2025-10-02"));
-        itemList.add(new Item("Backpack", "Personal Belongings", "Cafeteria", "Available", "2025-09-30"));
-        itemList.add(new Item("T-Shirt", "Clothing & Accessories", "Gym", "Claimed", "2025-09-29"));
-        itemList.add(new Item("Smartphone", "Gadgets & Electronics", "Hallway", "Available", "2025-10-01"));
-        itemList.add(new Item("School ID", "IDs & Cards", "Registrar", "Lost", "2025-09-28"));
+        // Load items from Firebase instead of sample data
+        loadUserFoundItems();
 
         // Start showing all items
-        filteredList.addAll(itemList);
         itemAdapter = new ItemAdapter(filteredList);
         recyclerView.setAdapter(itemAdapter);
 
@@ -80,6 +78,64 @@ public class SearchFragment extends Fragment {
         setupButtonListeners();
 
         return view;
+    }
+
+    private void loadUserFoundItems() {
+        // Get current user ID
+        String userId = null;
+        if (getActivity() instanceof HomeAndReportMainActivity) {
+            userId = ((HomeAndReportMainActivity) getActivity()).getUserId();
+        }
+
+        if (userId == null) {
+            Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Load items from user's foundItems collection
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("users")
+                .document(userId)
+                .collection("foundItems")
+                .whereEqualTo("status", "available")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    itemList.clear();
+                    for (QueryDocumentSnapshot doc : querySnapshot) {
+                        String name = doc.getString("itemName");
+                        String category = doc.getString("category");
+                        String location = doc.getString("location");
+                        String status = doc.getString("status");
+                        String date = doc.getString("dateFound");
+
+                        if (name != null && category != null) {
+                            itemList.add(new Item(
+                                    name,
+                                    category,
+                                    location != null ? location : "Unknown",
+                                    status != null ? status : "Available",
+                                    date != null ? date : ""
+                            ));
+                        }
+                    }
+
+                    // Update filtered list and notify adapter
+                    filteredList.clear();
+                    filteredList.addAll(itemList);
+                    itemAdapter.notifyDataSetChanged();
+
+                    if (itemList.isEmpty()) {
+                        Toast.makeText(requireContext(),
+                                "No items found. Report found items to see them here.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("SearchFragment", "Error loading items", e);
+                    Toast.makeText(requireContext(),
+                            "Failed to load items",
+                            Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void setupButtonListeners() {

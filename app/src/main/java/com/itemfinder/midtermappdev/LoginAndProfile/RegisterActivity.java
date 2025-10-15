@@ -108,6 +108,9 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
+        // Show progress
+        btnSignUp.setEnabled(false);
+        btnSignUp.setText("Creating account...");
 
         // Convert PIN to Firebase-compatible password
         String firebasePassword = convertPinToPassword(pin);
@@ -120,9 +123,8 @@ public class RegisterActivity extends AppCompatActivity {
                         if (user != null) {
                             String uid = user.getUid();
 
-                            // Save profile to Firestore
+                            // Save profile to Firestore with additional fields
                             saveUserToFirestore(uid, email, studentId, pin);
-
 
                             Toast.makeText(RegisterActivity.this,
                                     "Registration successful! You can now login.",
@@ -132,6 +134,8 @@ public class RegisterActivity extends AppCompatActivity {
                             finish();
                         }
                     } else {
+                        btnSignUp.setEnabled(true);
+                        btnSignUp.setText("Sign Up");
 
                         String errorMessage = task.getException() != null ?
                                 task.getException().getMessage() : "Registration failed";
@@ -157,21 +161,50 @@ public class RegisterActivity extends AppCompatActivity {
 
     private void saveUserToFirestore(String uid, String email, String studentId, String pin) {
         Map<String, Object> user = new HashMap<>();
+        user.put("userId", uid);
         user.put("email", email);
         user.put("studentId", studentId);
-        user.put("pin", pin); // Store original PIN for reference
-        user.put("emailVerified", true); // Set as verified since we're not using email verification
+        user.put("pin", pin);
+        user.put("fullName", "");
+        user.put("phoneNumber", "");
+        user.put("course", "");
+        user.put("createdAt", System.currentTimeMillis());
 
         // Save data under "users/{uid}"
         db.collection("users").document(uid)
                 .set(user)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "User data saved successfully to Firestore"))
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "User data saved successfully to Firestore");
+
+                    // Create user's personal collections
+                    createUserCollections(uid);
+                })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to save user data to Firestore", e);
-                    // Don't show error to user since registration was successful
+                    Toast.makeText(RegisterActivity.this,
+                            "Account created but profile setup incomplete. Please contact support.",
+                            Toast.LENGTH_LONG).show();
                 });
     }
 
+    private void createUserCollections(String uid) {
+        // Initialize empty subcollections for user's items
+        Map<String, Object> placeholder = new HashMap<>();
+        placeholder.put("initialized", true);
+        placeholder.put("timestamp", System.currentTimeMillis());
+
+        db.collection("users").document(uid)
+                .collection("foundItems").document("_init")
+                .set(placeholder);
+
+        db.collection("users").document(uid)
+                .collection("lostItems").document("_init")
+                .set(placeholder);
+
+        db.collection("users").document(uid)
+                .collection("claims").document("_init")
+                .set(placeholder);
+    }
     private boolean validateInput(String email, String studentId, String pin, String confirmPin) {
         etEmail.setError(null);
         etStudentId.setError(null);
