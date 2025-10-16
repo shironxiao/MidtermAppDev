@@ -2,18 +2,32 @@ package com.itemfinder.midtermappdev.Admin.ui.dashboard.adapter;
 
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
-import com.itemFinder.realfinalappdev.R;
+import com.itemfinder.midtermappdev.R;
 
 public class ItemViewHolder extends RecyclerView.ViewHolder {
-    TextView tvName, tvStatus;
-    Button btnApprove, btnReject;
+    public ImageView ivItemImage;
+    public TextView tvItemName;
+    public TextView tvCategory;
+    public TextView tvDateFound;
+    public TextView tvLocation;
+    public TextView tvDescription;
+    public TextView tvContact;
+    public TextView tvItemStatus;
+    public Button btnApprove, btnReject;
 
     public ItemViewHolder(View itemView) {
         super(itemView);
-        tvName = itemView.findViewById(R.id.tvItemName);
-        tvStatus = itemView.findViewById(R.id.tvItemStatus);
+        ivItemImage = itemView.findViewById(R.id.ivItemImage);
+        tvItemName = itemView.findViewById(R.id.tvItemName);
+        tvCategory = itemView.findViewById(R.id.tvCategory);
+        tvDateFound = itemView.findViewById(R.id.tvDateFound);
+        tvLocation = itemView.findViewById(R.id.tvLocation);
+        tvDescription = itemView.findViewById(R.id.tvDescription);
+        tvContact = itemView.findViewById(R.id.tvContact);
+        tvItemStatus = itemView.findViewById(R.id.tvItemStatus);
         btnApprove = itemView.findViewById(R.id.btnApprove);
         btnReject = itemView.findViewById(R.id.btnReject);
     }

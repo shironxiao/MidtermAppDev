@@ -6,8 +6,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
-import com.itemFinder.realfinalappdev.R;
-import com.itemFinder.realfinalappdev.data.model.Item_admin;
+import com.itemfinder.midtermappdev.R;
+import com.itemfinder.midtermappdev.Admin.data.model.Item_admin;
 
 public class ApproveItemDialog {
 
@@ -22,12 +22,10 @@ public class ApproveItemDialog {
         View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_approve_item, null);
         builder.setView(dialogView);
 
-        // Get UI elements
         TextView tvItemName = dialogView.findViewById(R.id.tvApproveItemName);
         TextView tvItemStatus = dialogView.findViewById(R.id.tvApproveItemStatus);
         EditText etNotes = dialogView.findViewById(R.id.etApproveNotes);
 
-        // Set item information
         tvItemName.setText("Item: " + itemAdmin.getName());
         tvItemStatus.setText("Current Status: " + itemAdmin.getStatus());
 

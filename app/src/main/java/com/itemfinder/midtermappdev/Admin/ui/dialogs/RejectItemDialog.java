@@ -6,8 +6,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
-import com.itemFinder.realfinalappdev.R;
-import com.itemFinder.realfinalappdev.data.model.Item_admin;
+import com.itemfinder.midtermappdev.R;
+import com.itemfinder.midtermappdev.Admin.data.model.Item_admin;
 
 public class RejectItemDialog {
 
@@ -22,12 +22,10 @@ public class RejectItemDialog {
         View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_reject_item, null);
         builder.setView(dialogView);
 
-        // Get UI elements
         TextView tvItemName = dialogView.findViewById(R.id.tvRejectItemName);
         TextView tvItemStatus = dialogView.findViewById(R.id.tvRejectItemStatus);
         EditText etReason = dialogView.findViewById(R.id.etRejectReason);
 
-        // Set item information
         tvItemName.setText("Item: " + itemAdmin.getName());
         tvItemStatus.setText("Current Status: " + itemAdmin.getStatus());
 

@@ -2,7 +2,7 @@ package com.itemfinder.midtermappdev.Admin.data.repository;
 
 import android.util.Log;
 import com.google.firebase.firestore.*;
-import com.itemFinder.realfinalappdev.data.model.Claim;
+import com.itemfinder.midtermappdev.Admin.data.model.Claim;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +26,6 @@ public class ClaimRepository {
         claimsRef = db.collection("claims");
     }
 
-    // ✅ Fetch all claims
     public void fetchAllClaims(ClaimFetchListener listener) {
         Log.d(TAG, "Fetching all claims from Firestore");
 
@@ -55,7 +54,6 @@ public class ClaimRepository {
                 });
     }
 
-    // ✅ Fetch claims by status
     public void fetchClaimsByStatus(String status, ClaimFetchListener listener) {
         Log.d(TAG, "Fetching claims with status: " + status);
 
@@ -83,17 +81,14 @@ public class ClaimRepository {
                 });
     }
 
-    // ✅ Approve a claim
     public void approveClaim(String claimId, String itemId, ClaimActionListener listener) {
         Log.d(TAG, "Approving claim: " + claimId);
 
-        // Update claim status
         claimsRef.document(claimId)
                 .update("status", "Approved")
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Claim approved: " + claimId);
 
-                    // Update item status to "Claimed"
                     db.collection("items").document(itemId)
                             .update("status", "Claimed")
                             .addOnSuccessListener(aVoid2 -> {
@@ -111,7 +106,6 @@ public class ClaimRepository {
                 });
     }
 
-    // ✅ Reject a claim
     public void rejectClaim(String claimId, ClaimActionListener listener) {
         Log.d(TAG, "Rejecting claim: " + claimId);
 
@@ -127,7 +121,6 @@ public class ClaimRepository {
                 });
     }
 
-    // ✅ Create a new claim
     public void createClaim(Claim claim, ClaimActionListener listener) {
         Log.d(TAG, "Creating new claim for item: " + claim.getItemId());
 

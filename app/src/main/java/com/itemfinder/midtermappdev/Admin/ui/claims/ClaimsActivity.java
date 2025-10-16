@@ -9,11 +9,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
-import com.itemFinder.realfinalappdev.R;
-import com.itemFinder.realfinalappdev.data.model.Claim;
-import com.itemFinder.realfinalappdev.data.model.ClaimStatus;
-import com.itemFinder.realfinalappdev.data.repository.ClaimRepository;
-import com.itemFinder.realfinalappdev.ui.claims.adapter.ClaimsAdapter;
+import com.itemfinder.midtermappdev.R;
+import com.itemfinder.midtermappdev.Admin.data.model.Claim;
+import com.itemfinder.midtermappdev.Admin.data.model.ClaimStatus;
+import com.itemfinder.midtermappdev.Admin.data.repository.ClaimRepository;
+import com.itemfinder.midtermappdev.Admin.ui.claims.adapter.ClaimsAdapter;
 import java.util.List;
 
 public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.OnClaimActionListener {
@@ -31,7 +31,6 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_claims_admin);
 
-        // Initialize views
         recyclerView = findViewById(R.id.recyclerViewClaims);
         progressBar = findViewById(R.id.progressBarClaims);
 
@@ -40,16 +39,13 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
         btnApprovedClaims = findViewById(R.id.btnApprovedClaims);
         btnRejectedClaims = findViewById(R.id.btnRejectedClaims);
 
-        // Set up RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setHasFixedSize(true);
 
         claimRepository = new ClaimRepository();
 
-        // Default: load all claims
         loadAllClaims();
 
-        // Filter button listeners
         btnAllClaims.setOnClickListener(v -> {
             Log.d(TAG, "All Claims button clicked");
             loadAllClaims();
@@ -71,7 +67,6 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
         });
     }
 
-    // ✅ Load all claims
     private void loadAllClaims() {
         Log.d(TAG, "Loading all claims...");
         showLoading(true);
@@ -99,7 +94,6 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
         });
     }
 
-    // ✅ Load claims by status
     private void loadClaimsByStatus(String status) {
         Log.d(TAG, "Loading claims with status: " + status);
         showLoading(true);
@@ -127,13 +121,11 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
         });
     }
 
-    // ✅ Helper to toggle progress bar
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 
-    // ✅ Approve claim
     @Override
     public void onApproveClaim(Claim claim) {
         Log.d(TAG, "Approving claim: " + claim.getId());
@@ -144,7 +136,7 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
                     public void onSuccess(String message) {
                         Log.d(TAG, "Claim approved successfully");
                         Toast.makeText(ClaimsActivity.this, message, Toast.LENGTH_SHORT).show();
-                        loadAllClaims(); // Refresh the list
+                        loadAllClaims();
                     }
 
                     @Override
@@ -155,7 +147,6 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
                 });
     }
 
-    // ✅ Reject claim
     @Override
     public void onRejectClaim(Claim claim) {
         Log.d(TAG, "Rejecting claim: " + claim.getId());
@@ -166,7 +157,7 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
                     public void onSuccess(String message) {
                         Log.d(TAG, "Claim rejected successfully");
                         Toast.makeText(ClaimsActivity.this, message, Toast.LENGTH_SHORT).show();
-                        loadAllClaims(); // Refresh the list
+                        loadAllClaims();
                     }
 
                     @Override

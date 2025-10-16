@@ -4,8 +4,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.recyclerview.widget.RecyclerView;
-import com.itemFinder.realfinalappdev.R;
-import com.itemFinder.realfinalappdev.data.model.Claim;
+import com.itemfinder.midtermappdev.R;
+import com.itemfinder.midtermappdev.Admin.data.model.Claim;
 import java.util.List;
 
 public class ClaimsAdapter extends RecyclerView.Adapter<ClaimViewHolder> {
@@ -33,22 +33,18 @@ public class ClaimsAdapter extends RecyclerView.Adapter<ClaimViewHolder> {
     public void onBindViewHolder(ClaimViewHolder holder, int position) {
         Claim claim = claimList.get(position);
 
-        // Set text values
         holder.tvClaimantName.setText("Claimant: " + claim.getClaimantName());
         holder.tvItemName.setText("Item: " + claim.getItemName());
         holder.tvClaimantEmail.setText("Email: " + claim.getClaimantEmail());
         holder.tvClaimantPhone.setText("Phone: " + claim.getClaimantPhone());
         holder.tvDescription.setText("Description: " + claim.getDescription());
 
-        // Format and set status
         holder.tvStatus.setText("Status: " + claim.getStatus());
         setStatusColor(holder, claim.getStatus());
 
-        // Set button listeners
         holder.btnApprove.setOnClickListener(v -> listener.onApproveClaim(claim));
         holder.btnReject.setOnClickListener(v -> listener.onRejectClaim(claim));
 
-        // Hide buttons if claim is already processed
         if (!claim.getStatus().equals("Pending")) {
             holder.btnApprove.setEnabled(false);
             holder.btnReject.setEnabled(false);
@@ -76,7 +72,6 @@ public class ClaimsAdapter extends RecyclerView.Adapter<ClaimViewHolder> {
         }
     }
 
-    // Method to update the list
     public void updateList(List<Claim> newList) {
         claimList.clear();
         claimList.addAll(newList);

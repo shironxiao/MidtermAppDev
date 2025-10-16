@@ -21,8 +21,11 @@ import com.itemfinder.midtermappdev.Admin.ui.dashboard.adapter.OnItemActionListe
 import com.itemfinder.midtermappdev.Admin.ui.dialogs.ApproveItemDialog;
 import com.itemfinder.midtermappdev.Admin.ui.dialogs.RejectItemDialog;
 import com.itemfinder.midtermappdev.Admin.utils.ValidationUtils;
+import android.content.Intent;
+import android.widget.Button;
 
 import java.util.List;
+import java.util.ArrayList;
 
 public class AdminDashboardActivity extends AppCompatActivity implements OnItemClickListener, OnItemActionListener {
 
@@ -44,6 +47,9 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
     private int pendingCount = 0;
     private int activeCount = 0;
     private int claimedCount = 0;
+
+    // Store all items for filtering
+    private List<Item_admin> allItems = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,23 +82,33 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
 
         btnPending.setOnClickListener(v -> {
             Log.d(TAG, "Pending button clicked");
-            loadItemsByCategory("pending");
+            currentCategory = "pending";
+            filterAndDisplayItems();
         });
 
         btnActive.setOnClickListener(v -> {
             Log.d(TAG, "Active button clicked");
-            loadItemsByCategory("active");
+            currentCategory = "approved";
+            filterAndDisplayItems();
         });
 
         btnClaims.setOnClickListener(v -> {
             Log.d(TAG, "Claims button clicked");
-            loadItemsByCategory("claimed");
+            currentCategory = "claimed";
+            filterAndDisplayItems();
         });
 
         btnAll.setOnClickListener(v -> {
             Log.d(TAG, "All items button clicked");
             currentCategory = "all";
-            loadAllItems();
+            filterAndDisplayItems();
+        });
+
+        Button btnBack = findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminDashboardActivity.this, com.itemfinder.midtermappdev.LoginAndProfile.LoginActivity.class);
+            startActivity(intent);
+            finish();
         });
     }
 
@@ -106,6 +122,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
                 Log.d(TAG, "Received " + itemAdmins.size() + " items from Firebase");
                 showLoading(false);
 
+                allItems = itemAdmins;
+
                 if (itemAdmins.isEmpty()) {
                     Toast.makeText(AdminDashboardActivity.this, "No items found.", Toast.LENGTH_SHORT).show();
                 } else {
@@ -114,10 +132,7 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
                 }
 
                 calculateAndUpdateStats(itemAdmins);
-
-                ItemsAdapter adapter = new ItemsAdapter(itemAdmins, AdminDashboardActivity.this, AdminDashboardActivity.this);
-                recyclerView.setAdapter(adapter);
-                Log.d(TAG, "Adapter set with " + itemAdmins.size() + " items");
+                filterAndDisplayItems();
             }
 
             @Override
@@ -129,38 +144,23 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         });
     }
 
-    private void loadItemsByCategory(String category) {
-        Log.d(TAG, "Loading items for category: " + category);
-        showLoading(true);
+    private void filterAndDisplayItems() {
+        List<Item_admin> filteredItems = new ArrayList<>();
 
-        firebaseHelper.fetchItemsByCategory(category, new AdminFirebaseHelper.ItemFetchListener() {
-            @Override
-            public void onItemsFetched(List<Item_admin> itemAdmins) {
-                Log.d(TAG, "Received " + itemAdmins.size() + " items for category: " + category);
-                showLoading(false);
-
-                if (itemAdmins.isEmpty()) {
-                    Toast.makeText(AdminDashboardActivity.this,
-                            "No items under " + category, Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(AdminDashboardActivity.this,
-                            "Loaded " + itemAdmins.size() + " " + category + " items", Toast.LENGTH_SHORT).show();
+        if ("all".equals(currentCategory)) {
+            filteredItems = new ArrayList<>(allItems);
+        } else {
+            for (Item_admin item : allItems) {
+                if (currentCategory.equalsIgnoreCase(item.getStatus())) {
+                    filteredItems.add(item);
                 }
-
-                calculateAndUpdateStats(itemAdmins);
-
-                ItemsAdapter adapter = new ItemsAdapter(itemAdmins, AdminDashboardActivity.this, AdminDashboardActivity.this);
-                recyclerView.setAdapter(adapter);
-                Log.d(TAG, "Adapter set with " + itemAdmins.size() + " items for category: " + category);
             }
+        }
 
-            @Override
-            public void onError(String error) {
-                Log.e(TAG, "Error loading items for category " + category + ": " + error);
-                showLoading(false);
-                Toast.makeText(AdminDashboardActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
-            }
-        });
+        Log.d(TAG, "Displaying " + filteredItems.size() + " items for category: " + currentCategory);
+
+        ItemsAdapter adapter = new ItemsAdapter(filteredItems, this, this);
+        recyclerView.setAdapter(adapter);
     }
 
     private void calculateAndUpdateStats(List<Item_admin> allItemAdmins) {
@@ -244,11 +244,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
                                     Toast.makeText(AdminDashboardActivity.this,
                                             message, Toast.LENGTH_SHORT).show();
 
-                                    if (currentCategory.equals("all")) {
-                                        loadAllItems();
-                                    } else {
-                                        loadItemsByCategory(currentCategory);
-                                    }
+                                    // Always reload all items to refresh everything
+                                    loadAllItems();
                                 }
 
                                 @Override
@@ -295,11 +292,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
                                     Toast.makeText(AdminDashboardActivity.this,
                                             message, Toast.LENGTH_SHORT).show();
 
-                                    if (currentCategory.equals("all")) {
-                                        loadAllItems();
-                                    } else {
-                                        loadItemsByCategory(currentCategory);
-                                    }
+                                    // Always reload all items to refresh everything
+                                    loadAllItems();
                                 }
 
                                 @Override

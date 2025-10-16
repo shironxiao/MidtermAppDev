@@ -12,6 +12,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
+        <!-- Logout Button -->
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#673AB7"
+            android:layout_marginBottom="12dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            app:cornerRadius="8dp" />
 
         <!-- Header -->
         <TextView

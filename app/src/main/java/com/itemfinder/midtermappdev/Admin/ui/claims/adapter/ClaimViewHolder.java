@@ -4,7 +4,7 @@ import android.view.View;
 import android.widget.TextView;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.recyclerview.widget.RecyclerView;
-import com.itemFinder.realfinalappdev.R;
+import com.itemfinder.midtermappdev.R;
 
 public class ClaimViewHolder extends RecyclerView.ViewHolder {
     public TextView tvClaimantName;

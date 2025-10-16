@@ -3,10 +3,11 @@ package com.itemfinder.midtermappdev.Admin.ui.dashboard.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import androidx.recyclerview.widget.RecyclerView;
-import com.itemFinder.realfinalappdev.R;
-import com.itemFinder.realfinalappdev.data.model.Item_admin;
+import android.widget.TextView;
 
+import androidx.recyclerview.widget.RecyclerView;
+import com.itemfinder.midtermappdev.R;
+import com.itemfinder.midtermappdev.Admin.data.model.Item_admin;
 import java.util.List;
 
 public class ItemsAdapter extends RecyclerView.Adapter<ItemViewHolder> {
@@ -14,7 +15,6 @@ public class ItemsAdapter extends RecyclerView.Adapter<ItemViewHolder> {
     private final OnItemClickListener clickListener;
     private final OnItemActionListener actionListener;
 
-    // Constructor with both listeners
     public ItemsAdapter(List<Item_admin> itemAdminList, OnItemClickListener clickListener, OnItemActionListener actionListener) {
         this.itemAdminList = itemAdminList;
         this.clickListener = clickListener;
@@ -31,21 +31,49 @@ public class ItemsAdapter extends RecyclerView.Adapter<ItemViewHolder> {
     @Override
     public void onBindViewHolder(ItemViewHolder holder, int position) {
         Item_admin itemAdmin = itemAdminList.get(position);
-        holder.tvName.setText(itemAdmin.getName());
-        holder.tvStatus.setText(itemAdmin.getStatus());
 
-        // Set status color
+        holder.tvItemName.setText(itemAdmin.getName());
+        holder.tvCategory.setText("Category: " + (itemAdmin.getCategory() != null ? itemAdmin.getCategory() : "N/A"));
+        holder.tvDateFound.setText("Date Found: " + (itemAdmin.getDateFound() != null ? itemAdmin.getDateFound() : "N/A"));
+        holder.tvLocation.setText("Location: " + (itemAdmin.getFoundLocation() != null ? itemAdmin.getFoundLocation() : "N/A"));
+        holder.tvDescription.setText("Description: " + (itemAdmin.getDescription() != null ? itemAdmin.getDescription() : "N/A"));
+
+        if (itemAdmin.isAnonymous()) {
+            holder.itemView.findViewById(R.id.tvAnonymous).setVisibility(View.VISIBLE);
+            holder.itemView.findViewById(R.id.tvStudentId).setVisibility(View.GONE);
+            holder.itemView.findViewById(R.id.tvEmail).setVisibility(View.GONE);
+        } else {
+            holder.itemView.findViewById(R.id.tvAnonymous).setVisibility(View.GONE);
+            holder.itemView.findViewById(R.id.tvStudentId).setVisibility(View.VISIBLE);
+            holder.itemView.findViewById(R.id.tvEmail).setVisibility(View.VISIBLE);
+
+            ((TextView) holder.itemView.findViewById(R.id.tvStudentId)).setText("Reported by: Student ID " + itemAdmin.getStudentId());
+            ((TextView) holder.itemView.findViewById(R.id.tvEmail)).setText("Email: " + itemAdmin.getEmail());
+        }
+
+        holder.tvItemStatus.setText("Status: " + itemAdmin.getStatus());
+
+        // Load image using Picasso
+        if (itemAdmin.getImageUrl() != null && !itemAdmin.getImageUrl().isEmpty()) {
+            com.squareup.picasso.Picasso.get()
+                    .load(itemAdmin.getImageUrl())
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .error(android.R.drawable.ic_menu_report_image)
+                    .fit()
+                    .centerCrop()
+                    .into(holder.ivItemImage);
+        }
+
         setStatusColor(holder, itemAdmin.getStatus());
 
-        // Click listener for item
         holder.itemView.setOnClickListener(v -> {
             if (clickListener != null) {
                 clickListener.onItemClick(itemAdmin);
             }
         });
 
-        // Show/hide action buttons based on status
-        if (itemAdmin.getStatus().equals("Pending")) {
+        // Only show buttons for pending items
+        if ("Pending".equalsIgnoreCase(itemAdmin.getStatus())) {
             holder.btnApprove.setVisibility(View.VISIBLE);
             holder.btnReject.setVisibility(View.VISIBLE);
 
@@ -74,16 +102,20 @@ public class ItemsAdapter extends RecyclerView.Adapter<ItemViewHolder> {
     private void setStatusColor(ItemViewHolder holder, String status) {
         switch (status) {
             case "Pending":
-                holder.tvStatus.setTextColor(holder.itemView.getContext().getColor(android.R.color.holo_orange_dark));
+            case "pending":
+                holder.tvItemStatus.setTextColor(holder.itemView.getContext().getColor(android.R.color.holo_orange_dark));
                 break;
             case "Approved":
-                holder.tvStatus.setTextColor(holder.itemView.getContext().getColor(android.R.color.holo_green_dark));
+            case "approved":
+                holder.tvItemStatus.setTextColor(holder.itemView.getContext().getColor(android.R.color.holo_green_dark));
                 break;
             case "Claimed":
-                holder.tvStatus.setTextColor(holder.itemView.getContext().getColor(android.R.color.holo_blue_dark));
+            case "claimed":
+                holder.tvItemStatus.setTextColor(holder.itemView.getContext().getColor(android.R.color.holo_blue_dark));
                 break;
             case "Rejected":
-                holder.tvStatus.setTextColor(holder.itemView.getContext().getColor(android.R.color.holo_red_dark));
+            case "rejected":
+                holder.tvItemStatus.setTextColor(holder.itemView.getContext().getColor(android.R.color.holo_red_dark));
                 break;
         }
     }

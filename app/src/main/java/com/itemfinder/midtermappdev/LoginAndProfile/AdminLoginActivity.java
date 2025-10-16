@@ -17,6 +17,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.itemfinder.midtermappdev.Admin.ui.dashboard.AdminDashboardActivity;
 import com.itemfinder.midtermappdev.R;
 
 public class AdminLoginActivity extends AppCompatActivity {
@@ -82,7 +83,7 @@ public class AdminLoginActivity extends AppCompatActivity {
                                 .addOnSuccessListener(documentSnapshot -> {
                                     if (documentSnapshot.exists()) {
                                         Toast.makeText(this, "Admin login successful!", Toast.LENGTH_SHORT).show();
-                                        Intent intent = new Intent(AdminLoginActivity.this,LoginActivity.class);
+                                        Intent intent = new Intent(AdminLoginActivity.this, AdminDashboardActivity.class);
                                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                         startActivity(intent);
                                         finish();
