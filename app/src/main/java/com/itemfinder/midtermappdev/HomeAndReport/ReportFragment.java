@@ -6,10 +6,12 @@ import android.app.TimePickerDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,10 +35,17 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.Fragment;
 
+import com.cloudinary.android.MediaManager;
+import com.cloudinary.android.callback.ErrorInfo;
+import com.cloudinary.android.callback.UploadCallback;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.itemfinder.midtermappdev.R;
+import com.squareup.picasso.Picasso;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -59,24 +68,73 @@ public class ReportFragment extends Fragment {
     private Calendar selectedDateTime;
     private Uri selectedImageUri;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
+    private String uploadedImageUrl = null;
+    private boolean isCloudinaryInitialized = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Log.d("ReportFragment", "=== onCreate called ===");
+
+        // Initialize Cloudinary
+        initCloudinary();
+
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
+                    Log.d("ReportFragment", "Image picker result: " + result.getResultCode());
                     if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                         selectedImageUri = result.getData().getData();
+                        Log.d("ReportFragment", "Selected image URI: " + selectedImageUri);
                         if (selectedImageUri != null) {
-                            ivSelectedPhoto.setImageURI(selectedImageUri);
+                            // Display the selected image using Picasso
+                            Picasso.get()
+                                    .load(selectedImageUri)
+                                    .placeholder(android.R.drawable.ic_menu_gallery)
+                                    .error(android.R.drawable.ic_menu_report_image)
+                                    .fit()
+                                    .centerCrop()
+                                    .into(ivSelectedPhoto);
+
                             ivSelectedPhoto.setVisibility(View.VISIBLE);
                             llUploadPrompt.setVisibility(View.GONE);
+                            Log.d("ReportFragment", "Image displayed successfully");
                         }
                     }
                 }
         );
+    }
+
+    private void initCloudinary() {
+        try {
+            // Check if already initialized
+            if (MediaManager.get() != null) {
+                isCloudinaryInitialized = true;
+                Log.d("ReportFragment", "Cloudinary already initialized");
+                return;
+            }
+        } catch (IllegalStateException e) {
+            // Not initialized yet, proceed with initialization
+            Log.d("ReportFragment", "Initializing Cloudinary...");
+        }
+
+        try {
+            Map<String, String> config = new HashMap<>();
+            config.put("cloud_name", "durqaiei1");
+            config.put("api_key", "918231765677369");
+            config.put("api_secret", "qAaOJMr9tjvu3_K543ZJXKj_vqM");
+
+            MediaManager.init(requireContext(), config);
+            isCloudinaryInitialized = true;
+            Log.d("ReportFragment", "Cloudinary initialized successfully");
+        } catch (Exception e) {
+            Log.e("ReportFragment", "Error initializing Cloudinary", e);
+            isCloudinaryInitialized = false;
+            Toast.makeText(requireContext(),
+                    "Image upload may not be available: " + e.getMessage(),
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Nullable
@@ -158,7 +216,7 @@ public class ReportFragment extends Fragment {
         if (getActivity() instanceof HomeAndReportMainActivity) {
             ((HomeAndReportMainActivity) getActivity()).replaceFragment(new HomeFragment());
             BottomNavigationView bottomNav = requireActivity().findViewById(R.id.navigationView);
-            bottomNav.setSelectedItemId(R.id.frame_layout);
+            bottomNav.setSelectedItemId(R.id.home);
         }
     }
 
@@ -220,34 +278,341 @@ public class ReportFragment extends Fragment {
             Toast.makeText(requireContext(), "Please select an item category", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (itemName.isEmpty()) { etItemName.setError("Item name is required"); etItemName.requestFocus(); return; }
-        if (description.isEmpty()) { etDescription.setError("Description is required"); etDescription.requestFocus(); return; }
-        if (location.equals("Select Location")) { Toast.makeText(requireContext(), "Please select a location", Toast.LENGTH_SHORT).show(); return; }
-        if (dateFound.isEmpty()) { Toast.makeText(requireContext(), "Please select date and time found", Toast.LENGTH_SHORT).show(); return; }
-        if (contact.isEmpty() && !isAnonymous) { etContact.setError("Contact information is required"); etContact.requestFocus(); return; }
+        if (itemName.isEmpty()) {
+            etItemName.setError("Item name is required");
+            etItemName.requestFocus();
+            return;
+        }
+        if (description.isEmpty()) {
+            etDescription.setError("Description is required");
+            etDescription.requestFocus();
+            return;
+        }
+        if (location.equals("Select Location")) {
+            Toast.makeText(requireContext(), "Please select a location", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (dateFound.isEmpty()) {
+            Toast.makeText(requireContext(), "Please select date and time found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (contact.isEmpty() && !isAnonymous) {
+            etContact.setError("Contact information is required");
+            etContact.requestFocus();
+            return;
+        }
 
-        submitReport(category, itemName, description, location, dateFound, contact, isAnonymous);
+        // Log Cloudinary status
+        Log.d("ReportFragment", "Cloudinary initialized: " + isCloudinaryInitialized);
+        Log.d("ReportFragment", "Image selected: " + (selectedImageUri != null));
+
+        // If image is selected, upload to Cloudinary first, then submit to Firebase
+        if (selectedImageUri != null) {
+            if (isCloudinaryInitialized) {
+                uploadImageToCloudinary(category, itemName, description, location, dateFound, contact, isAnonymous);
+            } else {
+                Toast.makeText(requireContext(),
+                        "Image upload not available. Submitting without image.",
+                        Toast.LENGTH_SHORT).show();
+                submitToFirebase(category, itemName, description, location, dateFound, contact, isAnonymous, null);
+            }
+        } else {
+            // No image, submit directly to Firebase
+            submitToFirebase(category, itemName, description, location, dateFound, contact, isAnonymous, null);
+        }
     }
 
-    private void submitReport(String category, String itemName, String description,
-                              String location, String dateFound, String contact, boolean isAnonymous) {
+    private void uploadImageToCloudinary(String category, String itemName, String description,
+                                         String location, String dateFound, String contact, boolean isAnonymous) {
 
-        Toast.makeText(requireContext(), "Submitting report...", Toast.LENGTH_SHORT).show();
+        Log.d("ReportFragment", "=== uploadImageToCloudinary called ===");
+        Log.d("ReportFragment", "isCloudinaryInitialized: " + isCloudinaryInitialized);
+        Log.d("ReportFragment", "selectedImageUri: " + selectedImageUri);
 
-        // Get current user ID from activity
+        if (!isCloudinaryInitialized) {
+            Log.e("ReportFragment", "Cloudinary not initialized!");
+            Toast.makeText(requireContext(), "Image upload service not available. Submitting without image.", Toast.LENGTH_SHORT).show();
+            submitToFirebase(category, itemName, description, location, dateFound, contact, isAnonymous, null);
+            return;
+        }
+
+        Toast.makeText(requireContext(), "Uploading image...", Toast.LENGTH_SHORT).show();
+        btnPostFoundItem.setEnabled(false);
+
+        // Use background thread for upload
+        new Thread(() -> {
+            try {
+                // Convert URI to file path
+                Log.d("ReportFragment", "Converting URI to file path...");
+                String filePath = getRealPathFromURI(selectedImageUri);
+
+                Log.d("ReportFragment", "File path: " + filePath);
+
+                if (filePath == null) {
+                    Log.e("ReportFragment", "File path is null!");
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(requireContext(), "Error reading image file. Submitting without image.", Toast.LENGTH_SHORT).show();
+                        btnPostFoundItem.setEnabled(true);
+                        submitToFirebase(category, itemName, description, location, dateFound, contact, isAnonymous, null);
+                    });
+                    return;
+                }
+
+                // Check if file exists
+                File imageFile = new File(filePath);
+                if (!imageFile.exists()) {
+                    Log.e("ReportFragment", "Image file does not exist at path: " + filePath);
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(requireContext(), "Image file not found. Submitting without image.", Toast.LENGTH_SHORT).show();
+                        btnPostFoundItem.setEnabled(true);
+                        submitToFirebase(category, itemName, description, location, dateFound, contact, isAnonymous, null);
+                    });
+                    return;
+                }
+
+                Log.d("ReportFragment", "File exists, size: " + imageFile.length() + " bytes");
+
+                // Direct HTTP upload to Cloudinary
+                String imageUrl = uploadToCloudinaryDirect(imageFile);
+
+                if (imageUrl != null) {
+                    Log.d("ReportFragment", "Upload successful: " + imageUrl);
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(requireContext(), "Image uploaded successfully!", Toast.LENGTH_SHORT).show();
+                        submitToFirebase(category, itemName, description, location, dateFound,
+                                contact, isAnonymous, imageUrl);
+                    });
+                } else {
+                    Log.e("ReportFragment", "Upload failed - null URL returned");
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(requireContext(), "Upload failed. Submitting without image.", Toast.LENGTH_LONG).show();
+                        submitToFirebase(category, itemName, description, location, dateFound,
+                                contact, isAnonymous, null);
+                    });
+                }
+
+            } catch (Exception e) {
+                Log.e("ReportFragment", "=== Exception during upload ===", e);
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(requireContext(), "Error uploading image: " + e.getMessage() + ". Submitting without image.", Toast.LENGTH_LONG).show();
+                    submitToFirebase(category, itemName, description, location, dateFound, contact, isAnonymous, null);
+                    btnPostFoundItem.setEnabled(true);
+                });
+            }
+        }).start();
+    }
+
+    private String uploadToCloudinaryDirect(File imageFile) {
+        try {
+            Log.d("ReportFragment", "Starting direct HTTP upload...");
+
+            String cloudName = "durqaiei1";
+            String uploadPreset = "found_items_preset";
+            String uploadUrl = "https://api.cloudinary.com/v1_1/" + cloudName + "/image/upload";
+
+            // Create multipart request
+            java.net.URL url = new java.net.URL(uploadUrl);
+            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+
+            String boundary = "----WebKitFormBoundary" + System.currentTimeMillis();
+            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+            connection.setConnectTimeout(30000); // 30 seconds
+            connection.setReadTimeout(30000);
+
+            java.io.OutputStream outputStream = connection.getOutputStream();
+            java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.OutputStreamWriter(outputStream, "UTF-8"), true);
+
+            // Add upload preset
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"upload_preset\"").append("\r\n");
+            writer.append("\r\n");
+            writer.append(uploadPreset).append("\r\n");
+            writer.flush();
+
+            // Add folder
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"folder\"").append("\r\n");
+            writer.append("\r\n");
+            writer.append("found_items").append("\r\n");
+            writer.flush();
+
+            // Add file
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"" + imageFile.getName() + "\"").append("\r\n");
+            writer.append("Content-Type: image/jpeg").append("\r\n");
+            writer.append("\r\n");
+            writer.flush();
+
+            java.io.FileInputStream fileInputStream = new java.io.FileInputStream(imageFile);
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            long totalBytesRead = 0;
+            long fileSize = imageFile.length();
+
+            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+                totalBytesRead += bytesRead;
+
+                // Log progress
+                int progress = (int) ((totalBytesRead * 100) / fileSize);
+                if (progress % 10 == 0) {
+                    Log.d("ReportFragment", "Upload progress: " + progress + "%");
+                }
+            }
+
+            fileInputStream.close();
+            outputStream.flush();
+
+            writer.append("\r\n");
+            writer.append("--" + boundary + "--").append("\r\n");
+            writer.flush();
+            writer.close();
+
+            // Get response
+            int responseCode = connection.getResponseCode();
+            Log.d("ReportFragment", "Response code: " + responseCode);
+
+            if (responseCode == 200) {
+                java.io.BufferedReader reader = new java.io.BufferedReader(
+                        new java.io.InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                Log.d("ReportFragment", "Response: " + response.toString());
+
+                // Parse JSON response to get secure_url
+                org.json.JSONObject jsonResponse = new org.json.JSONObject(response.toString());
+                String secureUrl = jsonResponse.getString("secure_url");
+
+                Log.d("ReportFragment", "Secure URL: " + secureUrl);
+                return secureUrl;
+            } else {
+                // Read error response
+                java.io.BufferedReader errorReader = new java.io.BufferedReader(
+                        new java.io.InputStreamReader(connection.getErrorStream()));
+                StringBuilder errorResponse = new StringBuilder();
+                String line;
+
+                while ((line = errorReader.readLine()) != null) {
+                    errorResponse.append(line);
+                }
+                errorReader.close();
+
+                Log.e("ReportFragment", "Error response: " + errorResponse.toString());
+                return null;
+            }
+
+        } catch (Exception e) {
+            Log.e("ReportFragment", "Direct upload exception", e);
+            return null;
+        }
+    }
+
+    private String getRealPathFromURI(Uri contentUri) {
+        try {
+            // Try to get file path from content URI
+            String[] projection = {MediaStore.Images.Media.DATA};
+            Cursor cursor = requireActivity().getContentResolver().query(contentUri, projection, null, null, null);
+
+            if (cursor != null) {
+                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                cursor.moveToFirst();
+                String path = cursor.getString(column_index);
+                cursor.close();
+                return path;
+            }
+
+            // If above method fails, copy file to cache
+            InputStream inputStream = requireActivity().getContentResolver().openInputStream(contentUri);
+            if (inputStream != null) {
+                File tempFile = new File(requireActivity().getCacheDir(), getFileName(contentUri));
+                FileOutputStream outputStream = new FileOutputStream(tempFile);
+
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+
+                inputStream.close();
+                outputStream.close();
+
+                return tempFile.getAbsolutePath();
+            }
+        } catch (Exception e) {
+            Log.e("ReportFragment", "Error getting file path", e);
+        }
+        return null;
+    }
+
+    private String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = requireActivity().getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (index != -1) {
+                        result = cursor.getString(index);
+                    }
+                }
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
+    }
+
+    private void submitToFirebase(String category, String itemName, String description,
+                                  String location, String dateFound, String contact,
+                                  boolean isAnonymous, String imageUrl) {
+
+        requireActivity().runOnUiThread(() -> {
+            Toast.makeText(requireContext(), "Submitting report...", Toast.LENGTH_SHORT).show();
+        });
+
+        // Get current user ID and data from activity
         String userId = null;
+        String userEmail = null;
+        String studentId = null;
+        String fullName = null;
+
         if (getActivity() instanceof HomeAndReportMainActivity) {
-            userId = ((HomeAndReportMainActivity) getActivity()).getUserId();
+            HomeAndReportMainActivity activity = (HomeAndReportMainActivity) getActivity();
+            userId = activity.getUserId();
+            userEmail = activity.getEmail();
+            studentId = activity.getStudentId();
+            fullName = activity.getFullName();
         }
 
         if (userId == null) {
             Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
+            btnPostFoundItem.setEnabled(true);
             return;
         }
 
         // Create report data
         Map<String, Object> reportData = new HashMap<>();
         reportData.put("userId", userId);
+        reportData.put("userEmail", userEmail);
+        reportData.put("studentId", studentId);
+        reportData.put("fullName", fullName);
         reportData.put("category", category);
         reportData.put("itemName", itemName);
         reportData.put("description", description);
@@ -255,47 +620,85 @@ public class ReportFragment extends Fragment {
         reportData.put("dateFound", dateFound);
         reportData.put("contact", isAnonymous ? "Anonymous" : contact);
         reportData.put("isAnonymous", isAnonymous);
-        reportData.put("status", "pending");
-        reportData.put("imageUri", selectedImageUri != null ? selectedImageUri.toString() : null);
+        reportData.put("status", "available");
+        reportData.put("imageUrl", imageUrl); // Cloudinary URL or null
         reportData.put("submittedAt", System.currentTimeMillis());
 
-        // Save to user's foundItems collection
         FirebaseFirestore db = FirebaseFirestore.getInstance();
+        final String finalUserId = userId;
+
+        // Save to user's foundItems collection
         db.collection("users")
-                .document(userId)
+                .document(finalUserId)
                 .collection("foundItems")
                 .add(reportData)
                 .addOnSuccessListener(documentReference -> {
-                    Log.d("ReportFragment", "Report saved with ID: " + documentReference.getId());
-                    Toast.makeText(requireContext(), "Report submitted successfully!", Toast.LENGTH_LONG).show();
+                    String docId = documentReference.getId();
+                    Log.d("ReportFragment", "Report saved with ID: " + docId);
 
-                    // Show in-app notification
-                    addNotification("Your found item report has been submitted.");
+                    // Also save to global allFoundItems collection for admin access
+                    reportData.put("documentId", docId);
+                    db.collection("allFoundItems")
+                            .document(docId)
+                            .set(reportData)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d("ReportFragment", "Also saved to allFoundItems");
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("ReportFragment", "Failed to save to allFoundItems", e);
+                            });
 
-                    // Show system notification
-                    showSubmissionNotification();
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(requireContext(), "Report submitted successfully!", Toast.LENGTH_LONG).show();
+                        btnPostFoundItem.setEnabled(true);
 
-                    // Navigate back to HomeFragment
-                    if (getActivity() instanceof HomeAndReportMainActivity) {
-                        HomeAndReportMainActivity main = (HomeAndReportMainActivity) getActivity();
-                        main.replaceFragment(new HomeFragment());
+                        // Show in-app notification
+                        addNotification("Your found item report has been submitted.");
 
-                        // Explicitly highlight Home in BottomNavigationView
-                        BottomNavigationView bottomNav = main.findViewById(R.id.navigationView);
-                        bottomNav.setSelectedItemId(R.id.home);
-                    }
+                        // Show system notification
+                        showSubmissionNotification();
+
+                        // Reset form
+                        resetForm();
+
+                        // Navigate back to HomeFragment
+                        if (getActivity() instanceof HomeAndReportMainActivity) {
+                            HomeAndReportMainActivity main = (HomeAndReportMainActivity) getActivity();
+                            main.replaceFragment(new HomeFragment());
+
+                            // Explicitly highlight Home in BottomNavigationView
+                            BottomNavigationView bottomNav = main.findViewById(R.id.navigationView);
+                            bottomNav.setSelectedItemId(R.id.home);
+                        }
+                    });
                 })
                 .addOnFailureListener(e -> {
                     Log.e("ReportFragment", "Error saving report", e);
-                    Toast.makeText(requireContext(),
-                            "Failed to submit report: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(requireContext(),
+                                "Failed to submit report: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                        btnPostFoundItem.setEnabled(true);
+                    });
                 });
     }
 
+    private void resetForm() {
+        spinnerCategory.setSelection(0);
+        spinnerLocation.setSelection(0);
+        etItemName.setText("");
+        etDescription.setText("");
+        etDateFound.setText("");
+        etContact.setText("");
+        switchAnonymous.setChecked(false);
+        selectedImageUri = null;
+        uploadedImageUrl = null;
+        ivSelectedPhoto.setVisibility(View.GONE);
+        llUploadPrompt.setVisibility(View.VISIBLE);
+    }
 
     private void addNotification(String message) {
-        View rootView = getActivity().findViewById(R.id.frame_layout); // replace with your main layout ID
+        View rootView = getActivity().findViewById(R.id.frame_layout);
         if (rootView != null) {
             LinearLayout notificationContainer = rootView.findViewById(R.id.notificationContainer);
             if (notificationContainer != null) {

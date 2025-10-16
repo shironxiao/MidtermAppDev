@@ -58,4 +58,7 @@ dependencies {
     implementation("com.squareup.picasso:picasso:2.8")
     //cloudinary sdk
     implementation("com.cloudinary:cloudinary-android:3.0.2")
+
+    implementation("org.json:json:20210307")
+
 }

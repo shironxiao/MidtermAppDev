@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <!--suppress AndroidDomInspection -->
     <application
@@ -17,7 +19,8 @@
         android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
         android:supportsRtl="true"
         android:fullBackupContent="@xml/backup_rules"
-        android:dataExtractionRules="@xml/data_extraction_rules">
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:usesCleartextTraffic="true">
 
         <!-- Main App Entry -->
         <activity
@@ -59,6 +62,7 @@
         <meta-data
             android:name="CLOUDINARY_URL"
             android:value="CLOUDINARY_URL=cloudinary://918231765677369:**********@durqaiei1"/>
+
 
     </application>
 </manifest>

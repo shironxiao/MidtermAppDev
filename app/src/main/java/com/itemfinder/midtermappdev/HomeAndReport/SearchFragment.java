@@ -54,7 +54,7 @@ public class SearchFragment extends Fragment {
         itemList = new ArrayList<>();
         filteredList = new ArrayList<>();
 
-        // Load items from Firebase instead of sample data
+        // Load items from Firebase
         loadUserFoundItems();
 
         // Start showing all items
@@ -107,15 +107,23 @@ public class SearchFragment extends Fragment {
                         String location = doc.getString("location");
                         String status = doc.getString("status");
                         String date = doc.getString("dateFound");
+                        String imageUrl = doc.getString("imageUrl"); // Get Cloudinary URL
 
                         if (name != null && category != null) {
-                            itemList.add(new Item(
+                            Item item = new Item(
                                     name,
                                     category,
                                     location != null ? location : "Unknown",
                                     status != null ? status : "Available",
                                     date != null ? date : ""
-                            ));
+                            );
+
+                            // Set the image URL if available
+                            if (imageUrl != null && !imageUrl.isEmpty()) {
+                                item.setImageUrl(imageUrl);
+                            }
+
+                            itemList.add(item);
                         }
                     }
 
