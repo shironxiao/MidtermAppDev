@@ -83,8 +83,10 @@ public class SearchFragment extends Fragment {
     private void loadApprovedItems() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Load from the main items collection where status is "approved"
-        db.collection("items")
+        Log.d(TAG, "Loading approved items from Firestore...");
+
+        // Load from pendingItems collection where status is "approved"
+        db.collection("pendingItems")
                 .whereEqualTo("status", "approved")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
@@ -92,9 +94,9 @@ public class SearchFragment extends Fragment {
 
                     for (QueryDocumentSnapshot doc : querySnapshot) {
                         try {
-                            String name = doc.getString("name");
+                            String name = doc.getString("itemName");
                             String category = doc.getString("category");
-                            String location = doc.getString("foundLocation");
+                            String location = doc.getString("location");
                             String status = doc.getString("status");
                             String date = doc.getString("dateFound");
                             String imageUrl = doc.getString("imageUrl");
@@ -114,7 +116,7 @@ public class SearchFragment extends Fragment {
                                 }
 
                                 itemList.add(item);
-                                Log.d(TAG, "Loaded item: " + name + " | Category: " + category);
+                                Log.d(TAG, "Loaded approved item: " + name + " | Category: " + category);
                             }
                         } catch (Exception e) {
                             Log.e(TAG, "Error parsing item: " + doc.getId(), e);
