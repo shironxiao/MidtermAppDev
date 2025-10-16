@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -75,17 +74,17 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
             holder.ivItemImage.setVisibility(View.GONE);
         }
 
-        // Set click listener to open claim process
+        // ✅ Added: pass all item data (name, category, location, date, status, image)
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onItemClick(item);
             } else {
-                // Default action: open process claim activity
                 Intent intent = new Intent(context, Processclaim.class);
                 intent.putExtra("itemName", item.getName());
                 intent.putExtra("itemCategory", item.getCategory());
                 intent.putExtra("itemLocation", item.getLocation());
                 intent.putExtra("itemDate", item.getDate());
+                intent.putExtra("itemStatus", item.getStatus()); // ← added this line
                 intent.putExtra("itemImageUrl", item.getImageUrl());
                 context.startActivity(intent);
             }

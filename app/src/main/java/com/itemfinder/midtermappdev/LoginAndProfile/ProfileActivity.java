@@ -73,7 +73,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void redirectToMain() {
-        Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
+        Intent intent = new Intent(ProfileActivity.this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
