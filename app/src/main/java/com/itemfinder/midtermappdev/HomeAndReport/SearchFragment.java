@@ -28,6 +28,7 @@ import java.util.List;
 
 public class SearchFragment extends Fragment {
 
+    private static final String TAG = "SearchFragment";
     RecyclerView recyclerView;
     ItemAdapter itemAdapter;
     List<Item> itemList;
@@ -43,7 +44,6 @@ public class SearchFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_search, container, false);
 
         // Initialize RecyclerView
@@ -54,11 +54,11 @@ public class SearchFragment extends Fragment {
         itemList = new ArrayList<>();
         filteredList = new ArrayList<>();
 
-        // Load items from Firebase
-        loadUserFoundItems();
+        // Load approved items from Firebase
+        loadApprovedItems();
 
         // Start showing all items
-        itemAdapter = new ItemAdapter(filteredList);
+        itemAdapter = new ItemAdapter(filteredList, requireContext());
         recyclerView.setAdapter(itemAdapter);
 
         // Find buttons
@@ -80,50 +80,44 @@ public class SearchFragment extends Fragment {
         return view;
     }
 
-    private void loadUserFoundItems() {
-        // Get current user ID
-        String userId = null;
-        if (getActivity() instanceof HomeAndReportMainActivity) {
-            userId = ((HomeAndReportMainActivity) getActivity()).getUserId();
-        }
-
-        if (userId == null) {
-            Toast.makeText(requireContext(), "User not authenticated", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Load items from user's foundItems collection
+    private void loadApprovedItems() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("users")
-                .document(userId)
-                .collection("foundItems")
-                .whereEqualTo("status", "available")
+
+        // Load from the main items collection where status is "approved"
+        db.collection("items")
+                .whereEqualTo("status", "approved")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     itemList.clear();
+
                     for (QueryDocumentSnapshot doc : querySnapshot) {
-                        String name = doc.getString("itemName");
-                        String category = doc.getString("category");
-                        String location = doc.getString("location");
-                        String status = doc.getString("status");
-                        String date = doc.getString("dateFound");
-                        String imageUrl = doc.getString("imageUrl"); // Get Cloudinary URL
+                        try {
+                            String name = doc.getString("name");
+                            String category = doc.getString("category");
+                            String location = doc.getString("foundLocation");
+                            String status = doc.getString("status");
+                            String date = doc.getString("dateFound");
+                            String imageUrl = doc.getString("imageUrl");
 
-                        if (name != null && category != null) {
-                            Item item = new Item(
-                                    name,
-                                    category,
-                                    location != null ? location : "Unknown",
-                                    status != null ? status : "Available",
-                                    date != null ? date : ""
-                            );
+                            if (name != null && category != null) {
+                                Item item = new Item(
+                                        name,
+                                        category,
+                                        location != null ? location : "Unknown",
+                                        "Available", // Display as "Available" to users
+                                        date != null ? date : ""
+                                );
 
-                            // Set the image URL if available
-                            if (imageUrl != null && !imageUrl.isEmpty()) {
-                                item.setImageUrl(imageUrl);
+                                // Set the image URL if available
+                                if (imageUrl != null && !imageUrl.isEmpty()) {
+                                    item.setImageUrl(imageUrl);
+                                }
+
+                                itemList.add(item);
+                                Log.d(TAG, "Loaded item: " + name + " | Category: " + category);
                             }
-
-                            itemList.add(item);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error parsing item: " + doc.getId(), e);
                         }
                     }
 
@@ -132,14 +126,16 @@ public class SearchFragment extends Fragment {
                     filteredList.addAll(itemList);
                     itemAdapter.notifyDataSetChanged();
 
+                    Log.d(TAG, "Total approved items loaded: " + itemList.size());
+
                     if (itemList.isEmpty()) {
                         Toast.makeText(requireContext(),
-                                "No items found. Report found items to see them here.",
-                                Toast.LENGTH_LONG).show();
+                                "No items available at the moment.",
+                                Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("SearchFragment", "Error loading items", e);
+                    Log.e(TAG, "Error loading approved items", e);
                     Toast.makeText(requireContext(),
                             "Failed to load items",
                             Toast.LENGTH_SHORT).show();
@@ -190,7 +186,6 @@ public class SearchFragment extends Fragment {
         });
     }
 
-    // Filter items by category
     @SuppressLint("NotifyDataSetChanged")
     private void filterCategory(String category) {
         filteredList.clear();
@@ -200,17 +195,19 @@ public class SearchFragment extends Fragment {
             }
         }
         itemAdapter.notifyDataSetChanged();
+
+        Log.d(TAG, "Filtered " + filteredList.size() + " items for category: " + category);
     }
 
-    // Show all items
     @SuppressLint("NotifyDataSetChanged")
     private void showAllItems() {
         filteredList.clear();
         filteredList.addAll(itemList);
         itemAdapter.notifyDataSetChanged();
+
+        Log.d(TAG, "Showing all " + filteredList.size() + " items");
     }
 
-    // Reset all category buttons (light gray + black text)
     private void resetCategoryButtons() {
         Button[] buttons = {btnAll, btnAcademic, btnWriting, btnPersonal, btnClothing, btnGadgets, btnIDs};
         for (Button btn : buttons) {
@@ -219,9 +216,15 @@ public class SearchFragment extends Fragment {
         }
     }
 
-    // Highlight selected button (red + white text)
     private void highlightButton(Button button) {
-        button.setBackgroundColor(Color.parseColor("#F44336")); // Red (Material Red 500)
+        button.setBackgroundColor(Color.parseColor("#F44336"));
         button.setTextColor(Color.WHITE);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Reload items when fragment becomes visible
+        loadApprovedItems();
     }
 }

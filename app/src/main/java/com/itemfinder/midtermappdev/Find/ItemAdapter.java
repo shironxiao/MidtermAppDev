@@ -1,10 +1,13 @@
 package com.itemfinder.midtermappdev.Find;
 
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,6 +21,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
 
     private List<Item> itemList;
     private OnItemClickListener listener;
+    private Context context;
 
     public interface OnItemClickListener {
         void onItemClick(Item item);
@@ -27,6 +31,11 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         this.itemList = itemList;
     }
 
+    public ItemAdapter(List<Item> itemList, Context context) {
+        this.itemList = itemList;
+        this.context = context;
+    }
+
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
@@ -34,6 +43,9 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
     @NonNull
     @Override
     public ItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (context == null) {
+            context = parent.getContext();
+        }
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_card, parent, false);
         return new ItemViewHolder(view);
@@ -54,20 +66,28 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
             holder.ivItemImage.setVisibility(View.VISIBLE);
             Picasso.get()
                     .load(item.getImageUrl())
-                    .placeholder(R.drawable.ic_placeholder_image) // Add placeholder drawable
-                    .error(R.drawable.ic_error_image) // Add error drawable
+                    .placeholder(R.drawable.ic_placeholder_image)
+                    .error(R.drawable.ic_error_image)
                     .fit()
                     .centerCrop()
                     .into(holder.ivItemImage);
         } else {
-            // Hide image view if no image available
             holder.ivItemImage.setVisibility(View.GONE);
         }
 
-        // Set click listener
+        // Set click listener to open claim process
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onItemClick(item);
+            } else {
+                // Default action: open process claim activity
+                Intent intent = new Intent(context, Processclaim.class);
+                intent.putExtra("itemName", item.getName());
+                intent.putExtra("itemCategory", item.getCategory());
+                intent.putExtra("itemLocation", item.getLocation());
+                intent.putExtra("itemDate", item.getDate());
+                intent.putExtra("itemImageUrl", item.getImageUrl());
+                context.startActivity(intent);
             }
         });
     }

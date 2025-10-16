@@ -1,365 +1,371 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F5F5"
+    android:orientation="vertical"
     android:padding="16dp">
 
-    <LinearLayout
+    <!-- Header Section (Non-scrollable) -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
-        <!-- Logout Button -->
-        <Button
-            android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Logout"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#673AB7"
-            android:layout_marginBottom="12dp"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
-            app:cornerRadius="8dp" />
+        android:layout_marginBottom="16dp">
 
-        <!-- Header -->
-        <TextView
-            android:id="@+id/tvTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Admin Dashboard"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#333333"
-            android:gravity="center"
-            android:layout_marginBottom="24dp" />
-
-        <!-- Dynamic Stats Cards Grid -->
-        <GridLayout
-            android:id="@+id/statsGrid"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:columnCount="2"
-            android:rowCount="2"
-            android:layout_marginBottom="24dp">
-
-            <!-- Total Items Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardTotalItems"
-                android:layout_width="0dp"
-                android:layout_height="120dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                android:backgroundTint="#E3F2FD">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:id="@+id/tvTotalItemsCount"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textSize="32sp"
-                        android:textStyle="bold"
-                        android:textColor="#1976D2"
-                        tools:text="4" />
-
-                    <TextView
-                        android:id="@+id/tvTotalItemsLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Total Items"
-                        android:textSize="14sp"
-                        android:textColor="#666666"
-                        android:gravity="center" />
-
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Pending Approval Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardPendingApproval"
-                android:layout_width="0dp"
-                android:layout_height="120dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                android:backgroundTint="#FFF3E0">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:id="@+id/tvPendingApprovalCount"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textSize="32sp"
-                        android:textStyle="bold"
-                        android:textColor="#F57C00"
-                        tools:text="1" />
-
-                    <TextView
-                        android:id="@+id/tvPendingApprovalLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Pending Approval"
-                        android:textSize="14sp"
-                        android:textColor="#666666"
-                        android:gravity="center" />
-
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Available Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardAvailable"
-                android:layout_width="0dp"
-                android:layout_height="120dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                android:backgroundTint="#E8F5E8">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:id="@+id/tvAvailableCount"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textSize="32sp"
-                        android:textStyle="bold"
-                        android:textColor="#388E3C"
-                        tools:text="3" />
-
-                    <TextView
-                        android:id="@+id/tvAvailableLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Available"
-                        android:textSize="14sp"
-                        android:textColor="#666666"
-                        android:gravity="center" />
-
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Pending Claims Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/cardPendingClaims"
-                android:layout_width="0dp"
-                android:layout_height="120dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="8dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                android:backgroundTint="#FCE4EC">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:id="@+id/tvPendingClaimsCount"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textSize="32sp"
-                        android:textStyle="bold"
-                        android:textColor="#C2185B"
-                        tools:text="0" />
-
-                    <TextView
-                        android:id="@+id/tvPendingClaimsLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Pending Claims"
-                        android:textSize="14sp"
-                        android:textColor="#666666"
-                        android:gravity="center" />
-
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-        </GridLayout>
-
-        <!-- Dynamic Filter Buttons Container -->
-        <HorizontalScrollView
-            android:id="@+id/filterScrollView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:scrollbars="none">
-
-            <LinearLayout
-                android:id="@+id/filterButtonsContainer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingStart="4dp"
-                android:paddingEnd="4dp">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnPending"
-                    style="@style/Widget.MaterialComponents.Button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Pending (0)"
-                    android:textSize="12sp"
-                    android:layout_marginEnd="8dp"
-                    app:cornerRadius="20dp"
-                    android:backgroundTint="#673AB7"
-                    android:textColor="#FFFFFF"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="8dp"
-                    tools:text="Pending (1)" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnActive"
-                    style="@style/Widget.MaterialComponents.Button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Active (0)"
-                    android:textSize="12sp"
-                    android:layout_marginEnd="8dp"
-                    app:cornerRadius="20dp"
-                    android:backgroundTint="#673AB7"
-                    android:textColor="#FFFFFF"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="8dp"
-                    tools:text="Active (3)" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnClaims"
-                    style="@style/Widget.MaterialComponents.Button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Claims (0)"
-                    android:textSize="12sp"
-                    android:layout_marginEnd="8dp"
-                    app:cornerRadius="20dp"
-                    android:backgroundTint="#673AB7"
-                    android:textColor="#FFFFFF"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="8dp"
-                    tools:text="Claims (0)" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnAll"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="All Items"
-                    android:textSize="12sp"
-                    app:cornerRadius="20dp"
-                    app:strokeColor="#673AB7"
-                    android:textColor="#673AB7"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="8dp" />
-
-            </LinearLayout>
-        </HorizontalScrollView>
-
-        <!-- Loading Indicator -->
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone"
-            android:layout_marginVertical="32dp" />
-
-        <!-- Empty State -->
         <LinearLayout
-            android:id="@+id/layoutEmptyState"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:padding="32dp"
-            android:visibility="gone">
+            android:orientation="vertical">
 
-            <ImageView
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:alpha="0.3"
-                android:layout_marginBottom="16dp" />
-
-            <TextView
-                android:id="@+id/tvEmptyStateTitle"
+            <!-- Logout Button -->
+            <Button
+                android:id="@+id/btnBack"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="No Items Found"
-                android:textSize="18sp"
+                android:text="Logout"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#673AB7"
+                android:layout_marginBottom="12dp"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                app:cornerRadius="8dp" />
+
+            <!-- Header -->
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Admin Dashboard"
+                android:textSize="24sp"
                 android:textStyle="bold"
-                android:textColor="#666666"
-                android:layout_marginBottom="8dp" />
+                android:textColor="#333333"
+                android:gravity="center"
+                android:layout_marginBottom="24dp" />
 
-            <TextView
-                android:id="@+id/tvEmptyStateMessage"
-                android:layout_width="wrap_content"
+            <!-- Dynamic Stats Cards Grid -->
+            <GridLayout
+                android:id="@+id/statsGrid"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="There are no itemAdmins to display at the moment."
-                android:textSize="14sp"
-                android:textColor="#999999"
-                android:gravity="center" />
+                android:columnCount="2"
+                android:rowCount="2"
+                android:layout_marginBottom="24dp">
+
+                <!-- Total Items Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardTotalItems"
+                    android:layout_width="0dp"
+                    android:layout_height="120dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="8dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    android:backgroundTint="#E3F2FD">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/tvTotalItemsCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            android:textColor="#1976D2"
+                            tools:text="4" />
+
+                        <TextView
+                            android:id="@+id/tvTotalItemsLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total Items"
+                            android:textSize="14sp"
+                            android:textColor="#666666"
+                            android:gravity="center" />
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Pending Approval Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardPendingApproval"
+                    android:layout_width="0dp"
+                    android:layout_height="120dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="8dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    android:backgroundTint="#FFF3E0">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/tvPendingApprovalCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            android:textColor="#F57C00"
+                            tools:text="1" />
+
+                        <TextView
+                            android:id="@+id/tvPendingApprovalLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pending Approval"
+                            android:textSize="14sp"
+                            android:textColor="#666666"
+                            android:gravity="center" />
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Available Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardAvailable"
+                    android:layout_width="0dp"
+                    android:layout_height="120dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="8dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    android:backgroundTint="#E8F5E8">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/tvAvailableCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            android:textColor="#388E3C"
+                            tools:text="3" />
+
+                        <TextView
+                            android:id="@+id/tvAvailableLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Available"
+                            android:textSize="14sp"
+                            android:textColor="#666666"
+                            android:gravity="center" />
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Pending Claims Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardPendingClaims"
+                    android:layout_width="0dp"
+                    android:layout_height="120dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="8dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    android:backgroundTint="#FCE4EC">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:id="@+id/tvPendingClaimsCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            android:textColor="#C2185B"
+                            tools:text="0" />
+
+                        <TextView
+                            android:id="@+id/tvPendingClaimsLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pending Claims"
+                            android:textSize="14sp"
+                            android:textColor="#666666"
+                            android:gravity="center" />
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+            </GridLayout>
+
+            <!-- Dynamic Filter Buttons Container -->
+            <HorizontalScrollView
+                android:id="@+id/filterScrollView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/filterButtonsContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAll"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="All Items"
+                        android:textSize="12sp"
+                        android:layout_marginEnd="8dp"
+                        app:cornerRadius="20dp"
+                        app:strokeColor="#673AB7"
+                        android:textColor="#673AB7"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPending"
+                        style="@style/Widget.MaterialComponents.Button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Pending (0)"
+                        android:textSize="12sp"
+                        android:layout_marginEnd="8dp"
+                        app:cornerRadius="20dp"
+                        android:backgroundTint="#673AB7"
+                        android:textColor="#FFFFFF"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        tools:text="Pending (1)" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnActive"
+                        style="@style/Widget.MaterialComponents.Button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Active (0)"
+                        android:textSize="12sp"
+                        android:layout_marginEnd="8dp"
+                        app:cornerRadius="20dp"
+                        android:backgroundTint="#673AB7"
+                        android:textColor="#FFFFFF"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        tools:text="Active (3)" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnClaims"
+                        style="@style/Widget.MaterialComponents.Button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Claims (0)"
+                        android:textSize="12sp"
+                        app:cornerRadius="20dp"
+                        android:backgroundTint="#673AB7"
+                        android:textColor="#FFFFFF"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="8dp"
+                        tools:text="Claims (0)" />
+
+                </LinearLayout>
+            </HorizontalScrollView>
 
         </LinearLayout>
 
-        <!-- Dynamic Items List using RecyclerView -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewItems"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"
-            android:clipToPadding="false"
-            tools:itemCount="3" />
+    </ScrollView>
 
-        <!-- Load More Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnLoadMore"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="match_parent"
+    <!-- Loading Indicator -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:layout_marginVertical="32dp" />
+
+    <!-- Empty State -->
+    <LinearLayout
+        android:id="@+id/layoutEmptyState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:alpha="0.3"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tvEmptyStateTitle"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Load More Items"
+            android:text="No Items Found"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#666666"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvEmptyStateMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="There are no items to display at the moment."
             android:textSize="14sp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            app:cornerRadius="8dp"
-            app:strokeColor="#673AB7"
-            android:textColor="#673AB7"
-            android:visibility="gone" />
-
-        <!-- Footer Spacer -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="24dp" />
+            android:textColor="#999999"
+            android:gravity="center" />
 
     </LinearLayout>
 
-</ScrollView>
+    <!-- Dynamic Items List using RecyclerView - NOW SCROLLABLE -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewItems"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:nestedScrollingEnabled="true"
+        android:clipToPadding="false"
+        tools:itemCount="3" />
+
+    <!-- Load More Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnLoadMore"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Load More Items"
+        android:textSize="14sp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        app:cornerRadius="8dp"
+        app:strokeColor="#673AB7"
+        android:textColor="#673AB7"
+        android:visibility="gone" />
+
+</LinearLayout>

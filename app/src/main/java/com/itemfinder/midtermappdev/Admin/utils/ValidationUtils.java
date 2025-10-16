@@ -64,7 +64,7 @@ public class ValidationUtils {
             return false;
         }
 
-        return description.length() >= 10 && description.length() <= 500;
+        return description.length() >= 5 && description.length() <= 500;
     }
 
     /**

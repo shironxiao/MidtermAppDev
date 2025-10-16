@@ -70,6 +70,16 @@
     <string name="admin_username">My Application</string>
     <string name="enter_username">Enter username</string>
 
-        <!-- TODO: Remove or change this placeholder text -->
+
+    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="back">Back</string>
+    <string name="process_claim">Process Claim</string>
+    <string name="claimer_information">Claimer Information</string>
+    <string name="full_name">Full Name</string>
+    <string name="proof_of_ownership">Proof of Ownership</string>
+    <string name="please_answer_the_following_claimer_name_and_id_required">Please answer the following (Claimer Name and ID required)</string>
+    <string name="upload_at_least_one_photo_as_proof">Upload at least one photo as proof *</string>
+    <string name="finder_information">Finder Information</string>
+
 </resources>
