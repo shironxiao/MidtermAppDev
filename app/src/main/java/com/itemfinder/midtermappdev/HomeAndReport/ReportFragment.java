@@ -545,7 +545,6 @@ public class ReportFragment extends Fragment {
             Toast.makeText(requireContext(), "Submitting report...", Toast.LENGTH_SHORT).show();
         });
 
-        // Get current user ID and data from activity
         String userId = null;
         String userEmail = null;
         String studentId = null;
@@ -565,7 +564,7 @@ public class ReportFragment extends Fragment {
             return;
         }
 
-        // Create report data
+        // Create report data for ADMIN APPROVAL
         Map<String, Object> reportData = new HashMap<>();
         reportData.put("userId", userId);
         reportData.put("userEmail", userEmail);
@@ -578,60 +577,54 @@ public class ReportFragment extends Fragment {
         reportData.put("dateFound", dateFound);
         reportData.put("contact", isAnonymous ? "Anonymous" : contact);
         reportData.put("isAnonymous", isAnonymous);
-        reportData.put("status", "available");
-        reportData.put("imageUrl", imageUrl); // Cloudinary URL or null
+        reportData.put("status", "pending");  // ✅ KEY: Status is pending
+        reportData.put("imageUrl", imageUrl);
         reportData.put("submittedAt", System.currentTimeMillis());
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         final String finalUserId = userId;
 
-        // Save to user's foundItems collection
-        db.collection("users")
-                .document(finalUserId)
-                .collection("foundItems")
+        // ✅ SAVE TO pendingItems COLLECTION (for admin approval)
+        db.collection("pendingItems")
                 .add(reportData)
                 .addOnSuccessListener(documentReference -> {
                     String docId = documentReference.getId();
-                    Log.d("ReportFragment", "Report saved with ID: " + docId);
+                    Log.d("ReportFragment", "Pending item saved with ID: " + docId);
 
-                    // Also save to global allFoundItems collection for admin access
+                    // Also save reference in user's foundItems for their records
                     reportData.put("documentId", docId);
-                    db.collection("allFoundItems")
+                    reportData.put("status", "pending_review");
+
+                    db.collection("users")
+                            .document(finalUserId)
+                            .collection("foundItems")
                             .document(docId)
                             .set(reportData)
                             .addOnSuccessListener(aVoid -> {
-                                Log.d("ReportFragment", "Also saved to allFoundItems");
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e("ReportFragment", "Failed to save to allFoundItems", e);
+                                Log.d("ReportFragment", "Also saved to user's foundItems");
                             });
 
                     requireActivity().runOnUiThread(() -> {
-                        Toast.makeText(requireContext(), "Report submitted successfully!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(requireContext(),
+                                "Report submitted! Awaiting admin approval.",
+                                Toast.LENGTH_LONG).show();
                         btnPostFoundItem.setEnabled(true);
 
-                        // Show in-app notification
-                        addNotification("Your found item report has been submitted.");
-
-                        // Show system notification
+                        // Show notification
                         showSubmissionNotification();
-
-                        // Reset form
                         resetForm();
 
-                        // Navigate back to HomeFragment
+                        // Navigate back to home
                         if (getActivity() instanceof HomeAndReportMainActivity) {
                             HomeAndReportMainActivity main = (HomeAndReportMainActivity) getActivity();
                             main.replaceFragment(new HomeFragment());
-
-                            // Explicitly highlight Home in BottomNavigationView
                             BottomNavigationView bottomNav = main.findViewById(R.id.navigationView);
                             bottomNav.setSelectedItemId(R.id.home);
                         }
                     });
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("ReportFragment", "Error saving report", e);
+                    Log.e("ReportFragment", "Error saving pending item", e);
                     requireActivity().runOnUiThread(() -> {
                         Toast.makeText(requireContext(),
                                 "Failed to submit report: " + e.getMessage(),

@@ -10,13 +10,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.itemFinder.realfinalappdev.ui.dashboard.AdminDashboardActivity;
-import com.itemFinder.realfinalappdev.utils.SharedPrefsManager;
-import com.itemFinder.realfinalappdev.utils.DateTimeUtils;
+import com.itemfinder.midtermappdev.Admin.ui.dashboard.AdminDashboardActivity;
+import com.itemfinder.midtermappdev.Admin.utils.SharedPrefsManager;
+import com.itemfinder.midtermappdev.Admin.utils.DateTimeUtils;
 
 public class MainActivity_admin extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "MainActivity_admin";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,16 +60,16 @@ public class MainActivity_admin extends AppCompatActivity {
     private void testFirebaseConnection() {
         try {
             FirebaseFirestore db = FirebaseFirestore.getInstance();
-            CollectionReference itemsRef = db.collection("items");
+            CollectionReference itemsRef = db.collection("pendingItems");
 
             itemsRef.get()
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "✅ Firestore connection successful!");
                             int itemCount = task.getResult().size();
-                            Log.d(TAG, "Items found: " + itemCount);
+                            Log.d(TAG, "Pending items found: " + itemCount);
                             Toast.makeText(MainActivity_admin.this,
-                                    "✅ Firestore Ready: " + itemCount + " items found",
+                                    "✅ Firestore Ready: " + itemCount + " pending items",
                                     Toast.LENGTH_SHORT).show();
                         } else {
                             Log.e(TAG, "❌ Firestore connection failed: " + task.getException());
@@ -88,6 +88,6 @@ public class MainActivity_admin extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "MainActivity destroyed");
+        Log.d(TAG, "MainActivity_admin destroyed");
     }
 }

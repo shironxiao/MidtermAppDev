@@ -11,16 +11,16 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
-import com.itemFinder.realfinalappdev.R;
-import com.itemFinder.realfinalappdev.data.model.Item_admin;
-import com.itemFinder.realfinalappdev.data.repository.ItemRepository;
-import com.itemFinder.realfinalappdev.firebase.FirebaseHelper;
-import com.itemFinder.realfinalappdev.ui.dashboard.adapter.ItemsAdapter;
-import com.itemFinder.realfinalappdev.ui.dashboard.adapter.OnItemClickListener;
-import com.itemFinder.realfinalappdev.ui.dashboard.adapter.OnItemActionListener;
-import com.itemFinder.realfinalappdev.ui.dialogs.ApproveItemDialog;
-import com.itemFinder.realfinalappdev.ui.dialogs.RejectItemDialog;
-import com.itemFinder.realfinalappdev.utils.ValidationUtils;
+import com.itemfinder.midtermappdev.R;
+import com.itemfinder.midtermappdev.Admin.data.model.Item_admin;
+import com.itemfinder.midtermappdev.Admin.data.repository.ItemRepository;
+import com.itemfinder.midtermappdev.Admin.firebase.AdminFirebaseHelper;
+import com.itemfinder.midtermappdev.Admin.ui.dashboard.adapter.ItemsAdapter;
+import com.itemfinder.midtermappdev.Admin.ui.dashboard.adapter.OnItemClickListener;
+import com.itemfinder.midtermappdev.Admin.ui.dashboard.adapter.OnItemActionListener;
+import com.itemfinder.midtermappdev.Admin.ui.dialogs.ApproveItemDialog;
+import com.itemfinder.midtermappdev.Admin.ui.dialogs.RejectItemDialog;
+import com.itemfinder.midtermappdev.Admin.utils.ValidationUtils;
 
 import java.util.List;
 
@@ -30,19 +30,16 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private ItemRepository repository;
-    private FirebaseHelper firebaseHelper;
-    private String currentCategory = "all"; // Track current category
+    private AdminFirebaseHelper firebaseHelper;
+    private String currentCategory = "all";
 
-    // UI Components for Stats Cards
     private TextView tvTotalItemsCount;
     private TextView tvPendingApprovalCount;
     private TextView tvAvailableCount;
     private TextView tvPendingClaimsCount;
 
-    // Filter Buttons
     private MaterialButton btnPending, btnActive, btnClaims, btnAll;
 
-    // Data for tracking counts
     private int totalItemsCount = 0;
     private int pendingCount = 0;
     private int activeCount = 0;
@@ -57,46 +54,40 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         recyclerView = findViewById(R.id.recyclerViewItems);
         progressBar = findViewById(R.id.progressBar);
 
-        // Initialize stats card TextViews
         tvTotalItemsCount = findViewById(R.id.tvTotalItemsCount);
         tvPendingApprovalCount = findViewById(R.id.tvPendingApprovalCount);
         tvAvailableCount = findViewById(R.id.tvAvailableCount);
         tvPendingClaimsCount = findViewById(R.id.tvPendingClaimsCount);
 
-        // Initialize filter buttons
         btnPending = findViewById(R.id.btnPending);
         btnActive = findViewById(R.id.btnActive);
         btnClaims = findViewById(R.id.btnClaims);
         btnAll = findViewById(R.id.btnAll);
 
-        // ✅ Set LayoutManager for RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setHasFixedSize(true);
 
         Log.d(TAG, "RecyclerView initialized with LinearLayoutManager");
 
-        // Initialize repository and firebase helper
         repository = new ItemRepository();
-        firebaseHelper = new FirebaseHelper();
+        firebaseHelper = new AdminFirebaseHelper();
 
-        // Default: load all items
         loadAllItems();
 
         btnPending.setOnClickListener(v -> {
             Log.d(TAG, "Pending button clicked");
-            loadItemsByCategory("pending");  // Will query status = "Pending"
+            loadItemsByCategory("pending");
         });
 
         btnActive.setOnClickListener(v -> {
             Log.d(TAG, "Active button clicked");
-            loadItemsByCategory("active");   // Will query status = "Approved"
+            loadItemsByCategory("active");
         });
 
         btnClaims.setOnClickListener(v -> {
             Log.d(TAG, "Claims button clicked");
-            loadItemsByCategory("claimed");  // Will query status = "Claimed"
+            loadItemsByCategory("claimed");
         });
-
 
         btnAll.setOnClickListener(v -> {
             Log.d(TAG, "All items button clicked");
@@ -105,12 +96,11 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         });
     }
 
-    // ✅ Load ALL items and update stats
     private void loadAllItems() {
         Log.d(TAG, "Loading all items...");
         showLoading(true);
 
-        firebaseHelper.fetchAllItems(new FirebaseHelper.ItemFetchListener() {
+        firebaseHelper.fetchAllItems(new AdminFirebaseHelper.ItemFetchListener() {
             @Override
             public void onItemsFetched(List<Item_admin> itemAdmins) {
                 Log.d(TAG, "Received " + itemAdmins.size() + " items from Firebase");
@@ -123,10 +113,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
                             "Loaded " + itemAdmins.size() + " items", Toast.LENGTH_SHORT).show();
                 }
 
-                // Calculate and update stats
                 calculateAndUpdateStats(itemAdmins);
 
-                // Create and set adapter with both listeners
                 ItemsAdapter adapter = new ItemsAdapter(itemAdmins, AdminDashboardActivity.this, AdminDashboardActivity.this);
                 recyclerView.setAdapter(adapter);
                 Log.d(TAG, "Adapter set with " + itemAdmins.size() + " items");
@@ -141,12 +129,11 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         });
     }
 
-    // ✅ Load items from a specific category and update stats
     private void loadItemsByCategory(String category) {
         Log.d(TAG, "Loading items for category: " + category);
         showLoading(true);
 
-        firebaseHelper.fetchItemsByCategory(category, new FirebaseHelper.ItemFetchListener() {
+        firebaseHelper.fetchItemsByCategory(category, new AdminFirebaseHelper.ItemFetchListener() {
             @Override
             public void onItemsFetched(List<Item_admin> itemAdmins) {
                 Log.d(TAG, "Received " + itemAdmins.size() + " items for category: " + category);
@@ -160,10 +147,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
                             "Loaded " + itemAdmins.size() + " " + category + " items", Toast.LENGTH_SHORT).show();
                 }
 
-                // Calculate and update stats
                 calculateAndUpdateStats(itemAdmins);
 
-                // Create and set adapter with both listeners
                 ItemsAdapter adapter = new ItemsAdapter(itemAdmins, AdminDashboardActivity.this, AdminDashboardActivity.this);
                 recyclerView.setAdapter(adapter);
                 Log.d(TAG, "Adapter set with " + itemAdmins.size() + " items for category: " + category);
@@ -178,41 +163,34 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         });
     }
 
-    // ✅ Calculate and update all stats dynamically
     private void calculateAndUpdateStats(List<Item_admin> allItemAdmins) {
         Log.d(TAG, "Calculating stats for " + allItemAdmins.size() + " items");
 
-        // Reset counts
         totalItemsCount = 0;
         pendingCount = 0;
         activeCount = 0;
         claimedCount = 0;
 
-        // Count items by status
         for (Item_admin itemAdmin : allItemAdmins) {
             totalItemsCount++;
             String status = itemAdmin.getStatus();
 
-            if ("Pending".equalsIgnoreCase(status)) {
+            if ("pending".equalsIgnoreCase(status)) {
                 pendingCount++;
-            } else if ("Approved".equalsIgnoreCase(status)) {
+            } else if ("approved".equalsIgnoreCase(status)) {
                 activeCount++;
-            } else if ("Claimed".equalsIgnoreCase(status)) {
+            } else if ("claimed".equalsIgnoreCase(status)) {
                 claimedCount++;
             }
         }
 
-        // Update stats cards
         updateStatsCards();
-
-        // Update filter button labels
         updateFilterButtonLabels();
 
         Log.d(TAG, "Stats updated - Total: " + totalItemsCount + ", Pending: " + pendingCount +
                 ", Active: " + activeCount + ", Claimed: " + claimedCount);
     }
 
-    // ✅ Update stats cards display
     private void updateStatsCards() {
         tvTotalItemsCount.setText(String.valueOf(totalItemsCount));
         tvPendingApprovalCount.setText(String.valueOf(pendingCount));
@@ -222,7 +200,6 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         Log.d(TAG, "Stats cards updated");
     }
 
-    // ✅ Update filter button labels with counts
     private void updateFilterButtonLabels() {
         btnPending.setText("Pending (" + pendingCount + ")");
         btnActive.setText("Active (" + activeCount + ")");
@@ -232,21 +209,18 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         Log.d(TAG, "Filter button labels updated");
     }
 
-    // ✅ Simple helper to toggle progress bar visibility
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
         Log.d(TAG, "Loading state: " + show);
     }
 
-    // ✅ Handle basic item click
     @Override
     public void onItemClick(Item_admin itemAdmin) {
         Log.d(TAG, "Item clicked: " + itemAdmin.getName() + " (ID: " + itemAdmin.getId() + ")");
         Toast.makeText(this, "Clicked: " + itemAdmin.getName(), Toast.LENGTH_SHORT).show();
     }
 
-    // ✅ Handle approve item action
     @Override
     public void onApproveItem(Item_admin itemAdmin) {
         Log.d(TAG, "Approve item dialog showing for: " + itemAdmin.getName());
@@ -256,26 +230,20 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
             public void onApprove(String notes) {
                 Log.d(TAG, "Item approved with notes: " + notes);
 
-                // Validate item before approving
                 ValidationUtils.ValidationResult result = ValidationUtils.validateItem(
                         itemAdmin.getName(), itemAdmin.getDescription(), itemAdmin.getStatus());
 
                 if (result.isValid) {
                     Log.d(TAG, "Item validation passed, proceeding with approval");
 
-                    // Determine current category
-                    String itemCategory = currentCategory.equals("all") ? "pending" : currentCategory;
-
-                    // Approve item in Firebase
-                    firebaseHelper.approveItem(itemAdmin.getId(), itemCategory, itemAdmin,
-                            new FirebaseHelper.ItemActionListener() {
+                    firebaseHelper.approveItem(itemAdmin.getId(),
+                            new AdminFirebaseHelper.ItemActionListener() {
                                 @Override
                                 public void onSuccess(String message) {
                                     Log.d(TAG, "Item approved successfully: " + itemAdmin.getName());
                                     Toast.makeText(AdminDashboardActivity.this,
                                             message, Toast.LENGTH_SHORT).show();
 
-                                    // Refresh list and stats
                                     if (currentCategory.equals("all")) {
                                         loadAllItems();
                                     } else {
@@ -305,7 +273,6 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         });
     }
 
-    // ✅ Handle reject item action
     @Override
     public void onRejectItem(Item_admin itemAdmin) {
         Log.d(TAG, "Reject item dialog showing for: " + itemAdmin.getName());
@@ -315,25 +282,19 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
             public void onReject(String reason) {
                 Log.d(TAG, "Item rejected with reason: " + reason);
 
-                // Validate rejection reason
                 ValidationUtils.ValidationResult result = ValidationUtils.validateRejectionReason(reason);
 
                 if (result.isValid) {
                     Log.d(TAG, "Rejection reason validation passed, proceeding with rejection");
 
-                    // Determine current category
-                    String itemCategory = currentCategory.equals("all") ? "pending" : currentCategory;
-
-                    // Reject item in Firebase
-                    firebaseHelper.rejectItem(itemAdmin.getId(), itemCategory, itemAdmin,
-                            new FirebaseHelper.ItemActionListener() {
+                    firebaseHelper.rejectItem(itemAdmin.getId(),
+                            new AdminFirebaseHelper.ItemActionListener() {
                                 @Override
                                 public void onSuccess(String message) {
                                     Log.d(TAG, "Item rejected successfully: " + itemAdmin.getName());
                                     Toast.makeText(AdminDashboardActivity.this,
                                             message, Toast.LENGTH_SHORT).show();
 
-                                    // Refresh list and stats
                                     if (currentCategory.equals("all")) {
                                         loadAllItems();
                                     } else {
