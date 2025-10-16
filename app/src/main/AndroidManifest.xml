@@ -44,6 +44,12 @@
         <activity
             android:name=".Find.Processclaim"
             android:exported="false" />
+        <activity
+            android:name=".Admin.MainActivity_admin"
+            android:exported="false" />
+        <activity
+            android:name=".Admin.ui.dashboard.AdminDashboardActivity"
+            android:exported="false" />
         <!-- Firebase and Google Services -->
 
         <service
