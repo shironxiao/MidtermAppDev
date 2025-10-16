@@ -56,5 +56,9 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
+        <meta-data
+            android:name="CLOUDINARY_URL"
+            android:value="CLOUDINARY_URL=cloudinary://918231765677369:**********@durqaiei1"/>
+
     </application>
 </manifest>

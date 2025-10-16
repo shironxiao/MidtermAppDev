@@ -54,4 +54,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    // picasso library
+    implementation("com.squareup.picasso:picasso:2.8")
+    //cloudinary sdk
+    implementation("com.cloudinary:cloudinary-android:3.0.2")
 }
