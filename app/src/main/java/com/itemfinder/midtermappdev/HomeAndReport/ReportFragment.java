@@ -322,6 +322,12 @@ public class ReportFragment extends Fragment {
         }
     }
 
+    // PART 1: Replace the uploadToCloudinaryDirect method in ReportFragment.java
+// This version works with content URIs directly instead of file paths
+
+// PART 2: Also update the uploadImageToCloudinary method to use URI directly
+
+    // Updated uploadImageToCloudinary method - remove file path conversion
     private void uploadImageToCloudinary(String category, String itemName, String description,
                                          String location, String dateFound, String contact, boolean isAnonymous) {
 
@@ -331,7 +337,8 @@ public class ReportFragment extends Fragment {
 
         if (!isCloudinaryInitialized) {
             Log.e("ReportFragment", "Cloudinary not initialized!");
-            Toast.makeText(requireContext(), "Image upload service not available. Submitting without image.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Image upload service not available. Submitting without image.",
+                    Toast.LENGTH_SHORT).show();
             submitToFirebase(category, itemName, description, location, dateFound, contact, isAnonymous, null);
             return;
         }
@@ -339,41 +346,13 @@ public class ReportFragment extends Fragment {
         Toast.makeText(requireContext(), "Uploading image...", Toast.LENGTH_SHORT).show();
         btnPostFoundItem.setEnabled(false);
 
-        // Use background thread for upload
+        // Use background thread for upload - PASS URI DIRECTLY
         new Thread(() -> {
             try {
-                // Convert URI to file path
-                Log.d("ReportFragment", "Converting URI to file path...");
-                String filePath = getRealPathFromURI(selectedImageUri);
+                Log.d("ReportFragment", "Starting upload with URI directly...");
 
-                Log.d("ReportFragment", "File path: " + filePath);
-
-                if (filePath == null) {
-                    Log.e("ReportFragment", "File path is null!");
-                    requireActivity().runOnUiThread(() -> {
-                        Toast.makeText(requireContext(), "Error reading image file. Submitting without image.", Toast.LENGTH_SHORT).show();
-                        btnPostFoundItem.setEnabled(true);
-                        submitToFirebase(category, itemName, description, location, dateFound, contact, isAnonymous, null);
-                    });
-                    return;
-                }
-
-                // Check if file exists
-                File imageFile = new File(filePath);
-                if (!imageFile.exists()) {
-                    Log.e("ReportFragment", "Image file does not exist at path: " + filePath);
-                    requireActivity().runOnUiThread(() -> {
-                        Toast.makeText(requireContext(), "Image file not found. Submitting without image.", Toast.LENGTH_SHORT).show();
-                        btnPostFoundItem.setEnabled(true);
-                        submitToFirebase(category, itemName, description, location, dateFound, contact, isAnonymous, null);
-                    });
-                    return;
-                }
-
-                Log.d("ReportFragment", "File exists, size: " + imageFile.length() + " bytes");
-
-                // Direct HTTP upload to Cloudinary
-                String imageUrl = uploadToCloudinaryDirect(imageFile);
+                // Direct upload using URI (NO file path conversion)
+                String imageUrl = uploadToCloudinaryDirect(selectedImageUri);
 
                 if (imageUrl != null) {
                     Log.d("ReportFragment", "Upload successful: " + imageUrl);
@@ -385,7 +364,8 @@ public class ReportFragment extends Fragment {
                 } else {
                     Log.e("ReportFragment", "Upload failed - null URL returned");
                     requireActivity().runOnUiThread(() -> {
-                        Toast.makeText(requireContext(), "Upload failed. Submitting without image.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(requireContext(), "Upload failed. Submitting without image.",
+                                Toast.LENGTH_LONG).show();
                         submitToFirebase(category, itemName, description, location, dateFound,
                                 contact, isAnonymous, null);
                     });
@@ -394,7 +374,8 @@ public class ReportFragment extends Fragment {
             } catch (Exception e) {
                 Log.e("ReportFragment", "=== Exception during upload ===", e);
                 requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(requireContext(), "Error uploading image: " + e.getMessage() + ". Submitting without image.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(requireContext(), "Error uploading image: " + e.getMessage() +
+                            ". Submitting without image.", Toast.LENGTH_LONG).show();
                     submitToFirebase(category, itemName, description, location, dateFound, contact, isAnonymous, null);
                     btnPostFoundItem.setEnabled(true);
                 });
@@ -402,9 +383,9 @@ public class ReportFragment extends Fragment {
         }).start();
     }
 
-    private String uploadToCloudinaryDirect(File imageFile) {
+    private String uploadToCloudinaryDirect(Uri imageUri) {
         try {
-            Log.d("ReportFragment", "Starting direct HTTP upload...");
+            Log.d("ReportFragment", "Starting direct HTTP upload from URI...");
 
             String cloudName = "durqaiei1";
             String uploadPreset = "found_items_preset";
@@ -422,7 +403,8 @@ public class ReportFragment extends Fragment {
             connection.setReadTimeout(30000);
 
             java.io.OutputStream outputStream = connection.getOutputStream();
-            java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.OutputStreamWriter(outputStream, "UTF-8"), true);
+            java.io.PrintWriter writer = new java.io.PrintWriter(
+                    new java.io.OutputStreamWriter(outputStream, "UTF-8"), true);
 
             // Add upload preset
             writer.append("--" + boundary).append("\r\n");
@@ -438,31 +420,42 @@ public class ReportFragment extends Fragment {
             writer.append("found_items").append("\r\n");
             writer.flush();
 
-            // Add file
+            // Get filename from URI
+            String filename = getFileName(imageUri);
+            if (filename == null) {
+                filename = "upload_" + System.currentTimeMillis() + ".jpg";
+            }
+
+            // Add file from InputStream (CRITICAL FIX)
             writer.append("--" + boundary).append("\r\n");
-            writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"" + imageFile.getName() + "\"").append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"")
+                    .append("\r\n");
             writer.append("Content-Type: image/jpeg").append("\r\n");
             writer.append("\r\n");
             writer.flush();
 
-            java.io.FileInputStream fileInputStream = new java.io.FileInputStream(imageFile);
+            // Read from content URI using InputStream
+            InputStream inputStream = requireActivity().getContentResolver().openInputStream(imageUri);
+            if (inputStream == null) {
+                Log.e("ReportFragment", "Failed to open input stream from URI");
+                return null;
+            }
+
             byte[] buffer = new byte[4096];
             int bytesRead;
             long totalBytesRead = 0;
-            long fileSize = imageFile.length();
 
-            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
                 totalBytesRead += bytesRead;
 
-                // Log progress
-                int progress = (int) ((totalBytesRead * 100) / fileSize);
-                if (progress % 10 == 0) {
-                    Log.d("ReportFragment", "Upload progress: " + progress + "%");
+                // Log progress every 100KB
+                if (totalBytesRead % (100 * 1024) == 0) {
+                    Log.d("ReportFragment", "Uploaded: " + (totalBytesRead / 1024) + " KB");
                 }
             }
 
-            fileInputStream.close();
+            inputStream.close();
             outputStream.flush();
 
             writer.append("\r\n");
@@ -515,42 +508,7 @@ public class ReportFragment extends Fragment {
         }
     }
 
-    private String getRealPathFromURI(Uri contentUri) {
-        try {
-            // Try to get file path from content URI
-            String[] projection = {MediaStore.Images.Media.DATA};
-            Cursor cursor = requireActivity().getContentResolver().query(contentUri, projection, null, null, null);
 
-            if (cursor != null) {
-                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-                cursor.moveToFirst();
-                String path = cursor.getString(column_index);
-                cursor.close();
-                return path;
-            }
-
-            // If above method fails, copy file to cache
-            InputStream inputStream = requireActivity().getContentResolver().openInputStream(contentUri);
-            if (inputStream != null) {
-                File tempFile = new File(requireActivity().getCacheDir(), getFileName(contentUri));
-                FileOutputStream outputStream = new FileOutputStream(tempFile);
-
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-
-                inputStream.close();
-                outputStream.close();
-
-                return tempFile.getAbsolutePath();
-            }
-        } catch (Exception e) {
-            Log.e("ReportFragment", "Error getting file path", e);
-        }
-        return null;
-    }
 
     private String getFileName(Uri uri) {
         String result = null;
