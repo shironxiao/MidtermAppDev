@@ -15,12 +15,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.itemfinder.midtermappdev.LoginAndProfile.LoginActivity;
+import com.itemfinder.midtermappdev.LoginAndProfile.MainActivity;
+import com.itemfinder.midtermappdev.LoginAndProfile.MyReportsActivity;
 import com.itemfinder.midtermappdev.R;
 
 public class ProfileFragment extends Fragment {
 
     private TextView tvEmail, tvStudentId, tvPassword;
-    private Button btnLogout;
+    private Button btnLogout, btnMyReports;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -38,8 +40,9 @@ public class ProfileFragment extends Fragment {
         // Load user data
         loadUserData();
 
-        // Setup logout button
+        // Setup buttons
         setupLogoutButton();
+        setupMyReportsButton();
 
         return view;
     }
@@ -49,6 +52,7 @@ public class ProfileFragment extends Fragment {
         tvStudentId = view.findViewById(R.id.tvStudentId);
         tvPassword = view.findViewById(R.id.tvPassword);
         btnLogout = view.findViewById(R.id.btnLogout);
+        btnMyReports = view.findViewById(R.id.btnMyReports); // Add this button to fragment_profile.xml
     }
 
     private void loadUserData() {
@@ -84,6 +88,24 @@ public class ProfileFragment extends Fragment {
             // Finish the current activity
             if (getActivity() != null) {
                 getActivity().finish();
+            }
+        });
+    }
+
+    private void setupMyReportsButton() {
+        btnMyReports.setOnClickListener(v -> {
+            if (getActivity() instanceof HomeAndReportMainActivity) {
+                HomeAndReportMainActivity activity = (HomeAndReportMainActivity) getActivity();
+                String userId = activity.getUserId();
+
+                if (userId != null && !userId.isEmpty()) {
+                    // Navigate to My Reports Activity
+                    Intent intent = new Intent(getActivity(), MyReportsActivity.class);
+                    intent.putExtra("userId", userId);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(getContext(), "User not logged in", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }

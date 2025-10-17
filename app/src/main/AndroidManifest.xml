@@ -53,6 +53,9 @@
         <activity
             android:name=".Admin.ui.claims.ClaimsActivity"
             android:exported="false" />
+        <activity
+            android:name=".LoginAndProfile.MyReportsActivity"
+            android:exported="false" />
         <!-- Firebase and Google Services -->
 
         <service

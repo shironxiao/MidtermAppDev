@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.itemfinder.midtermappdev.R;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -47,13 +48,44 @@ public class FoundItemAdapter extends RecyclerView.Adapter<FoundItemAdapter.View
         holder.itemLocation.setText(item.getItemLocation());
         holder.itemDate.setText(item.getItemDate());
         holder.itemTime.setText(item.getItemTime());
-        holder.itemHandedStatus.setText(item.getHandedStatus());
         holder.categoryBadge.setText(item.getCategory());
-        holder.statusBadge.setText(item.getStatus());
+
+        // Set status badge with proper formatting
+        String status = item.getStatus();
+        if (status != null) {
+            if (status.equalsIgnoreCase("pending") || status.equalsIgnoreCase("pending_review")) {
+                holder.statusBadge.setText("Pending");
+                holder.statusBadge.setTextColor(context.getResources().getColor(android.R.color.holo_orange_dark));
+            } else if (status.equalsIgnoreCase("approved")) {
+                holder.statusBadge.setText("Approved");
+                holder.statusBadge.setTextColor(context.getResources().getColor(android.R.color.holo_blue_dark));
+            } else if (status.equalsIgnoreCase("claimed")) {
+                holder.statusBadge.setText("Claimed");
+                holder.statusBadge.setTextColor(context.getResources().getColor(android.R.color.holo_green_dark));
+            } else if (status.equalsIgnoreCase("rejected")) {
+                holder.statusBadge.setText("Rejected");
+                holder.statusBadge.setTextColor(context.getResources().getColor(android.R.color.holo_red_dark));
+            } else {
+                holder.statusBadge.setText(status);
+            }
+        }
 
         // Load image using Picasso
+        String imageUrl = item.getImageUrl();
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            Picasso.get()
+                    .load(imageUrl)
+                    .placeholder(R.drawable.ic_package) // Default placeholder
+                    .error(R.drawable.ic_package) // Error image
+                    .fit()
+                    .centerCrop()
+                    .into(holder.itemImage);
+        } else {
+            // Set default image if no URL
+            holder.itemImage.setImageResource(R.drawable.ic_package);
+        }
 
-
+        // Delete button click listener
         holder.btnDelete.setOnClickListener(v -> onDeleteClickListener.onDeleteClick(item));
     }
 
@@ -64,7 +96,8 @@ public class FoundItemAdapter extends RecyclerView.Adapter<FoundItemAdapter.View
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView itemImage;
-        TextView itemName, itemDescription, itemLocation, itemDate, itemTime, itemHandedStatus, categoryBadge, statusBadge;
+        TextView itemName, itemDescription, itemLocation, itemDate, itemTime;
+        TextView categoryBadge, statusBadge;
         ImageButton btnDelete;
 
         public ViewHolder(@NonNull View itemView) {

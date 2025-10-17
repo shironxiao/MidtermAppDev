@@ -176,6 +176,15 @@
             android:textSize="20sp"
             android:textStyle="bold"
             tools:ignore="VisualLintButtonSize" />
+        <Button
+            android:id="@+id/btnMyReports"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="My Reports"
+            android:drawableLeft="@drawable/outline_report_24"
+            android:drawablePadding="8dp"
+            android:padding="12dp"
+            android:layout_marginTop="16dp" />
 
     </LinearLayout>
 
