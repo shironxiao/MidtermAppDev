@@ -25,7 +25,7 @@ public class Processclaim extends AppCompatActivity {
     private EditText claimerNameInput, claimerIdInput, claimerDescriptionInput;
 
     // Finder details
-    private TextView finderName, finderContact, claimLocation;
+    private TextView finderContact, claimLocation;
 
     // Buttons and image views
     private Button btnClaim;
@@ -62,8 +62,21 @@ public class Processclaim extends AppCompatActivity {
         String itemStatus = intent.getStringExtra("itemStatus");
         String itemImageUrl = intent.getStringExtra("itemImageUrl");
 
-        // ✅ Access views inside included item_card.xml
-        View itemCardView = findViewById(R.id.itemsContainer);
+        // 🟦 Handle finder anonymity
+        boolean isAnonymous = intent.getBooleanExtra("isAnonymous", false);
+        String finderSchoolId = intent.getStringExtra("finderContact");
+        String claimLocationValue = intent.getStringExtra("claimLocation");
+
+        if (isAnonymous) {
+            finderContact.setText("Finder chose to remain anonymous.");
+        } else {
+            finderContact.setText(finderSchoolId != null ? finderSchoolId : "Not available");
+        }
+
+        claimLocation.setText(claimLocationValue != null ? claimLocationValue : "Will be provided by admin");
+
+        // ✅ Access included item card
+        View itemCardView = findViewById(R.id.item_card_include);
         if (itemCardView != null) {
             TextView tvItemName = itemCardView.findViewById(R.id.tvItemName);
             TextView tvCategory = itemCardView.findViewById(R.id.tvCategory);
@@ -94,12 +107,11 @@ public class Processclaim extends AppCompatActivity {
         proof2 = findViewById(R.id.proof2);
         proof3 = findViewById(R.id.proof3);
 
-        // Open image picker for each proof image
         proof1.setOnClickListener(v -> openImagePicker(0));
         proof2.setOnClickListener(v -> openImagePicker(1));
         proof3.setOnClickListener(v -> openImagePicker(2));
 
-        // ✅ Claim submission button
+        // ✅ Submit button
         btnClaim = findViewById(R.id.btnClaim);
         btnClaim.setOnClickListener(v -> handleClaim());
     }
@@ -120,15 +132,9 @@ public class Processclaim extends AppCompatActivity {
             selectedImages[currentImageIndex] = imageUri;
 
             switch (currentImageIndex) {
-                case 0:
-                    proof1.setImageURI(imageUri);
-                    break;
-                case 1:
-                    proof2.setImageURI(imageUri);
-                    break;
-                case 2:
-                    proof3.setImageURI(imageUri);
-                    break;
+                case 0: proof1.setImageURI(imageUri); break;
+                case 1: proof2.setImageURI(imageUri); break;
+                case 2: proof3.setImageURI(imageUri); break;
             }
         }
     }
@@ -138,7 +144,6 @@ public class Processclaim extends AppCompatActivity {
         String claimerId = claimerIdInput.getText().toString().trim();
         String description = claimerDescriptionInput.getText().toString().trim();
 
-        // ✅ Validation checks
         if (claimerName.isEmpty()) {
             Toast.makeText(this, "Please enter your full name.", Toast.LENGTH_SHORT).show();
             return;
@@ -167,7 +172,6 @@ public class Processclaim extends AppCompatActivity {
             return;
         }
 
-        // ✅ Success message
         Toast.makeText(this,
                 "Claim submitted successfully!\n\n" +
                         "Claimer Name: " + claimerName +
