@@ -11,10 +11,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.itemfinder.midtermappdev.R;
-import com.squareup.picasso.Picasso;
 
 import java.util.List;
+
+import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder> {
 
@@ -60,15 +63,14 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
         holder.tvStatus.setText("Status: " + item.getStatus());
         holder.tvDate.setText("Date: " + item.getDate());
 
-        // Load image using Picasso if imageUrl is available
+        // Load image using Glide with maximum blur
         if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
             holder.ivItemImage.setVisibility(View.VISIBLE);
-            Picasso.get()
+            Glide.with(context)
                     .load(item.getImageUrl())
                     .placeholder(R.drawable.ic_placeholder_image)
                     .error(R.drawable.ic_error_image)
-                    .fit()
-                    .centerCrop()
+                    .transform(new CenterCrop(), new BlurTransformation(25, 8))
                     .into(holder.ivItemImage);
         } else {
             holder.ivItemImage.setVisibility(View.GONE);

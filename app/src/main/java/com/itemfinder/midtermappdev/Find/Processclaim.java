@@ -15,17 +15,20 @@ import android.view.View;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.itemfinder.midtermappdev.R;
-import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class Processclaim extends AppCompatActivity {
 
@@ -125,13 +128,13 @@ public class Processclaim extends AppCompatActivity {
             if (tvDate != null) tvDate.setText("Date Found: " + itemDate);
             if (tvStatus != null) tvStatus.setText(itemStatus);
 
+            // Load image with maximum blur using Glide
             if (itemImageUrl != null && !itemImageUrl.isEmpty()) {
-                Picasso.get()
+                Glide.with(this)
                         .load(itemImageUrl)
                         .placeholder(R.drawable.ic_placeholder_image)
                         .error(R.drawable.ic_error_image)
-                        .fit()
-                        .centerCrop()
+                        .transform(new CenterCrop(), new BlurTransformation(25, 8))
                         .into(ivItemImage);
             }
         }
@@ -150,6 +153,14 @@ public class Processclaim extends AppCompatActivity {
         btnClaim.setOnClickListener(v -> handleClaim());
     }
 
+    private void setBlurredPlaceholder(ImageView imageView) {
+        // Set a default placeholder with blur effect
+        Glide.with(this)
+                .load(R.drawable.ic_placeholder_image)
+                .transform(new BlurTransformation(25, 8))
+                .into(imageView);
+    }
+
     private void openImagePicker(int index) {
         currentImageIndex = index;
         Intent intent = new Intent(Intent.ACTION_PICK);
@@ -165,10 +176,25 @@ public class Processclaim extends AppCompatActivity {
             Uri imageUri = data.getData();
             selectedImages[currentImageIndex] = imageUri;
 
+            // Load selected image with blur effect
+            ImageView targetImageView = null;
             switch (currentImageIndex) {
-                case 0: proof1.setImageURI(imageUri); break;
-                case 1: proof2.setImageURI(imageUri); break;
-                case 2: proof3.setImageURI(imageUri); break;
+                case 0:
+                    targetImageView = proof1;
+                    break;
+                case 1:
+                    targetImageView = proof2;
+                    break;
+                case 2:
+                    targetImageView = proof3;
+                    break;
+            }
+
+            if (targetImageView != null) {
+                Glide.with(this)
+                        .load(imageUri)
+                        .transform(new CenterCrop(), new BlurTransformation(25, 8))
+                        .into(targetImageView);
             }
         }
     }

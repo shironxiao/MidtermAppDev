@@ -82,4 +82,7 @@
     <string name="upload_at_least_one_photo_as_proof">Upload at least one photo as proof *</string>
     <string name="finder_information">Finder Information</string>
 
+    <string name="pending">Pending</string>
+    <string name="delete_item">Delete Item</string>
+
 </resources>

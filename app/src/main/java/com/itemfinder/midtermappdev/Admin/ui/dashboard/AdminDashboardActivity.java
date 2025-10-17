@@ -40,14 +40,14 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
     private TextView tvTotalItemsCount;
     private TextView tvPendingApprovalCount;
     private TextView tvAvailableCount;
-    private TextView tvPendingClaimsCount;
+    private TextView tvRejectedCount; // Changed from tvPendingClaimsCount
 
-    private MaterialButton btnPending, btnActive, btnClaims, btnAll;
+    private MaterialButton btnPending, btnActive, btnRejected, btnAll; // Changed from btnClaims
 
     private int totalItemsCount = 0;
     private int pendingCount = 0;
     private int activeCount = 0;
-    private int claimedCount = 0;
+    private int rejectedCount = 0; // Changed from claimedCount
 
     // Store all items for filtering
     private List<Item_admin> allItems = new ArrayList<>();
@@ -64,11 +64,11 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         tvTotalItemsCount = findViewById(R.id.tvTotalItemsCount);
         tvPendingApprovalCount = findViewById(R.id.tvPendingApprovalCount);
         tvAvailableCount = findViewById(R.id.tvAvailableCount);
-        tvPendingClaimsCount = findViewById(R.id.tvPendingClaimsCount);
+        tvRejectedCount = findViewById(R.id.tvRejectedCount); // Changed from tvPendingClaimsCount
 
         btnPending = findViewById(R.id.btnPending);
         btnActive = findViewById(R.id.btnActive);
-        btnClaims = findViewById(R.id.btnClaims);
+        btnRejected = findViewById(R.id.btnRejected); // Changed from btnClaims
         btnAll = findViewById(R.id.btnAll);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -93,9 +93,9 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
             filterAndDisplayItems();
         });
 
-        btnClaims.setOnClickListener(v -> {
-            Log.d(TAG, "Claims button clicked");
-            currentCategory = "claimed";
+        btnRejected.setOnClickListener(v -> {
+            Log.d(TAG, "Rejected button clicked");
+            currentCategory = "rejected";
             filterAndDisplayItems();
         });
 
@@ -180,7 +180,7 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         totalItemsCount = 0;
         pendingCount = 0;
         activeCount = 0;
-        claimedCount = 0;
+        rejectedCount = 0; // Changed from claimedCount
 
         for (Item_admin itemAdmin : allItemAdmins) {
             totalItemsCount++;
@@ -190,8 +190,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
                 pendingCount++;
             } else if ("approved".equalsIgnoreCase(status)) {
                 activeCount++;
-            } else if ("claimed".equalsIgnoreCase(status)) {
-                claimedCount++;
+            } else if ("rejected".equalsIgnoreCase(status)) {
+                rejectedCount++;
             }
         }
 
@@ -199,14 +199,14 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         updateFilterButtonLabels();
 
         Log.d(TAG, "Stats updated - Total: " + totalItemsCount + ", Pending: " + pendingCount +
-                ", Active: " + activeCount + ", Claimed: " + claimedCount);
+                ", Active: " + activeCount + ", Rejected: " + rejectedCount);
     }
 
     private void updateStatsCards() {
         tvTotalItemsCount.setText(String.valueOf(totalItemsCount));
         tvPendingApprovalCount.setText(String.valueOf(pendingCount));
         tvAvailableCount.setText(String.valueOf(activeCount));
-        tvPendingClaimsCount.setText(String.valueOf(claimedCount));
+        tvRejectedCount.setText(String.valueOf(rejectedCount)); // Changed from tvPendingClaimsCount
 
         Log.d(TAG, "Stats cards updated");
     }
@@ -214,7 +214,7 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
     private void updateFilterButtonLabels() {
         btnPending.setText("Pending (" + pendingCount + ")");
         btnActive.setText("Active (" + activeCount + ")");
-        btnClaims.setText("Claims (" + claimedCount + ")");
+        btnRejected.setText("Rejected (" + rejectedCount + ")"); // Changed from btnClaims
         btnAll.setText("All Items (" + totalItemsCount + ")");
 
         Log.d(TAG, "Filter button labels updated");
