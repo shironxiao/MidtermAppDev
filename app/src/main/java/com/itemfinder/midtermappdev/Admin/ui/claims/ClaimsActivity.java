@@ -24,7 +24,7 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
     private ClaimRepository claimRepository;
     private ClaimsAdapter claimsAdapter;
 
-    private MaterialButton btnAllClaims, btnPendingClaims, btnApprovedClaims, btnRejectedClaims;
+    private MaterialButton btnAllClaims, btnPendingClaims, btnApprovedClaims, btnRejectedClaims, btnClaimedClaims;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +38,7 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
         btnPendingClaims = findViewById(R.id.btnPendingClaims);
         btnApprovedClaims = findViewById(R.id.btnApprovedClaims);
         btnRejectedClaims = findViewById(R.id.btnRejectedClaims);
+        btnClaimedClaims = findViewById(R.id.btnClaimedClaims);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setHasFixedSize(true);
@@ -64,6 +65,11 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
         btnRejectedClaims.setOnClickListener(v -> {
             Log.d(TAG, "Rejected Claims button clicked");
             loadClaimsByStatus(ClaimStatus.REJECTED);
+        });
+
+        btnClaimedClaims.setOnClickListener(v -> {
+            Log.d(TAG, "Claimed Claims button clicked");
+            loadClaimsByStatus("Claimed");
         });
     }
 
@@ -130,21 +136,8 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
     public void onApproveClaim(Claim claim) {
         Log.d(TAG, "Approving claim: " + claim.getId());
 
-        claimRepository.approveClaim(claim.getId(), claim.getItemId(),
-                new ClaimRepository.ClaimActionListener() {
-                    @Override
-                    public void onSuccess(String message) {
-                        Log.d(TAG, "Claim approved successfully");
-                        Toast.makeText(ClaimsActivity.this, message, Toast.LENGTH_SHORT).show();
-                        loadAllClaims();
-                    }
-
-                    @Override
-                    public void onError(String error) {
-                        Log.e(TAG, "Error approving claim: " + error);
-                        Toast.makeText(ClaimsActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
-                    }
-                });
+        // Show location selection dialog
+        showLocationSelectionDialog(claim);
     }
 
     @Override
@@ -163,6 +156,65 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
                     @Override
                     public void onError(String error) {
                         Log.e(TAG, "Error rejecting claim: " + error);
+                        Toast.makeText(ClaimsActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    @Override
+    public void onMarkAsClaimed(Claim claim) {
+        Log.d(TAG, "Marking claim as claimed: " + claim.getId());
+
+        claimRepository.markAsClaimed(claim.getId(),
+                new ClaimRepository.ClaimActionListener() {
+                    @Override
+                    public void onSuccess(String message) {
+                        Log.d(TAG, "Claim marked as claimed successfully");
+                        Toast.makeText(ClaimsActivity.this, message, Toast.LENGTH_SHORT).show();
+                        loadAllClaims();
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, "Error marking claim as claimed: " + error);
+                        Toast.makeText(ClaimsActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    private void showLocationSelectionDialog(Claim claim) {
+        String[] locations = {
+                "SG CCMS",
+                "SG COENG",
+                "SG CBPA",
+                "SG COED"
+        };
+
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        builder.setTitle("Select Claim Location");
+        builder.setItems(locations, (dialog, which) -> {
+            String selectedLocation = locations[which];
+            approveClaimWithLocation(claim, selectedLocation);
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void approveClaimWithLocation(Claim claim, String location) {
+        claimRepository.approveClaimWithLocation(claim.getId(), claim.getItemId(), location,
+                new ClaimRepository.ClaimActionListener() {
+                    @Override
+                    public void onSuccess(String message) {
+                        Log.d(TAG, "Claim approved with location: " + location);
+                        Toast.makeText(ClaimsActivity.this,
+                                "Claim approved! Location: " + location,
+                                Toast.LENGTH_SHORT).show();
+                        loadAllClaims();
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, "Error approving claim: " + error);
                         Toast.makeText(ClaimsActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
                     }
                 });

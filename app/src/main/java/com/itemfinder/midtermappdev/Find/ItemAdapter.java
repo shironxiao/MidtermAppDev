@@ -74,17 +74,18 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemViewHolder
             holder.ivItemImage.setVisibility(View.GONE);
         }
 
-        // ✅ Added: pass all item data (name, category, location, date, status, image)
+        // ✅ Pass all item data including itemId
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onItemClick(item);
             } else {
                 Intent intent = new Intent(context, Processclaim.class);
+                intent.putExtra("itemId", item.getId());
                 intent.putExtra("itemName", item.getName());
                 intent.putExtra("itemCategory", item.getCategory());
                 intent.putExtra("itemLocation", item.getLocation());
                 intent.putExtra("itemDate", item.getDate());
-                intent.putExtra("itemStatus", item.getStatus()); // ← added this line
+                intent.putExtra("itemStatus", item.getStatus());
                 intent.putExtra("itemImageUrl", item.getImageUrl());
                 context.startActivity(intent);
             }

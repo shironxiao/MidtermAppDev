@@ -20,18 +20,41 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Logout Button -->
-            <Button
-                android:id="@+id/btnBack"
-                android:layout_width="wrap_content"
+            <!-- Top Action Buttons Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Logout"
-                android:textColor="#FFFFFF"
-                android:backgroundTint="#673AB7"
-                android:layout_marginBottom="12dp"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
-                app:cornerRadius="8dp" />
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <!-- Logout Button -->
+                <Button
+                    android:id="@+id/btnBack"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="Logout"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#673AB7"
+                    android:layout_marginEnd="8dp"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="8dp"
+                    app:cornerRadius="8dp" />
+
+                <!-- View Claims Button -->
+                <Button
+                    android:id="@+id/btnViewClaims"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="View Claims"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#FF5722"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="8dp"
+                    app:cornerRadius="8dp" />
+
+            </LinearLayout>
 
             <!-- Header -->
             <TextView
@@ -266,14 +289,14 @@
                         style="@style/Widget.MaterialComponents.Button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Active (0)"
-                        android:textSize="12sp"
                         android:layout_marginEnd="8dp"
-                        app:cornerRadius="20dp"
                         android:backgroundTint="#673AB7"
-                        android:textColor="#FFFFFF"
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="8dp"
+                        android:text="Active (0)"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp"
+                        app:cornerRadius="20dp"
                         tools:text="Active (3)" />
 
                     <com.google.android.material.button.MaterialButton
@@ -281,13 +304,13 @@
                         style="@style/Widget.MaterialComponents.Button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Claims (0)"
-                        android:textSize="12sp"
-                        app:cornerRadius="20dp"
                         android:backgroundTint="#673AB7"
-                        android:textColor="#FFFFFF"
                         android:paddingHorizontal="16dp"
                         android:paddingVertical="8dp"
+                        android:text="Claims (0)"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp"
+                        app:cornerRadius="20dp"
                         tools:text="Claims (0)" />
 
                 </LinearLayout>

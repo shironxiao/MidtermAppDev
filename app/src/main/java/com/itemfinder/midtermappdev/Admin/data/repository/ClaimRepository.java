@@ -4,7 +4,9 @@ import android.util.Log;
 import com.google.firebase.firestore.*;
 import com.itemfinder.midtermappdev.Admin.data.model.Claim;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ClaimRepository {
     private static final String TAG = "ClaimRepository";
@@ -29,7 +31,8 @@ public class ClaimRepository {
     public void fetchAllClaims(ClaimFetchListener listener) {
         Log.d(TAG, "Fetching all claims from Firestore");
 
-        claimsRef.get()
+        claimsRef.orderBy("claimDate", Query.Direction.DESCENDING)
+                .get()
                 .addOnSuccessListener(querySnapshot -> {
                     List<Claim> list = new ArrayList<>();
                     Log.d(TAG, "Total claims found: " + querySnapshot.size());
@@ -58,6 +61,7 @@ public class ClaimRepository {
         Log.d(TAG, "Fetching claims with status: " + status);
 
         claimsRef.whereEqualTo("status", status)
+                .orderBy("claimDate", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     List<Claim> list = new ArrayList<>();
@@ -81,24 +85,18 @@ public class ClaimRepository {
                 });
     }
 
-    public void approveClaim(String claimId, String itemId, ClaimActionListener listener) {
-        Log.d(TAG, "Approving claim: " + claimId);
+    public void approveClaimWithLocation(String claimId, String itemId, String location, ClaimActionListener listener) {
+        Log.d(TAG, "Approving claim: " + claimId + " with location: " + location);
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("status", "Approved");
+        updates.put("claimLocation", location);
 
         claimsRef.document(claimId)
-                .update("status", "Approved")
+                .update(updates)
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Claim approved: " + claimId);
-
-                    db.collection("items").document(itemId)
-                            .update("status", "Claimed")
-                            .addOnSuccessListener(aVoid2 -> {
-                                Log.d(TAG, "Item status updated to Claimed");
-                                listener.onSuccess("Claim approved successfully!");
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Error updating item: " + e.getMessage());
-                                listener.onError(e.getMessage());
-                            });
+                    listener.onSuccess("Claim approved successfully!");
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error approving claim: " + e.getMessage());
@@ -117,6 +115,21 @@ public class ClaimRepository {
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error rejecting claim: " + e.getMessage());
+                    listener.onError(e.getMessage());
+                });
+    }
+
+    public void markAsClaimed(String claimId, ClaimActionListener listener) {
+        Log.d(TAG, "Marking claim as claimed: " + claimId);
+
+        claimsRef.document(claimId)
+                .update("status", "Claimed")
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Claim marked as claimed: " + claimId);
+                    listener.onSuccess("Item marked as claimed successfully!");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error marking claim as claimed: " + e.getMessage());
                     listener.onError(e.getMessage());
                 });
     }

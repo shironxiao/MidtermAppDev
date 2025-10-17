@@ -82,6 +82,20 @@
                     android:paddingVertical="8dp" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnClaimedClaims"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Claimed"
+                    android:textSize="12sp"
+                    android:layout_marginEnd="8dp"
+                    app:cornerRadius="20dp"
+                    android:backgroundTint="#2196F3"
+                    android:textColor="#FFFFFF"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="8dp" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRejectedClaims"
                     style="@style/Widget.MaterialComponents.Button"
                     android:layout_width="wrap_content"

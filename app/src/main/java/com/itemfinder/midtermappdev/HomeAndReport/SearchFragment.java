@@ -94,6 +94,7 @@ public class SearchFragment extends Fragment {
 
                     for (QueryDocumentSnapshot doc : querySnapshot) {
                         try {
+                            String id = doc.getId();
                             String name = doc.getString("itemName");
                             String category = doc.getString("category");
                             String location = doc.getString("location");
@@ -110,13 +111,14 @@ public class SearchFragment extends Fragment {
                                         date != null ? date : ""
                                 );
 
-                                // Set the image URL if available
+                                // Set the ID and image URL
+                                item.setId(id);
                                 if (imageUrl != null && !imageUrl.isEmpty()) {
                                     item.setImageUrl(imageUrl);
                                 }
 
                                 itemList.add(item);
-                                Log.d(TAG, "Loaded approved item: " + name + " | Category: " + category);
+                                Log.d(TAG, "Loaded approved item: " + name + " | ID: " + id);
                             }
                         } catch (Exception e) {
                             Log.e(TAG, "Error parsing item: " + doc.getId(), e);

@@ -1,6 +1,7 @@
 package com.itemfinder.midtermappdev.Find;
 
 public class Item {
+    private String id;
     private String name;
     private String category;
     private String location;
@@ -26,51 +27,21 @@ public class Item {
         this.imageUrl = imageUrl;
     }
 
-    public String getName() {
-        return name;
-    }
+    // Getters
+    public String getId() { return id; }
+    public String getName() { return name; }
+    public String getCategory() { return category; }
+    public String getLocation() { return location; }
+    public String getStatus() { return status; }
+    public String getDate() { return date; }
+    public String getImageUrl() { return imageUrl; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getDate() {
-        return date;
-    }
-
-    public void setDate(String date) {
-        this.date = date;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
+    // Setters
+    public void setId(String id) { this.id = id; }
+    public void setName(String name) { this.name = name; }
+    public void setCategory(String category) { this.category = category; }
+    public void setLocation(String location) { this.location = location; }
+    public void setStatus(String status) { this.status = status; }
+    public void setDate(String date) { this.date = date; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }
