@@ -4,7 +4,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.content.Intent;
+import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,7 +17,10 @@ import com.itemfinder.midtermappdev.Admin.data.model.Claim;
 import com.itemfinder.midtermappdev.Admin.data.model.ClaimStatus;
 import com.itemfinder.midtermappdev.Admin.data.repository.ClaimRepository;
 import com.itemfinder.midtermappdev.Admin.ui.claims.adapter.ClaimsAdapter;
+import com.itemfinder.midtermappdev.Admin.ui.dashboard.AdminDashboardActivity;
+import java.util.ArrayList;
 import java.util.List;
+
 
 public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.OnClaimActionListener {
 
@@ -26,6 +32,22 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
 
     private MaterialButton btnAllClaims, btnPendingClaims, btnApprovedClaims, btnRejectedClaims, btnClaimedClaims;
 
+    // ✅ Stats TextViews
+    private TextView tvTotalClaimsCount;
+    private TextView tvPendingClaimsCount;
+    private TextView tvApprovedClaimsCount;
+    private TextView tvRejectedClaimsCount;
+
+    // ✅ Stats counters
+    private int totalClaimsCount = 0;
+    private int pendingCount = 0;
+    private int approvedCount = 0;
+    private int rejectedCount = 0;
+    private int claimedCount = 0;
+
+    // ✅ Store all claims for filtering
+    private List<Claim> allClaims = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +55,12 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
 
         recyclerView = findViewById(R.id.recyclerViewClaims);
         progressBar = findViewById(R.id.progressBarClaims);
+
+        // ✅ Initialize stats TextViews
+        tvTotalClaimsCount = findViewById(R.id.tvTotalClaimsCount);
+        tvPendingClaimsCount = findViewById(R.id.tvPendingClaimsCount);
+        tvApprovedClaimsCount = findViewById(R.id.tvApprovedClaimsCount);
+        tvRejectedClaimsCount = findViewById(R.id.tvRejectedClaimsCount);
 
         btnAllClaims = findViewById(R.id.btnAllClaims);
         btnPendingClaims = findViewById(R.id.btnPendingClaims);
@@ -71,6 +99,13 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
             Log.d(TAG, "Claimed Claims button clicked");
             loadClaimsByStatus("Claimed");
         });
+        Button btnBack = findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(v -> {
+            Log.d(TAG, "Back button clicked");
+            Intent intent = new Intent(ClaimsActivity.this, AdminDashboardActivity.class);
+            startActivity(intent);
+            finish();
+        });
     }
 
     private void loadAllClaims() {
@@ -83,9 +118,14 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
                 Log.d(TAG, "Received " + claims.size() + " claims");
                 showLoading(false);
 
+                allClaims = claims;
+
                 if (claims.isEmpty()) {
                     Toast.makeText(ClaimsActivity.this, "No claims found.", Toast.LENGTH_SHORT).show();
                 }
+
+                // ✅ Calculate stats and update cards
+                calculateAndUpdateStats(claims);
 
                 claimsAdapter = new ClaimsAdapter(claims, ClaimsActivity.this);
                 recyclerView.setAdapter(claimsAdapter);
@@ -127,6 +167,60 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
         });
     }
 
+    // ✅ Calculate stats from all claims
+    private void calculateAndUpdateStats(List<Claim> claims) {
+        Log.d(TAG, "Calculating stats for " + claims.size() + " claims");
+
+        totalClaimsCount = 0;
+        pendingCount = 0;
+        approvedCount = 0;
+        rejectedCount = 0;
+        claimedCount = 0;
+
+        for (Claim claim : claims) {
+            totalClaimsCount++;
+            String status = claim.getStatus();
+
+            if ("Pending".equalsIgnoreCase(status)) {
+                pendingCount++;
+            } else if ("Approved".equalsIgnoreCase(status)) {
+                approvedCount++;
+            } else if ("Rejected".equalsIgnoreCase(status)) {
+                rejectedCount++;
+            } else if ("Claimed".equalsIgnoreCase(status)) {
+                claimedCount++;
+            }
+        }
+
+        updateStatsCards();
+        Log.d(TAG, "Stats updated - Total: " + totalClaimsCount + ", Pending: " + pendingCount +
+                ", Approved: " + approvedCount + ", Rejected: " + rejectedCount);
+    }
+
+    // ✅ Update stats card TextViews
+    private void updateStatsCards() {
+        tvTotalClaimsCount.setText(String.valueOf(totalClaimsCount));
+        tvPendingClaimsCount.setText(String.valueOf(pendingCount));
+        tvApprovedClaimsCount.setText(String.valueOf(approvedCount));
+        tvRejectedClaimsCount.setText(String.valueOf(rejectedCount));
+
+        // ✅ Update button labels with counts
+        updateFilterButtonLabels();
+
+        Log.d(TAG, "Stats cards updated");
+    }
+
+    // ✅ Update filter button labels with counts
+    private void updateFilterButtonLabels() {
+        btnAllClaims.setText("All Claims (" + totalClaimsCount + ")");
+        btnPendingClaims.setText("Pending (" + pendingCount + ")");
+        btnApprovedClaims.setText("Approved (" + approvedCount + ")");
+        btnRejectedClaims.setText("Rejected (" + rejectedCount + ")");
+        btnClaimedClaims.setText("Claimed (" + claimedCount + ")");
+
+        Log.d(TAG, "Filter button labels updated");
+    }
+
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
@@ -135,8 +229,6 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
     @Override
     public void onApproveClaim(Claim claim) {
         Log.d(TAG, "Approving claim: " + claim.getId());
-
-        // Show location selection dialog
         showLocationSelectionDialog(claim);
     }
 

@@ -15,6 +15,7 @@ import com.itemfinder.midtermappdev.R;
 import com.itemfinder.midtermappdev.Admin.data.model.Item_admin;
 import com.itemfinder.midtermappdev.Admin.data.repository.ItemRepository;
 import com.itemfinder.midtermappdev.Admin.firebase.AdminFirebaseHelper;
+import com.itemfinder.midtermappdev.Admin.ui.claims.ClaimsActivity;
 import com.itemfinder.midtermappdev.Admin.ui.dashboard.adapter.ItemsAdapter;
 import com.itemfinder.midtermappdev.Admin.ui.dashboard.adapter.OnItemClickListener;
 import com.itemfinder.midtermappdev.Admin.ui.dashboard.adapter.OnItemActionListener;
@@ -103,6 +104,16 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
             currentCategory = "all";
             filterAndDisplayItems();
         });
+
+        // ✅ NEW: View Claims button to navigate to ClaimsActivity
+        Button btnViewClaims = findViewById(R.id.btnViewClaims);
+        if (btnViewClaims != null) {
+            btnViewClaims.setOnClickListener(v -> {
+                Log.d(TAG, "View Claims button clicked - navigating to ClaimsActivity");
+                Intent intent = new Intent(AdminDashboardActivity.this, ClaimsActivity.class);
+                startActivity(intent);
+            });
+        }
 
         Button btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> {
@@ -244,7 +255,6 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
                                     Toast.makeText(AdminDashboardActivity.this,
                                             message, Toast.LENGTH_SHORT).show();
 
-                                    // Always reload all items to refresh everything
                                     loadAllItems();
                                 }
 
@@ -292,7 +302,6 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
                                     Toast.makeText(AdminDashboardActivity.this,
                                             message, Toast.LENGTH_SHORT).show();
 
-                                    // Always reload all items to refresh everything
                                     loadAllItems();
                                 }
 
