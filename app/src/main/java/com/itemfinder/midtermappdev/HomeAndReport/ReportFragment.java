@@ -10,6 +10,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.util.Log;
@@ -33,6 +35,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 
 import com.cloudinary.android.MediaManager;
@@ -142,6 +146,29 @@ public class ReportFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_report, container, false);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (requireContext().checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1);
+            }
+        }
+
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            CharSequence name = "ReportChannel";
+            String description = "Channel for found item report updates";
+            int importance = android.app.NotificationManager.IMPORTANCE_DEFAULT;
+
+            android.app.NotificationChannel channel =
+                    new android.app.NotificationChannel("report_channel_id", name, importance);
+            channel.setDescription(description);
+
+            android.app.NotificationManager notificationManager =
+                    requireContext().getSystemService(android.app.NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+
 
         initializeViews(view);
         setupSpinners();
@@ -541,9 +568,9 @@ public class ReportFragment extends Fragment {
                                   String location, String dateFound, String contact,
                                   boolean isAnonymous, String imageUrl) {
 
-        requireActivity().runOnUiThread(() -> {
-            Toast.makeText(requireContext(), "Submitting report...", Toast.LENGTH_SHORT).show();
-        });
+        requireActivity().runOnUiThread(() ->
+                Toast.makeText(requireContext(), "Submitting report...", Toast.LENGTH_SHORT).show()
+        );
 
         String userId = null;
         String userEmail = null;
@@ -564,7 +591,7 @@ public class ReportFragment extends Fragment {
             return;
         }
 
-        // Create report data for ADMIN APPROVAL
+        // ✅ Prepare report data
         Map<String, Object> reportData = new HashMap<>();
         reportData.put("userId", userId);
         reportData.put("userEmail", userEmail);
@@ -577,51 +604,65 @@ public class ReportFragment extends Fragment {
         reportData.put("dateFound", dateFound);
         reportData.put("contact", isAnonymous ? "Anonymous" : contact);
         reportData.put("isAnonymous", isAnonymous);
-        reportData.put("status", "pending");  // ✅ KEY: Status is pending
+        reportData.put("status", "pending");
         reportData.put("imageUrl", imageUrl);
         reportData.put("submittedAt", System.currentTimeMillis());
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         final String finalUserId = userId;
 
-        // ✅ SAVE TO pendingItems COLLECTION (for admin approval)
+        // ✅ Save to "pendingItems"
         db.collection("pendingItems")
                 .add(reportData)
                 .addOnSuccessListener(documentReference -> {
                     String docId = documentReference.getId();
-                    Log.d("ReportFragment", "Pending item saved with ID: " + docId);
-
-                    // Also save reference in user's foundItems for their records
                     reportData.put("documentId", docId);
                     reportData.put("status", "pending_review");
 
+                    // ✅ Save also in user's collection
                     db.collection("users")
                             .document(finalUserId)
                             .collection("foundItems")
                             .document(docId)
                             .set(reportData)
                             .addOnSuccessListener(aVoid -> {
-                                Log.d("ReportFragment", "Also saved to user's foundItems");
+                                Log.d("ReportFragment", "Saved to user's foundItems too.");
                             });
 
+                    // ✅ Once saved successfully, run UI updates
                     requireActivity().runOnUiThread(() -> {
                         Toast.makeText(requireContext(),
                                 "Report submitted! Awaiting admin approval.",
                                 Toast.LENGTH_LONG).show();
-                        btnPostFoundItem.setEnabled(true);
 
-                        // Show notification
-                        showSubmissionNotification();
-                        resetForm();
-
-                        // Navigate back to home
+                        // 🔹 Navigate back to HomeFragment first
                         if (getActivity() instanceof HomeAndReportMainActivity) {
                             HomeAndReportMainActivity main = (HomeAndReportMainActivity) getActivity();
                             main.replaceFragment(new HomeFragment());
-                            BottomNavigationView bottomNav = main.findViewById(R.id.navigationView);
-                            bottomNav.setSelectedItemId(R.id.home);
+
+                            // Wait for navigation to complete before sending notification
+                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                HomeFragment homeFragment = (HomeFragment)
+                                        main.getSupportFragmentManager().findFragmentById(R.id.frame_layout);
+
+                                if (homeFragment != null && homeFragment.isAdded()) {
+                                    homeFragment.addInAppNotification("Your found item has been submitted!");
+                                    DrawerLayout drawer = main.findViewById(R.id.drawerLayout);
+                                    drawer.openDrawer(GravityCompat.END);
+                                } else {
+                                    Log.e("InAppNotif", "Still can't find HomeFragment after navigation!");
+                                }
+                            }, 500); // Small delay (0.5s) to let fragment attach
                         }
+
+                        // 🔹 System notification
+                        showSubmissionNotification();
+
+                        // 🔹 Reset form
+                        resetForm();
+                        btnPostFoundItem.setEnabled(true);
                     });
+
                 })
                 .addOnFailureListener(e -> {
                     Log.e("ReportFragment", "Error saving pending item", e);
@@ -633,6 +674,7 @@ public class ReportFragment extends Fragment {
                     });
                 });
     }
+
 
     private void resetForm() {
         spinnerCategory.setSelection(0);

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/sampleItemCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:background="@drawable/dialog_bg"
+        android:layout_marginBottom="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        tools:ignore="MissingConstraints">
+
+        <ImageView
+            android:id="@+id/itemImage"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_placeholder_image"
+            android:scaleType="centerCrop"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="Item Image" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/itemName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Item Name"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#000000" />
+
+            <TextView
+                android:id="@+id/itemDetails"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Found in Library · 2 hours ago"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/statusBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Available"
+            android:textSize="11sp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

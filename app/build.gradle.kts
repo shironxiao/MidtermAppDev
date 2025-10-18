@@ -42,13 +42,14 @@ dependencies {
     implementation(libs.constraintlayout)
 
     // ✅ Firebase
-    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
 
     // Navigation
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
+    implementation(libs.firebase.database)
 
     // Testing
     testImplementation(libs.junit)
@@ -65,6 +66,6 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     implementation("jp.wasabeef:glide-transformations:4.3.0")
-
+    implementation("com.google.code.gson:gson:2.10.1")
 
 }

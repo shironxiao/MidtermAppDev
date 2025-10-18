@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,7 +23,8 @@ import com.itemfinder.midtermappdev.R;
 public class ProfileFragment extends Fragment {
 
     private TextView tvEmail, tvStudentId, tvPassword;
-    private Button btnLogout, btnMyReports;
+    private Button btnLogout;
+    private LinearLayout btnMyReports; // Changed from Button to LinearLayout
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -52,7 +54,7 @@ public class ProfileFragment extends Fragment {
         tvStudentId = view.findViewById(R.id.tvStudentId);
         tvPassword = view.findViewById(R.id.tvPassword);
         btnLogout = view.findViewById(R.id.btnLogout);
-        btnMyReports = view.findViewById(R.id.btnMyReports); // Add this button to fragment_profile.xml
+        btnMyReports = view.findViewById(R.id.btnMyReports); // Now finds LinearLayout correctly
     }
 
     private void loadUserData() {

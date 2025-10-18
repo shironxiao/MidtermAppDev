@@ -84,5 +84,7 @@
 
     <string name="pending">Pending</string>
     <string name="delete_item">Delete Item</string>
-
+    <string name="back_button">Back</string>
+    <string name="my_reports">My Reports</string>
+    <string name="track_your_reported_items">Track your reported items</string>
 </resources>

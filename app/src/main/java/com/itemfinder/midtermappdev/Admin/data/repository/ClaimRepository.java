@@ -10,7 +10,6 @@ import java.util.Map;
 
 public class ClaimRepository {
     private static final String TAG = "ClaimRepository";
-    private final FirebaseFirestore db;
     private final CollectionReference claimsRef;
 
     public interface ClaimFetchListener {
@@ -24,7 +23,7 @@ public class ClaimRepository {
     }
 
     public ClaimRepository() {
-        db = FirebaseFirestore.getInstance();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
         claimsRef = db.collection("claims");
     }
 
@@ -120,19 +119,44 @@ public class ClaimRepository {
     }
 
     public void markAsClaimed(String claimId, ClaimActionListener listener) {
-        Log.d(TAG, "Marking claim as claimed: " + claimId);
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        claimsRef.document(claimId)
-                .update("status", "Claimed")
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Claim marked as claimed: " + claimId);
-                    listener.onSuccess("Item marked as claimed successfully!");
+        // Get the claim document first
+        db.collection("claims").document(claimId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String itemId = documentSnapshot.getString("itemId");
+                        String userId = documentSnapshot.getString("userId");
+                        if (itemId == null || userId == null) {
+                            listener.onError("Missing itemId or userId in claim document.");
+                            return;
+                        }
+
+                        // Step 1: Update claim status
+                        db.collection("claims").document(claimId)
+                                .update("status", "Claimed")
+                                .addOnSuccessListener(aVoid -> {
+                                    // Step 2: Also update the user's foundItems status
+                                    db.collection("users")
+                                            .document(userId)
+                                            .collection("foundItems")
+                                            .document(itemId)
+                                            .update("status", "Claimed")
+                                            .addOnSuccessListener(v -> listener.onSuccess("Claim marked as claimed successfully."))
+                                            .addOnFailureListener(e -> {
+                                                Log.e("ClaimRepository", "Failed to update user found item", e);
+                                                listener.onError("Claim updated, but failed to update user report: " + e.getMessage());
+                                            });
+                                })
+                                .addOnFailureListener(e -> listener.onError("Failed to mark claim as claimed: " + e.getMessage()));
+
+                    } else {
+                        listener.onError("Claim document not found.");
+                    }
                 })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error marking claim as claimed: " + e.getMessage());
-                    listener.onError(e.getMessage());
-                });
+                .addOnFailureListener(e -> listener.onError("Error retrieving claim: " + e.getMessage()));
     }
+
 
     public void createClaim(Claim claim, ClaimActionListener listener) {
         Log.d(TAG, "Creating new claim for item: " + claim.getItemId());

@@ -1,30 +1,179 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:background="@drawable/dialog_bg">
+    android:background="@android:color/white">
 
-    <TextView
-        android:id="@+id/dialogTitle"
+    <!-- Header with Close Button -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="More Items"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginBottom="12dp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp"
+        android:background="#F5F5F5">
 
+        <TextView
+            android:id="@+id/dialogTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="All Items"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#000000" />
+
+        <ImageButton
+            android:id="@+id/btnClose"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:contentDescription="Close" />
+    </LinearLayout>
+
+    <!-- Progress Bar -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="24dp"
+        android:visibility="gone" />
+
+    <!-- Empty State Text -->
+    <TextView
+        android:id="@+id/emptyStateText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No items found"
+        android:textSize="16sp"
+        android:textColor="#999999"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone" />
+
+    <!-- Scrollable Content -->
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="300dp">
+        android:layout_height="wrap_content"
+        android:maxHeight="600dp">
 
         <LinearLayout
-            android:id="@+id/itemsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <!-- ===================================================== -->
+            <!-- Available Items Card -->
+            <!-- ===================================================== -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/itemsAvailable"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#F0F4FF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Header -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_package"
+                            android:layout_marginEnd="8dp"
+                            android:contentDescription="Package Icon" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Available Items Reported"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000" />
+                    </LinearLayout>
+
+                    <!-- Items Container (no nested ScrollView) -->
+                    <LinearLayout
+                        android:id="@+id/availableItemsContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <!-- Items will be added here programmatically -->
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- ===================================================== -->
+            <!-- Claimed Items Card -->
+            <!-- ===================================================== -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/itemsClaimed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#F0FDF4">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Header -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_check_circle"
+                            android:layout_marginEnd="8dp"
+                            android:contentDescription="Package Check Icon" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Claimed Items"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#000000" />
+                    </LinearLayout>
+
+                    <!-- Items Container (no nested ScrollView) -->
+                    <LinearLayout
+                        android:id="@+id/claimedItemsContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <!-- Items will be added here programmatically -->
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
     </ScrollView>
 
 </LinearLayout>

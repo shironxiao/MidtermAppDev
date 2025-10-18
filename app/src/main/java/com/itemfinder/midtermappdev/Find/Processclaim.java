@@ -21,6 +21,7 @@ import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.itemfinder.midtermappdev.HomeAndReport.HomeFragment;
 import com.itemfinder.midtermappdev.R;
 
 import java.util.ArrayList;
@@ -329,15 +330,22 @@ public class Processclaim extends AppCompatActivity {
                 .add(claimData)
                 .addOnSuccessListener(documentReference -> {
                     Log.d(TAG, "Claim saved successfully: " + documentReference.getId());
+
                     runOnUiThread(() -> {
                         Toast.makeText(Processclaim.this,
                                 "Claim submitted successfully! Please wait for admin approval.",
                                 Toast.LENGTH_LONG).show();
+
+                        // 🟢 Send notification directly to HomeFragment
+                        HomeFragment.sendInAppNotificationToHome(Processclaim.this,
+                                "🟡 Your claim request for \"" + itemName + "\" has been submitted.");
+
                         btnClaim.setText("Submit Claim Request");
                         btnClaim.setEnabled(true);
                         finish();
                     });
                 })
+
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error saving claim", e);
                     runOnUiThread(() -> {

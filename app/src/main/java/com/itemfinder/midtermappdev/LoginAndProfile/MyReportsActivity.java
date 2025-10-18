@@ -1,5 +1,6 @@
 package com.itemfinder.midtermappdev.LoginAndProfile;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -9,11 +10,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.itemfinder.midtermappdev.R;
 
@@ -27,9 +28,8 @@ public class MyReportsActivity extends AppCompatActivity {
     // UI Components
     private RecyclerView recyclerViewItems;
     private LinearLayout emptyStateLayout;
-    private ImageView emptyStateIcon;
     private TextView emptyStateTitle, emptyStateMessage;
-    private TextView summaryPending, summaryApproved, summaryClaimed, summaryRejected;
+
     private TextView badgePending, badgeApproved, badgeClaimed, badgeRejected;
 
     // Tab layouts
@@ -39,8 +39,8 @@ public class MyReportsActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private String userId;
     private FoundItemAdapter adapter;
-    private List<FoundItem> allItems = new ArrayList<>();
-    private List<FoundItem> filteredItems = new ArrayList<>();
+    private final List<FoundItem> allItems = new ArrayList<>();
+    private final List<FoundItem> filteredItems = new ArrayList<>();
     private String currentTab = "pending";
 
     // Counters
@@ -48,6 +48,10 @@ public class MyReportsActivity extends AppCompatActivity {
     private int approvedCount = 0;
     private int claimedCount = 0;
     private int rejectedCount = 0;
+
+    public MyReportsActivity() {
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,15 +79,9 @@ public class MyReportsActivity extends AppCompatActivity {
     private void initializeViews() {
         recyclerViewItems = findViewById(R.id.recyclerViewItems);
         emptyStateLayout = findViewById(R.id.emptyStateLayout);
-        emptyStateIcon = findViewById(R.id.emptyStateIcon);
         emptyStateTitle = findViewById(R.id.emptyStateTitle);
         emptyStateMessage = findViewById(R.id.emptyStateMessage);
 
-        // Summary TextViews
-        summaryPending = findViewById(R.id.summaryPending);
-        summaryApproved = findViewById(R.id.summaryApproved);
-        summaryClaimed = findViewById(R.id.summaryClaimed);
-        summaryRejected = findViewById(R.id.summaryRejected);
 
         // Badge TextViews
         badgePending = findViewById(R.id.badgePending);
@@ -96,13 +94,15 @@ public class MyReportsActivity extends AppCompatActivity {
         tabApproved = findViewById(R.id.tabApproved);
         tabClaimed = findViewById(R.id.tabClaimed);
         tabRejected = findViewById(R.id.tabRejected);
+        ImageView btnBack = findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(v -> finish());
+
+
     }
 
     private void setupRecyclerView() {
-        adapter = new FoundItemAdapter(this, filteredItems, item -> {
-            // Handle delete click
-            showDeleteConfirmation(item);
-        });
+        // Handle delete click
+        adapter = new FoundItemAdapter(this, filteredItems, this::showDeleteConfirmation);
 
         recyclerViewItems.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewItems.setAdapter(adapter);
@@ -118,11 +118,9 @@ public class MyReportsActivity extends AppCompatActivity {
     private void loadUserReports() {
         Log.d(TAG, "Loading reports for user: " + userId);
 
-        // Query user's foundItems subcollection
-        db.collection("users")
-                .document(userId)
-                .collection("foundItems")
-                .orderBy("submittedAt", Query.Direction.DESCENDING)
+        // Load from pendingItems collection filtered by userId
+        db.collection("pendingItems")
+                .whereEqualTo("userId", userId)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     allItems.clear();
@@ -132,11 +130,6 @@ public class MyReportsActivity extends AppCompatActivity {
                     rejectedCount = 0;
 
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        // Skip the initialization document
-                        if (document.getId().equals("_init")) {
-                            continue;
-                        }
-
                         String itemName = document.getString("itemName");
                         String description = document.getString("description");
                         String location = document.getString("location");
@@ -145,6 +138,9 @@ public class MyReportsActivity extends AppCompatActivity {
                         String status = document.getString("status");
                         String imageUrl = document.getString("imageUrl");
                         String documentId = document.getId();
+
+                        // Log the status for debugging
+                        Log.d(TAG, "Item: " + itemName + ", Status: " + status);
 
                         // Extract date and time from dateFound
                         String itemDate = "";
@@ -155,16 +151,25 @@ public class MyReportsActivity extends AppCompatActivity {
                             if (parts.length > 1) {
                                 itemTime = parts[1] + (parts.length > 2 ? " " + parts[2] : "");
                             }
+                        } else if (dateFound != null) {
+                            itemDate = dateFound;
                         }
+
+                        // Normalize status to lowercase for consistent comparison
+                        String normalizedStatus = status != null ? status.toLowerCase().trim() : "pending";
 
                         // Determine handed status based on status
                         String handedStatus = "Pending";
-                        if ("approved".equalsIgnoreCase(status)) {
-                            handedStatus = "Available";
-                        } else if ("claimed".equalsIgnoreCase(status)) {
-                            handedStatus = "Claimed";
-                        } else if ("rejected".equalsIgnoreCase(status)) {
-                            handedStatus = "Rejected";
+                        switch (normalizedStatus) {
+                            case "approved":
+                                handedStatus = "Available";
+                                break;
+                            case "claimed":
+                                handedStatus = "Claimed";
+                                break;
+                            case "rejected":
+                                handedStatus = "Rejected";
+                                break;
                         }
 
                         FoundItem item = new FoundItem(
@@ -174,7 +179,7 @@ public class MyReportsActivity extends AppCompatActivity {
                                 itemDate,
                                 itemTime,
                                 category != null ? category : "Other",
-                                status != null ? status : "pending",
+                                normalizedStatus, // Use normalized status
                                 imageUrl,
                                 handedStatus,
                                 documentId
@@ -182,21 +187,65 @@ public class MyReportsActivity extends AppCompatActivity {
 
                         allItems.add(item);
 
-                        // Count by status
-                        if ("pending".equalsIgnoreCase(status) || "pending_review".equalsIgnoreCase(status)) {
-                            pendingCount++;
-                        } else if ("approved".equalsIgnoreCase(status)) {
-                            approvedCount++;
-                        } else if ("claimed".equalsIgnoreCase(status)) {
-                            claimedCount++;
-                        } else if ("rejected".equalsIgnoreCase(status)) {
-                            rejectedCount++;
+                        // Count by status - using normalized status
+                        switch (normalizedStatus) {
+                            case "pending":
+                            case "pending_review":
+                                pendingCount++;
+                                break;
+                            case "approved":
+                                approvedCount++;
+                                break;
+                            case "claimed":
+                                claimedCount++;
+                                break;
+                            case "rejected":
+                                rejectedCount++;
+                                break;
                         }
                     }
 
-                    Log.d(TAG, "Loaded " + allItems.size() + " reports");
-                    updateSummary();
-                    filterByTab(currentTab);
+                    Log.d(TAG, "Loaded " + allItems.size() + " reports from pendingItems");
+                    Log.d(TAG, "Counts - Pending: " + pendingCount + ", Approved: " + approvedCount +
+                            ", Claimed: " + claimedCount + ", Rejected: " + rejectedCount);
+
+                    // Now load claimed items from claims collection
+                    db.collection("claims")
+                            .whereEqualTo("userId", userId)
+                            .whereEqualTo("status", "Claimed")
+                            .get()
+                            .addOnSuccessListener(claimSnapshots -> {
+                                for (QueryDocumentSnapshot claimDoc : claimSnapshots) {
+                                    FoundItem claimedItem = new FoundItem(
+                                            claimDoc.getString("itemName"),
+                                            claimDoc.getString("description"),
+                                            claimDoc.getString("itemLocation"),
+                                            claimDoc.getString("itemDate"),
+                                            "", // no time
+                                            claimDoc.getString("itemCategory"),
+                                            "claimed",
+                                            claimDoc.getString("itemImageUrl"),
+                                            "Claimed",
+                                            claimDoc.getId()
+                                    );
+                                    allItems.add(claimedItem);
+                                    claimedCount++;
+                                }
+
+                                Log.d(TAG, "Total items after adding claims: " + allItems.size());
+                                Log.d(TAG, "Final claimed count: " + claimedCount);
+
+                                updateSummary();
+                                filterByTab(currentTab);
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to fetch claimed items", e);
+                                Toast.makeText(this, "Failed to load claimed items: " + e.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                                // Still update UI with pendingItems data
+                                updateSummary();
+                                filterByTab(currentTab);
+                            });
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error loading reports", e);
@@ -230,16 +279,19 @@ public class MyReportsActivity extends AppCompatActivity {
     }
 
     private void resetTabStyles() {
-        tabPending.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-        tabApproved.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-        tabClaimed.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-        tabRejected.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+
+        tabPending.setBackgroundColor(ContextCompat.getColor(this, android.R.color.transparent));
+        tabApproved.setBackgroundColor(ContextCompat.getColor(this, android.R.color.transparent));
+        tabClaimed.setBackgroundColor(ContextCompat.getColor(this, android.R.color.transparent));
+        tabRejected.setBackgroundColor(ContextCompat.getColor(this, android.R.color.transparent));
+
     }
 
     private void highlightTab(LinearLayout tab) {
         tab.setBackgroundColor(getResources().getColor(android.R.color.holo_blue_light, null));
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void filterByTab(String tab) {
         filteredItems.clear();
 
@@ -274,6 +326,7 @@ public class MyReportsActivity extends AppCompatActivity {
         updateEmptyState(tab);
     }
 
+    @SuppressLint("SetTextI18n")
     private void updateEmptyState(String tab) {
         if (filteredItems.isEmpty()) {
             recyclerViewItems.setVisibility(View.GONE);
@@ -305,11 +358,6 @@ public class MyReportsActivity extends AppCompatActivity {
     }
 
     private void updateSummary() {
-        summaryPending.setText(String.valueOf(pendingCount));
-        summaryApproved.setText(String.valueOf(approvedCount));
-        summaryClaimed.setText(String.valueOf(claimedCount));
-        summaryRejected.setText(String.valueOf(rejectedCount));
-
         badgePending.setText(String.valueOf(pendingCount));
         badgeApproved.setText(String.valueOf(approvedCount));
         badgeClaimed.setText(String.valueOf(claimedCount));
@@ -336,9 +384,7 @@ public class MyReportsActivity extends AppCompatActivity {
                     Toast.makeText(this, "Report deleted", Toast.LENGTH_SHORT).show();
                     loadUserReports(); // Reload data
                 })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Failed to delete: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
+                .addOnFailureListener(e -> Toast.makeText(this, "Failed to delete: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show());
     }
 }

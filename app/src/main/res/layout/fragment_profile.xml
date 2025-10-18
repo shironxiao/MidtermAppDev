@@ -166,6 +166,7 @@
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"
             android:layout_height="56dp"
+            android:layout_marginBottom="14dp"
             android:background="@drawable/button_background"
             android:drawablePadding="8dp"
             android:drawableTint="@android:color/white"
@@ -176,16 +177,35 @@
             android:textSize="20sp"
             android:textStyle="bold"
             tools:ignore="VisualLintButtonSize" />
-        <Button
+        <LinearLayout
             android:id="@+id/btnMyReports"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="My Reports"
-            android:drawableLeft="@drawable/outline_report_24"
-            android:drawablePadding="8dp"
-            android:padding="12dp"
-            android:layout_marginTop="16dp" />
+            android:layout_height="64dp"
+            android:background="@drawable/my_reports_button_background"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true">
 
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_reports"
+                android:layout_marginEnd="10dp"
+                app:tint="@android:color/white"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MY REPORTS"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                tools:ignore="HardcodedText" />
+
+        </LinearLayout>
     </LinearLayout>
 
 </ScrollView>

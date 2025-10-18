@@ -8,6 +8,8 @@ public class Item {
     private String status;
     private String date;
     private String imageUrl;
+    private boolean claimed;
+
 
     public Item(String name, String category, String location, String status, String date) {
         this.name = name;
@@ -35,6 +37,10 @@ public class Item {
     public String getStatus() { return status; }
     public String getDate() { return date; }
     public String getImageUrl() { return imageUrl; }
+
+    public boolean isClaimed() { return claimed; }
+    public void setClaimed(boolean claimed) { this.claimed = claimed; }
+
 
     // Setters
     public void setId(String id) { this.id = id; }

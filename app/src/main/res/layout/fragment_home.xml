@@ -14,400 +14,271 @@
         android:layout_height="match_parent"
         android:background="#FFFBFB">
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingBottom="100dp"
-        android:clipToPadding="false">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <!-- Top Bar -->
-        <RelativeLayout
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="69dp"
-            android:background="#959595"
-            android:elevation="4dp"
-            android:padding="16dp">
-
-            <ImageView
-                android:id="@+id/logo"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_alignParentStart="true"
-                android:src="@drawable/schoollogo" />
-
-            <ImageButton
-                android:id="@+id/notificationButton"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:background="@android:color/transparent"
-                android:src="@android:drawable/ic_popup_reminder" />
-        </RelativeLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
-
-            <TextView
-                android:id="@+id/welcomeText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="Hello!"
-                android:textColor="#000000"
-                android:textSize="28sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:gravity="center"
-                android:text="Welcome back to CNSC Lost and Found!"
-                android:textColor="#444444"
-                android:textSize="16sp" />
-        </LinearLayout>
-
-        <!-- "What did you lose?" clickable layout -->
-        <LinearLayout
-            android:id="@+id/btnLost"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="30dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="15dp"
-            android:background="#C8C7C7"
-            android:backgroundTint="#E6E3E3"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="start|center_vertical"
-            android:textAlignment="textStart"
-            android:minWidth="2dp"
-            android:orientation="horizontal"
-            android:padding="15dp">
-
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="10dp"
-                android:src="@drawable/outline_manage_search_24" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="What did you lose?"
-                android:textColor="#000000"
-                android:textSize="16sp" />
-        </LinearLayout>
-
-        <!-- "What did you find?" clickable layout -->
-        <LinearLayout
-            android:id="@+id/btnFound"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="30dp"
-            android:layout_marginBottom="20dp"
-            android:background="#F6F3F3"
-            android:backgroundTint="#EFEEEE"
-            app:cardCornerRadius="25dp"
-            app:cardElevation="2dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:minWidth="2dp"
-            android:orientation="horizontal"
-            android:padding="15dp">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="10dp"
-                android:src="@drawable/outline_person_24" />
-
-            <TextView
-
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="What did you find?"
-                android:textColor="#000000"
-                android:textSize="16sp" />
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/outline_report_24" />
-        </LinearLayout>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="2dp">
+            android:layout_height="match_parent"
+            android:paddingBottom="100dp"
+            android:clipToPadding="false">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@android:drawable/ic_menu_recent_history"
-                    app:tint="#5B7FA6" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="Recent Activity"
-                    android:textColor="#000000"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-                </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
                 android:orientation="vertical">
 
+                <!-- Top Bar -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="69dp"
+                    android:background="#959595"
+                    android:elevation="4dp"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:id="@+id/logo"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_alignParentStart="true"
+                        android:src="@drawable/schoollogo" />
+
+                    <ImageButton
+                        android:id="@+id/notificationButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="@android:color/transparent"
+                        android:src="@android:drawable/ic_popup_reminder" />
+                </RelativeLayout>
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:src="@android:drawable/ic_menu_mylocation" />
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:id="@+id/welcomeText"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="5dp"
-                        android:text="Items"
+                        android:gravity="center"
+                        android:text="Hello!"
                         android:textColor="#000000"
-                        android:textSize="15sp"
+                        android:textSize="28sp"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center"
+                        android:text="Welcome back to CNSC Lost and Found!"
+                        android:textColor="#444444"
+                        android:textSize="16sp" />
                 </LinearLayout>
 
-                <!-- Item 1 -->
-                <RelativeLayout
+                <!-- "What did you lose?" clickable layout -->
+                <LinearLayout
+                    android:id="@+id/btnLost"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:padding="8dp">
+                    android:layout_marginHorizontal="30dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="15dp"
+                    android:background="#C8C7C7"
+                    android:backgroundTint="#E6E3E3"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="start|center_vertical"
+                    android:textAlignment="textStart"
+                    android:minWidth="2dp"
+                    android:orientation="horizontal"
+                    android:padding="15dp">
+
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="10dp"
+                        android:src="@drawable/outline_manage_search_24" />
 
                     <TextView
-                        android:id="@+id/item1Name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="iPhone 12 Pro"
+                        android:text="What did you lose?"
                         android:textColor="#000000"
-                        android:textStyle="bold" />
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <!-- "What did you find?" clickable layout -->
+                <LinearLayout
+                    android:id="@+id/btnFound"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="30dp"
+                    android:layout_marginBottom="20dp"
+                    android:background="#F6F3F3"
+                    android:backgroundTint="#EFEEEE"
+                    app:cardCornerRadius="25dp"
+                    app:cardElevation="2dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minWidth="2dp"
+                    android:orientation="horizontal"
+                    android:padding="15dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="10dp"
+                        android:src="@drawable/outline_person_24" />
 
                     <TextView
+
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_below="@id/item1Name"
-                        android:text="Found in Library • 2 hours ago"
-                        android:textColor="#666666"
-                        android:textSize="12sp" />
+                        android:layout_weight="1"
+                        android:text="What did you find?"
+                        android:textColor="#000000"
+                        android:textSize="16sp" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/outline_report_24" />
+                </LinearLayout>
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:background="#00D66C"
-                        android:paddingHorizontal="12dp"
-                        android:paddingVertical="4dp"
-                        android:text="New"
-                        android:textColor="#FFFFFF"
-                        android:textSize="12sp" />
-                </RelativeLayout>
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/item2Name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Blue Umbrella"
-                    android:textColor="#000000"
-                    android:textStyle="bold" />
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@android:drawable/ic_menu_recent_history"
+                                app:tint="#5B7FA6" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/item2Name"
-                    android:text="Found in student park • 7 hours ago"
-                    android:textColor="#666666"
-                    android:textSize="12sp" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:text="Recent Activity"
+                                android:textColor="#000000"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:background="#B0BEC5"
-                        android:paddingHorizontal="12dp"
-                        android:paddingVertical="4dp"
-                        android:text="Available"
-                        android:textColor="#FFFFFF"
-                        android:textSize="12sp" />
-                </RelativeLayout>
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/moreItems"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="More items..."
-                    android:textColor="#5B7FA6"
-                    android:textStyle="bold" />
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="15dp"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
+                                    android:src="@android:drawable/ic_menu_mylocation" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="5dp"
+                                    android:text="Items"
+                                    android:textColor="#000000"
+                                    android:textSize="15sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <!-- Dynamic container for available items -->
+                            <LinearLayout
+                                android:id="@+id/availableItemsContainer"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:layout_marginTop="8dp"
+                                android:padding="4dp" />
+
+
+                            <TextView
+                                android:id="@+id/moreItems"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="More items..."
+                                android:textColor="#5B7FA6"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Claimed Section -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginVertical="16dp"
+                            android:background="#E0E0E0" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@android:drawable/ic_menu_mylocation" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:text="Claimed"
+                                android:textColor="#000000"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Dynamic container for claimed items -->
+                        <LinearLayout
+                            android:id="@+id/claimedItemsContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:layout_marginTop="8dp"
+                            android:padding="4dp" />
+
+
+                        <TextView
+                            android:id="@+id/moreClaimedItems"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="More items..."
+                            android:textColor="#5B7FA6"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
             </LinearLayout>
-
-                <!-- Claimed Section -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="16dp"
-                    android:background="#E0E0E0" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@android:drawable/ic_menu_mylocation" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="Claimed"
-                    android:textColor="#000000"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:padding="8dp"
-                    android:text="Student ID card\nClaimed • 3 hours ago"
-                    android:textColor="#666666"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/moreClaimedItems"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="More items..."
-                    android:textColor="#5B7FA6"
-                    android:textStyle="bold" />
-
-                <!-- Missing Section -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="16dp"
-                    android:background="#E0E0E0" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@android:drawable/ic_menu_close_clear_cancel" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="Missing"
-                    android:textColor="#000000"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-                <!-- Missing Item 1 -->
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:padding="8dp">
-
-                <TextView
-                    android:id="@+id/missing1Name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Motor Helmet"
-                    android:textColor="#000000"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/missing1Name"
-                    android:text="Missing in parking • 7 hours ago"
-                    android:textColor="#666666"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:background="#FF5252"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="4dp"
-                    android:text="Not yet Found"
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp" />
-
-                </RelativeLayout>
-
-                <TextView
-                    android:id="@+id/moreMissingItems"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="More items..."
-                    android:textColor="#5B7FA6"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-    </LinearLayout>
-    </ScrollView>
-</RelativeLayout>
+        </ScrollView>
+    </RelativeLayout>
 
     <!-- Right side drawer content -->
     <LinearLayout
@@ -418,7 +289,7 @@
         android:background="#FFFFFF"
         android:orientation="vertical">
 
-        <!-- Notification Header -->
+        <!-- Notification Header (must be FIRST in this container) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -443,22 +314,23 @@
                 android:textSize="12sp" />
         </LinearLayout>
 
-        <!-- Notification List -->
+        <!-- RecyclerView fills remaining height -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvNotifications"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:padding="8dp"
-            android:visibility="visible" />
+            android:clipToPadding="false"
+            android:scrollbars="vertical"
+            android:overScrollMode="ifContentScrolls" />
 
-        <!-- No Notifications Message -->
+        <!-- No Notifications Message (wrap_content, below the list) -->
         <TextView
             android:id="@+id/tvNoNotifications"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="12dp"
             android:gravity="center"
             android:text="No notifications yet"
             android:textColor="#999999"
@@ -466,4 +338,6 @@
             android:visibility="gone" />
 
     </LinearLayout>
+
+
 </androidx.drawerlayout.widget.DrawerLayout>
