@@ -29,6 +29,7 @@ public class ClaimViewHolder extends RecyclerView.ViewHolder {
     public AppCompatButton btnApprove;
     public AppCompatButton btnReject;
     public AppCompatButton btnClaimed;
+    public AppCompatButton btnDelete; // NEW: Delete button
 
     public ClaimViewHolder(View itemView) {
         super(itemView);
@@ -56,5 +57,6 @@ public class ClaimViewHolder extends RecyclerView.ViewHolder {
         btnApprove = itemView.findViewById(R.id.btnApprove);
         btnReject = itemView.findViewById(R.id.btnReject);
         btnClaimed = itemView.findViewById(R.id.btnClaimed);
+        btnDelete = itemView.findViewById(R.id.btnDelete); // NEW
     }
 }

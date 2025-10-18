@@ -17,6 +17,7 @@ public class ClaimsAdapter extends RecyclerView.Adapter<ClaimViewHolder> {
         void onApproveClaim(Claim claim);
         void onRejectClaim(Claim claim);
         void onMarkAsClaimed(Claim claim);
+        void onDeleteClaim(Claim claim); // NEW: Delete action
     }
 
     public ClaimsAdapter(List<Claim> claimList, OnClaimActionListener listener) {
@@ -108,32 +109,52 @@ public class ClaimsAdapter extends RecyclerView.Adapter<ClaimViewHolder> {
 
         // Button visibility based on status
         String status = claim.getStatus();
+
         if ("Pending".equals(status)) {
+            // Pending: Show Approve and Reject buttons
             holder.btnApprove.setVisibility(View.VISIBLE);
             holder.btnReject.setVisibility(View.VISIBLE);
             holder.btnClaimed.setVisibility(View.GONE);
+            holder.btnDelete.setVisibility(View.GONE);
 
             holder.btnApprove.setEnabled(true);
             holder.btnReject.setEnabled(true);
             holder.btnApprove.setAlpha(1.0f);
             holder.btnReject.setAlpha(1.0f);
+
         } else if ("Approved".equals(status)) {
+            // Approved: Show Mark as Claimed button
             holder.btnApprove.setVisibility(View.GONE);
             holder.btnReject.setVisibility(View.GONE);
             holder.btnClaimed.setVisibility(View.VISIBLE);
+            holder.btnDelete.setVisibility(View.GONE);
 
             holder.btnClaimed.setEnabled(true);
             holder.btnClaimed.setAlpha(1.0f);
-        } else {
-            // Rejected or Claimed
+
+        } else if ("Rejected".equals(status)) {
+            // Rejected: Show ONLY Delete button
             holder.btnApprove.setVisibility(View.GONE);
             holder.btnReject.setVisibility(View.GONE);
             holder.btnClaimed.setVisibility(View.GONE);
+            holder.btnDelete.setVisibility(View.VISIBLE);
+
+            holder.btnDelete.setEnabled(true);
+            holder.btnDelete.setAlpha(1.0f);
+
+        } else {
+            // Claimed or other status: Hide all buttons
+            holder.btnApprove.setVisibility(View.GONE);
+            holder.btnReject.setVisibility(View.GONE);
+            holder.btnClaimed.setVisibility(View.GONE);
+            holder.btnDelete.setVisibility(View.GONE);
         }
 
+        // Set click listeners
         holder.btnApprove.setOnClickListener(v -> listener.onApproveClaim(claim));
         holder.btnReject.setOnClickListener(v -> listener.onRejectClaim(claim));
         holder.btnClaimed.setOnClickListener(v -> listener.onMarkAsClaimed(claim));
+        holder.btnDelete.setOnClickListener(v -> listener.onDeleteClaim(claim));
     }
 
     @Override

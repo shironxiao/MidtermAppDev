@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,14 +41,14 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
     private TextView tvTotalItemsCount;
     private TextView tvPendingApprovalCount;
     private TextView tvAvailableCount;
-    private TextView tvRejectedCount; // Changed from tvPendingClaimsCount
+    private TextView tvRejectedCount;
 
-    private MaterialButton btnPending, btnActive, btnRejected, btnAll; // Changed from btnClaims
+    private MaterialButton btnPending, btnActive, btnRejected, btnAll;
 
     private int totalItemsCount = 0;
     private int pendingCount = 0;
     private int activeCount = 0;
-    private int rejectedCount = 0; // Changed from claimedCount
+    private int rejectedCount = 0;
 
     // Store all items for filtering
     private List<Item_admin> allItems = new ArrayList<>();
@@ -64,11 +65,11 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         tvTotalItemsCount = findViewById(R.id.tvTotalItemsCount);
         tvPendingApprovalCount = findViewById(R.id.tvPendingApprovalCount);
         tvAvailableCount = findViewById(R.id.tvAvailableCount);
-        tvRejectedCount = findViewById(R.id.tvRejectedCount); // Changed from tvPendingClaimsCount
+        tvRejectedCount = findViewById(R.id.tvRejectedCount);
 
         btnPending = findViewById(R.id.btnPending);
         btnActive = findViewById(R.id.btnActive);
-        btnRejected = findViewById(R.id.btnRejected); // Changed from btnClaims
+        btnRejected = findViewById(R.id.btnRejected);
         btnAll = findViewById(R.id.btnAll);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -105,7 +106,7 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
             filterAndDisplayItems();
         });
 
-        // ✅ NEW: View Claims button to navigate to ClaimsActivity
+        // View Claims button to navigate to ClaimsActivity
         Button btnViewClaims = findViewById(R.id.btnViewClaims);
         if (btnViewClaims != null) {
             btnViewClaims.setOnClickListener(v -> {
@@ -180,7 +181,7 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         totalItemsCount = 0;
         pendingCount = 0;
         activeCount = 0;
-        rejectedCount = 0; // Changed from claimedCount
+        rejectedCount = 0;
 
         for (Item_admin itemAdmin : allItemAdmins) {
             totalItemsCount++;
@@ -206,7 +207,7 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         tvTotalItemsCount.setText(String.valueOf(totalItemsCount));
         tvPendingApprovalCount.setText(String.valueOf(pendingCount));
         tvAvailableCount.setText(String.valueOf(activeCount));
-        tvRejectedCount.setText(String.valueOf(rejectedCount)); // Changed from tvPendingClaimsCount
+        tvRejectedCount.setText(String.valueOf(rejectedCount));
 
         Log.d(TAG, "Stats cards updated");
     }
@@ -214,7 +215,7 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
     private void updateFilterButtonLabels() {
         btnPending.setText("Pending (" + pendingCount + ")");
         btnActive.setText("Active (" + activeCount + ")");
-        btnRejected.setText("Rejected (" + rejectedCount + ")"); // Changed from btnClaims
+        btnRejected.setText("Rejected (" + rejectedCount + ")");
         btnAll.setText("All Items (" + totalItemsCount + ")");
 
         Log.d(TAG, "Filter button labels updated");
@@ -325,5 +326,43 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
                 Toast.makeText(AdminDashboardActivity.this, "Rejection cancelled", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    @Override
+    public void onDeleteItem(Item_admin itemAdmin) {
+        Log.d(TAG, "Delete button clicked for item: " + itemAdmin.getId());
+
+        // Show confirmation dialog
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Item")
+                .setMessage("Are you sure you want to permanently delete this rejected item? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    deleteItem(itemAdmin);
+                })
+                .setNegativeButton("Cancel", null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+    }
+
+    private void deleteItem(Item_admin itemAdmin) {
+        Log.d(TAG, "Deleting item: " + itemAdmin.getId());
+
+        firebaseHelper.deleteItem(itemAdmin.getId(),
+                new AdminFirebaseHelper.ItemActionListener() {
+                    @Override
+                    public void onSuccess(String message) {
+                        Log.d(TAG, "Item deleted successfully");
+                        Toast.makeText(AdminDashboardActivity.this,
+                                "Item deleted successfully", Toast.LENGTH_SHORT).show();
+                        loadAllItems();
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, "Error deleting item: " + error);
+                        Toast.makeText(AdminDashboardActivity.this,
+                                "Error: " + error, Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 }

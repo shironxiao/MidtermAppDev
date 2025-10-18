@@ -215,6 +215,20 @@
             android:gravity="end"
             android:layout_marginTop="8dp">
 
+            <!-- Delete Button (only for rejected claims) -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete"
+                android:textSize="12sp"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/button_delete_background"
+                android:textColor="#FFFFFF"
+                android:visibility="gone" />
+
             <!-- Reject Button -->
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnReject"

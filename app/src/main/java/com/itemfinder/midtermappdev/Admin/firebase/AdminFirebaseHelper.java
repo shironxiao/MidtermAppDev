@@ -20,7 +20,7 @@ public class AdminFirebaseHelper {
         void onError(String error);
     }
 
-    // ✅ Fetch PENDING items (items awaiting admin approval)
+    // Fetch PENDING items (items awaiting admin approval)
     public void fetchPendingItems(ItemFetchListener listener) {
         Log.d(TAG, "Fetching pending items...");
 
@@ -45,7 +45,7 @@ public class AdminFirebaseHelper {
                 });
     }
 
-    // ✅ Fetch ALL items (all statuses)
+    // Fetch ALL items (all statuses)
     public void fetchAllItems(ItemFetchListener listener) {
         Log.d(TAG, "Fetching all items...");
 
@@ -69,7 +69,7 @@ public class AdminFirebaseHelper {
                 });
     }
 
-    // ✅ Fetch items by category (status filter)
+    // Fetch items by category (status filter)
     public void fetchItemsByCategory(String category, ItemFetchListener listener) {
         Log.d(TAG, "Fetching items for category: " + category);
 
@@ -96,7 +96,7 @@ public class AdminFirebaseHelper {
                 });
     }
 
-    // ✅ Approve an item (move from pending to approved)
+    // Approve an item (move from pending to approved)
     public void approveItem(String itemId, ItemActionListener listener) {
         Log.d(TAG, "Approving item: " + itemId);
 
@@ -129,7 +129,7 @@ public class AdminFirebaseHelper {
                 });
     }
 
-    // ✅ Reject an item
+    // Reject an item
     public void rejectItem(String itemId, ItemActionListener listener) {
         Log.d(TAG, "Rejecting item: " + itemId);
 
@@ -146,7 +146,24 @@ public class AdminFirebaseHelper {
                 });
     }
 
-    // ✅ Helper: Convert Firestore document to Item_admin
+    // NEW: Delete an item
+    public void deleteItem(String itemId, ItemActionListener listener) {
+        Log.d(TAG, "Deleting item: " + itemId);
+
+        db.collection("pendingItems")
+                .document(itemId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Item deleted successfully: " + itemId);
+                    listener.onSuccess("Item deleted successfully!");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error deleting item: " + e.getMessage());
+                    listener.onError("Failed to delete item: " + e.getMessage());
+                });
+    }
+
+    // Helper: Convert Firestore document to Item_admin
     private Item_admin documentToItem_admin(DocumentSnapshot doc) {
         Item_admin item = new Item_admin();
         item.setId(doc.getId());
@@ -167,7 +184,7 @@ public class AdminFirebaseHelper {
         return item;
     }
 
-    // ✅ Helper: Map category to Firestore status
+    // Helper: Map category to Firestore status
     private String mapCategoryToStatus(String category) {
         switch (category.toLowerCase()) {
             case "pending":

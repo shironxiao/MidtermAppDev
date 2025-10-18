@@ -16,7 +16,7 @@ public class ItemViewHolder extends RecyclerView.ViewHolder {
     public TextView tvDescription;
     public TextView tvContact;
     public TextView tvItemStatus;
-    public Button btnApprove, btnReject;
+    public Button btnApprove, btnReject, btnDelete; // Added btnDelete
 
     public ItemViewHolder(View itemView) {
         super(itemView);
@@ -30,5 +30,6 @@ public class ItemViewHolder extends RecyclerView.ViewHolder {
         tvItemStatus = itemView.findViewById(R.id.tvItemStatus);
         btnApprove = itemView.findViewById(R.id.btnApprove);
         btnReject = itemView.findViewById(R.id.btnReject);
+        btnDelete = itemView.findViewById(R.id.btnDelete); // NEW
     }
 }

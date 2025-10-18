@@ -157,6 +157,21 @@ public class ClaimRepository {
                 .addOnFailureListener(e -> listener.onError("Error retrieving claim: " + e.getMessage()));
     }
 
+    // NEW: Delete claim method
+    public void deleteClaim(String claimId, ClaimActionListener listener) {
+        Log.d(TAG, "Deleting claim: " + claimId);
+
+        claimsRef.document(claimId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Claim deleted successfully: " + claimId);
+                    listener.onSuccess("Claim deleted successfully!");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error deleting claim: " + e.getMessage());
+                    listener.onError("Failed to delete claim: " + e.getMessage());
+                });
+    }
 
     public void createClaim(Claim claim, ClaimActionListener listener) {
         Log.d(TAG, "Creating new claim for item: " + claim.getItemId());

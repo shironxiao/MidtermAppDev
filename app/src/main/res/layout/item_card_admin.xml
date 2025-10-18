@@ -75,7 +75,7 @@
             android:maxLines="3"
             android:ellipsize="end" />
 
-        <!-- ✅ Contact -->
+        <!-- Contact -->
         <TextView
             android:id="@+id/tvContact"
             android:layout_width="match_parent"
@@ -143,6 +143,20 @@
             android:layout_marginTop="14dp"
             android:orientation="horizontal"
             android:gravity="end">
+
+            <!-- Delete Button (only for rejected items) -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete"
+                android:textSize="12sp"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/button_delete_background"
+                android:textColor="#FFFFFF"
+                android:visibility="gone" />
 
             <!-- Reject Button -->
             <androidx.appcompat.widget.AppCompatButton

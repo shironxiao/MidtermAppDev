@@ -72,10 +72,14 @@ public class ItemsAdapter extends RecyclerView.Adapter<ItemViewHolder> {
             }
         });
 
-        // Only show buttons for pending items
-        if ("Pending".equalsIgnoreCase(itemAdmin.getStatus())) {
+        // Button visibility based on status
+        String status = itemAdmin.getStatus();
+
+        if ("Pending".equalsIgnoreCase(status)) {
+            // Pending: Show Approve and Reject buttons
             holder.btnApprove.setVisibility(View.VISIBLE);
             holder.btnReject.setVisibility(View.VISIBLE);
+            holder.btnDelete.setVisibility(View.GONE);
 
             holder.btnApprove.setOnClickListener(v -> {
                 if (actionListener != null) {
@@ -88,9 +92,24 @@ public class ItemsAdapter extends RecyclerView.Adapter<ItemViewHolder> {
                     actionListener.onRejectItem(itemAdmin);
                 }
             });
-        } else {
+
+        } else if ("rejected".equalsIgnoreCase(status)) {
+            // Rejected: Show ONLY Delete button
             holder.btnApprove.setVisibility(View.GONE);
             holder.btnReject.setVisibility(View.GONE);
+            holder.btnDelete.setVisibility(View.VISIBLE);
+
+            holder.btnDelete.setOnClickListener(v -> {
+                if (actionListener != null) {
+                    actionListener.onDeleteItem(itemAdmin);
+                }
+            });
+
+        } else {
+            // Approved or Claimed: Hide all buttons
+            holder.btnApprove.setVisibility(View.GONE);
+            holder.btnReject.setVisibility(View.GONE);
+            holder.btnDelete.setVisibility(View.GONE);
         }
     }
 

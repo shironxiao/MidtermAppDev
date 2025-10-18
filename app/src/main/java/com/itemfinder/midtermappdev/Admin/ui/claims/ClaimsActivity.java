@@ -8,6 +8,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.content.Intent;
 import android.widget.Button;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,7 +22,6 @@ import com.itemfinder.midtermappdev.Admin.ui.dashboard.AdminDashboardActivity;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.OnClaimActionListener {
 
     private static final String TAG = "ClaimsActivity";
@@ -32,20 +32,20 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
 
     private MaterialButton btnAllClaims, btnPendingClaims, btnApprovedClaims, btnRejectedClaims, btnClaimedClaims;
 
-    // ✅ Stats TextViews
+    // Stats TextViews
     private TextView tvTotalClaimsCount;
     private TextView tvPendingClaimsCount;
     private TextView tvApprovedClaimsCount;
     private TextView tvRejectedClaimsCount;
 
-    // ✅ Stats counters
+    // Stats counters
     private int totalClaimsCount = 0;
     private int pendingCount = 0;
     private int approvedCount = 0;
     private int rejectedCount = 0;
     private int claimedCount = 0;
 
-    // ✅ Store all claims for filtering
+    // Store all claims for filtering
     private List<Claim> allClaims = new ArrayList<>();
 
     @Override
@@ -56,7 +56,7 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
         recyclerView = findViewById(R.id.recyclerViewClaims);
         progressBar = findViewById(R.id.progressBarClaims);
 
-        // ✅ Initialize stats TextViews
+        // Initialize stats TextViews
         tvTotalClaimsCount = findViewById(R.id.tvTotalClaimsCount);
         tvPendingClaimsCount = findViewById(R.id.tvPendingClaimsCount);
         tvApprovedClaimsCount = findViewById(R.id.tvApprovedClaimsCount);
@@ -99,6 +99,7 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
             Log.d(TAG, "Claimed Claims button clicked");
             loadClaimsByStatus("Claimed");
         });
+
         Button btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> {
             Log.d(TAG, "Back button clicked");
@@ -124,7 +125,6 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
                     Toast.makeText(ClaimsActivity.this, "No claims found.", Toast.LENGTH_SHORT).show();
                 }
 
-                // ✅ Calculate stats and update cards
                 calculateAndUpdateStats(claims);
 
                 claimsAdapter = new ClaimsAdapter(claims, ClaimsActivity.this);
@@ -167,7 +167,6 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
         });
     }
 
-    // ✅ Calculate stats from all claims
     private void calculateAndUpdateStats(List<Claim> claims) {
         Log.d(TAG, "Calculating stats for " + claims.size() + " claims");
 
@@ -197,20 +196,17 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
                 ", Approved: " + approvedCount + ", Rejected: " + rejectedCount);
     }
 
-    // ✅ Update stats card TextViews
     private void updateStatsCards() {
         tvTotalClaimsCount.setText(String.valueOf(totalClaimsCount));
         tvPendingClaimsCount.setText(String.valueOf(pendingCount));
         tvApprovedClaimsCount.setText(String.valueOf(approvedCount));
         tvRejectedClaimsCount.setText(String.valueOf(rejectedCount));
 
-        // ✅ Update button labels with counts
         updateFilterButtonLabels();
 
         Log.d(TAG, "Stats cards updated");
     }
 
-    // ✅ Update filter button labels with counts
     private void updateFilterButtonLabels() {
         btnAllClaims.setText("All Claims (" + totalClaimsCount + ")");
         btnPendingClaims.setText("Pending (" + pendingCount + ")");
@@ -274,6 +270,42 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
                 });
     }
 
+    @Override
+    public void onDeleteClaim(Claim claim) {
+        Log.d(TAG, "Delete button clicked for claim: " + claim.getId());
+
+        // Show confirmation dialog
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Claim")
+                .setMessage("Are you sure you want to permanently delete this rejected claim? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    deleteClaim(claim);
+                })
+                .setNegativeButton("Cancel", null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+    }
+
+    private void deleteClaim(Claim claim) {
+        Log.d(TAG, "Deleting claim: " + claim.getId());
+
+        claimRepository.deleteClaim(claim.getId(),
+                new ClaimRepository.ClaimActionListener() {
+                    @Override
+                    public void onSuccess(String message) {
+                        Log.d(TAG, "Claim deleted successfully");
+                        Toast.makeText(ClaimsActivity.this, "Claim deleted successfully", Toast.LENGTH_SHORT).show();
+                        loadAllClaims();
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, "Error deleting claim: " + error);
+                        Toast.makeText(ClaimsActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
     private void showLocationSelectionDialog(Claim claim) {
         String[] locations = {
                 "SG CCMS",
@@ -282,7 +314,7 @@ public class ClaimsActivity extends AppCompatActivity implements ClaimsAdapter.O
                 "SG COED"
         };
 
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Select Claim Location");
         builder.setItems(locations, (dialog, which) -> {
             String selectedLocation = locations[which];
