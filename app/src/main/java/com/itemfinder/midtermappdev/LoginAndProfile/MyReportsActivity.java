@@ -373,18 +373,45 @@ public class MyReportsActivity extends AppCompatActivity {
                 .show();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void deleteReport(FoundItem item) {
-        // Delete from user's subcollection
-        db.collection("users")
-                .document(userId)
-                .collection("foundItems")
-                .document(item.getDocumentId())
-                .delete()
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Report deleted", Toast.LENGTH_SHORT).show();
-                    loadUserReports(); // Reload data
-                })
-                .addOnFailureListener(e -> Toast.makeText(this, "Failed to delete: " + e.getMessage(),
-                        Toast.LENGTH_SHORT).show());
+        String documentId = item.getDocumentId();
+        String status = item.getStatus().toLowerCase();
+
+        Log.d(TAG, "Removing report from view - DocID: " + documentId + ", Status: " + status);
+
+        // Remove from allItems list
+        allItems.removeIf(foundItem -> foundItem.getDocumentId().equals(documentId));
+
+        // Remove from filteredItems list
+        filteredItems.removeIf(foundItem -> foundItem.getDocumentId().equals(documentId));
+
+        // Update counts based on removed item's status
+        switch (status) {
+            case "pending":
+            case "pending_review":
+                pendingCount--;
+                break;
+            case "approved":
+                approvedCount--;
+                break;
+            case "claimed":
+                claimedCount--;
+                break;
+            case "rejected":
+                rejectedCount--;
+                break;
+        }
+
+        // Update UI
+        updateSummary();
+        adapter.notifyDataSetChanged();
+        updateEmptyState(currentTab);
+
+        Toast.makeText(this, "Report removed from view", Toast.LENGTH_SHORT).show();
+
+        Log.d(TAG, "Updated counts - Pending: " + pendingCount + ", Approved: " + approvedCount +
+                ", Claimed: " + claimedCount + ", Rejected: " + rejectedCount);
     }
+
 }

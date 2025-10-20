@@ -85,8 +85,15 @@ public class FoundItemAdapter extends RecyclerView.Adapter<FoundItemAdapter.View
             holder.itemImage.setImageResource(R.drawable.ic_package);
         }
 
-        // Delete button click listener
-        holder.btnDelete.setOnClickListener(v -> onDeleteClickListener.onDeleteClick(item));
+        // Show delete button only for Claimed and Rejected items
+        if (status != null &&
+                (status.equalsIgnoreCase("claimed") || status.equalsIgnoreCase("rejected"))) {
+            holder.btnDelete.setVisibility(View.VISIBLE);
+            holder.btnDelete.setOnClickListener(v -> onDeleteClickListener.onDeleteClick(item));
+        } else {
+            holder.btnDelete.setVisibility(View.GONE);
+        }
+
     }
 
     @Override

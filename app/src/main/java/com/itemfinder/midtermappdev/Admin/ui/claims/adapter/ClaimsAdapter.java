@@ -17,7 +17,7 @@ public class ClaimsAdapter extends RecyclerView.Adapter<ClaimViewHolder> {
         void onApproveClaim(Claim claim);
         void onRejectClaim(Claim claim);
         void onMarkAsClaimed(Claim claim);
-        void onDeleteClaim(Claim claim); // NEW: Delete action
+        void onDeleteClaim(Claim claim);
     }
 
     public ClaimsAdapter(List<Claim> claimList, OnClaimActionListener listener) {
@@ -142,8 +142,18 @@ public class ClaimsAdapter extends RecyclerView.Adapter<ClaimViewHolder> {
             holder.btnDelete.setEnabled(true);
             holder.btnDelete.setAlpha(1.0f);
 
+        } else if ("Claimed".equals(status)) {
+            // Claimed: Show ONLY Delete button
+            holder.btnApprove.setVisibility(View.GONE);
+            holder.btnReject.setVisibility(View.GONE);
+            holder.btnClaimed.setVisibility(View.GONE);
+            holder.btnDelete.setVisibility(View.VISIBLE);
+
+            holder.btnDelete.setEnabled(true);
+            holder.btnDelete.setAlpha(1.0f);
+
         } else {
-            // Claimed or other status: Hide all buttons
+            // Other status: Hide all buttons
             holder.btnApprove.setVisibility(View.GONE);
             holder.btnReject.setVisibility(View.GONE);
             holder.btnClaimed.setVisibility(View.GONE);
