@@ -50,6 +50,8 @@ import java.util.Set;
 
 public class HomeFragment extends Fragment {
 
+    private static final String TAG = "HomeFragment";
+
     private LinearLayout btnLost, btnFound;
     private DrawerLayout drawerLayout;
     private TextView moreFoundItems, moreClaimedItems;
@@ -64,6 +66,10 @@ public class HomeFragment extends Fragment {
     private LinearLayout claimedItemsPreviewContainer;
     private DatabaseReference databaseReference;
     private FirebaseFirestore firestore;
+
+    // ✅ NotificationManager integration
+    private com.itemfinder.midtermappdev.utils.NotificationManager notificationManager;
+    private String currentUserId;
 
     private void saveNotificationsToPrefs() {
         requireActivity().getSharedPreferences("notifications", 0)
@@ -119,6 +125,9 @@ public class HomeFragment extends Fragment {
         databaseReference = FirebaseDatabase.getInstance().getReference("items");
         firestore = FirebaseFirestore.getInstance();
 
+        // ✅ Initialize NotificationManager
+        initializeNotificationManager();
+
         // Load data preview from both Realtime Database and Firestore
         loadItemsFromRealtimeDatabase();
         loadItemsFromFirestore();
@@ -171,6 +180,61 @@ public class HomeFragment extends Fragment {
     }
 
     /**
+     * ✅ Initialize NotificationManager with real-time tracking
+     */
+    private void initializeNotificationManager() {
+        // Get current user ID
+        if (getActivity() instanceof HomeAndReportMainActivity) {
+            currentUserId = ((HomeAndReportMainActivity) getActivity()).getUserId();
+        }
+
+        if (currentUserId == null || currentUserId.isEmpty()) {
+            Log.w(TAG, "User ID not found, cannot initialize NotificationManager");
+            return;
+        }
+
+        Log.d(TAG, "Initializing NotificationManager for user: " + currentUserId);
+
+        // Get NotificationManager instance
+        notificationManager = com.itemfinder.midtermappdev.utils.NotificationManager.getInstance();
+
+        // Initialize with callback
+        notificationManager.initialize(
+                requireContext(),
+                currentUserId,
+                new com.itemfinder.midtermappdev.utils.NotificationManager.NotificationCallback() {
+                    @Override
+                    public void onNotificationReceived(String message, String type, String documentId) {
+                        Log.d(TAG, "Notification received: " + message);
+                        addInAppNotification(message);
+
+                        // Auto-open notification drawer for important updates
+                        if (type.contains("APPROVED") || type.contains("REJECTED")) {
+                            openNotificationDrawer();
+                        }
+                    }
+
+                    @Override
+                    public void onNotificationRemoved(String documentId) {
+                        Log.d(TAG, "Notification removed for: " + documentId);
+                        // Optional: Remove specific notification from list
+                    }
+                }
+        );
+
+        Log.d(TAG, "NotificationManager initialized successfully");
+    }
+
+    /**
+     * ✅ Open notification drawer automatically
+     */
+    private void openNotificationDrawer() {
+        if (drawerLayout != null && !drawerLayout.isDrawerOpen(GravityCompat.END)) {
+            drawerLayout.openDrawer(GravityCompat.END);
+        }
+    }
+
+    /**
      * Load items from Firebase Realtime Database (items node)
      */
     private void loadItemsFromRealtimeDatabase() {
@@ -191,25 +255,14 @@ public class HomeFragment extends Fragment {
 
                     item.setId(itemSnap.getKey());
 
-                    // Debug log
-                    Log.d("HomeFragment", "Item: " + item.getName() +
-                            " | Status: " + item.getStatus() +
-                            " | isClaimed: " + item.isClaimed());
-
                     // Check if item is claimed
                     if (item.isClaimed() || "claimed".equalsIgnoreCase(item.getStatus())) {
                         claimedItems.add(item);
-                        Log.d("HomeFragment", "✅ Added to CLAIMED: " + item.getName());
                     } else if ("approved".equalsIgnoreCase(item.getStatus()) ||
                             "available".equalsIgnoreCase(item.getStatus())) {
                         availableItems.add(item);
-                        Log.d("HomeFragment", "✅ Added to AVAILABLE: " + item.getName());
-                    } else {
-                        Log.w("HomeFragment", "⚠️ Item not categorized: " + item.getName() + " (status: " + item.getStatus() + ")");
                     }
                 }
-
-                Log.d("HomeFragment", "📊 Available: " + availableItems.size() + ", Claimed: " + claimedItems.size());
 
                 // Update UI with available items
                 updateAvailableItemsUI(availableItems);
@@ -220,7 +273,7 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("HomeFragment", "Error loading items: " + error.getMessage());
+                Log.e(TAG, "Error loading items: " + error.getMessage());
             }
         });
     }
@@ -234,7 +287,7 @@ public class HomeFragment extends Fragment {
                 .limit(10)
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) {
-                        Log.e("HomeFragment", "Error loading Firestore items: " + error.getMessage());
+                        Log.e(TAG, "Error loading Firestore items: " + error.getMessage());
                         return;
                     }
 
@@ -252,7 +305,6 @@ public class HomeFragment extends Fragment {
                             );
                             item.setId(doc.getId());
 
-                            // Check if claimed
                             Boolean isClaimed = doc.getBoolean("isClaimed");
                             if (isClaimed != null && isClaimed) {
                                 item.setClaimed(true);
@@ -261,23 +313,20 @@ public class HomeFragment extends Fragment {
                             firestoreItems.add(item);
                         }
 
-                        // Merge with existing items (avoid duplicates)
                         mergeFirestoreItems(firestoreItems);
                     }
                 });
     }
 
     /**
-     * Load claimed items from Firestore (claims collection with status "Claimed")
-     * Simplified version without complex queries to avoid index requirements
+     * Load claimed items from Firestore
      */
     private void loadClaimedItemsFromFirestore() {
-        // Load from claims collection - get all and filter locally
         firestore.collection("claims")
-                .limit(50) // Get more items to filter locally
+                .limit(50)
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) {
-                        Log.e("HomeFragment", "Error loading claimed items: " + error.getMessage());
+                        Log.e(TAG, "Error loading claimed items: " + error.getMessage());
                         return;
                     }
 
@@ -287,12 +336,9 @@ public class HomeFragment extends Fragment {
                         for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
                             String status = doc.getString("status");
 
-                            // Filter for claimed items only
                             if ("Claimed".equalsIgnoreCase(status)) {
                                 String itemId = doc.getString("itemId");
                                 String itemName = doc.getString("itemName");
-
-                                Log.d("HomeFragment", "📦 Found claimed item: " + itemName);
 
                                 Item item = new Item(
                                         itemName != null ? itemName : "Unknown Item",
@@ -309,23 +355,16 @@ public class HomeFragment extends Fragment {
                             }
                         }
 
-                        Log.d("HomeFragment", "🎯 Total claimed items from claims collection: " + claimedItems.size());
-
-                        // Update claimed items UI
                         if (!claimedItems.isEmpty()) {
                             updateClaimedItemsUI(claimedItems);
-                        } else {
-                            Log.w("HomeFragment", "⚠️ No claimed items found in claims collection");
                         }
                     }
                 });
 
-        // Also check approvedItems collection for items marked as claimed
         firestore.collection("approvedItems")
                 .limit(50)
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) {
-                        Log.e("HomeFragment", "Error loading claimed approved items: " + error.getMessage());
                         return;
                     }
 
@@ -335,11 +374,8 @@ public class HomeFragment extends Fragment {
                         for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
                             Boolean isClaimed = doc.getBoolean("isClaimed");
 
-                            // Filter for claimed items only
                             if (isClaimed != null && isClaimed) {
                                 String itemName = doc.getString("itemName");
-
-                                Log.d("HomeFragment", "📦 Found claimed approved item: " + itemName);
 
                                 Item item = new Item(
                                         itemName,
@@ -356,28 +392,18 @@ public class HomeFragment extends Fragment {
                             }
                         }
 
-                        Log.d("HomeFragment", "🎯 Total claimed from approvedItems: " + claimedItems.size());
-
-                        // Merge with existing claimed items
                         if (!claimedItems.isEmpty()) {
                             mergeClaimedItems(claimedItems);
-                        } else {
-                            Log.w("HomeFragment", "⚠️ No claimed items found in approvedItems collection");
                         }
                     }
                 });
     }
 
-    /**
-     * Merge claimed items without duplicating
-     */
     private void mergeClaimedItems(List<Item> newClaimedItems) {
         if (claimedItemsPreviewContainer == null) return;
 
-        // Get current count
         int currentCount = claimedItemsPreviewContainer.getChildCount();
 
-        // Add new items (up to 5 total)
         for (Item item : newClaimedItems) {
             if (currentCount >= 5) break;
 
@@ -387,9 +413,6 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    /**
-     * Merge Firestore items with existing Realtime Database items
-     */
     private void mergeFirestoreItems(List<Item> firestoreItems) {
         List<Item> availableItems = new ArrayList<>();
         List<Item> claimedItems = new ArrayList<>();
@@ -402,7 +425,6 @@ public class HomeFragment extends Fragment {
             }
         }
 
-        // Add to existing UI (won't duplicate if already exists)
         if (!availableItems.isEmpty()) {
             updateAvailableItemsUI(availableItems);
         }
@@ -411,13 +433,9 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    /**
-     * Update Available Items UI
-     */
     private void updateAvailableItemsUI(List<Item> items) {
         if (availableItemsPreviewContainer == null) return;
 
-        // Clear and show only latest 5 items
         availableItemsPreviewContainer.removeAllViews();
 
         int count = Math.min(items.size(), 5);
@@ -427,19 +445,12 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    /**
-     * Update Claimed Items UI
-     */
     private void updateClaimedItemsUI(List<Item> items) {
         if (claimedItemsPreviewContainer == null) return;
 
-        // Clear and show only latest 5 items
         claimedItemsPreviewContainer.removeAllViews();
 
-        Log.d("HomeFragment", "🔄 Updating Claimed Items UI with " + items.size() + " items");
-
         if (items.isEmpty()) {
-            // Show "No claimed items yet" message
             TextView noItemsText = new TextView(getContext());
             noItemsText.setText("No claimed items yet");
             noItemsText.setTextColor(0xFF999999);
@@ -457,6 +468,12 @@ public class HomeFragment extends Fragment {
     }
 
     private View createItemCard(Item item) {
+        // ✅ Safety: Ensure fragment is still attached before using getContext()
+        if (getContext() == null || !isAdded()) {
+            Log.w(TAG, "Fragment not attached — skipping item card creation for: " + item.getName());
+            return new View(requireActivity()); // return a dummy view safely
+        }
+
         LayoutInflater inflater = LayoutInflater.from(getContext());
         View itemView = inflater.inflate(R.layout.item_lost_found_card, null, false);
 
@@ -489,6 +506,7 @@ public class HomeFragment extends Fragment {
         return itemView;
     }
 
+
     private void listenForFirestoreUpdates() {
         try {
             FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -500,7 +518,7 @@ public class HomeFragment extends Fragment {
                         .collection("foundItems")
                         .addSnapshotListener((snapshots, e) -> {
                             if (e != null) {
-                                Log.w("HomeFragment", "Listen failed.", e);
+                                Log.w(TAG, "Listen failed.", e);
                                 return;
                             }
 
@@ -522,7 +540,7 @@ public class HomeFragment extends Fragment {
                         });
             }
         } catch (Exception ex) {
-            Log.e("HomeFragment", "Error attaching Firestore listener", ex);
+            Log.e(TAG, "Error attaching Firestore listener", ex);
         }
     }
 
@@ -630,26 +648,6 @@ public class HomeFragment extends Fragment {
                 });
     }
 
-    public static void sendInAppNotificationToHome(Context context, String message) {
-        if (context == null) return;
-
-        if (context instanceof androidx.fragment.app.FragmentActivity) {
-            androidx.fragment.app.FragmentActivity activity = (androidx.fragment.app.FragmentActivity) context;
-
-            activity.runOnUiThread(() -> {
-                FragmentManager fm = activity.getSupportFragmentManager();
-                Fragment currentFragment = fm.findFragmentById(R.id.frame_layout);
-
-                if (currentFragment instanceof HomeFragment) {
-                    ((HomeFragment) currentFragment).addInAppNotification(message);
-                    Log.d("HomeFragment", "✅ Notification sent: " + message);
-                } else {
-                    Log.w("HomeFragment", "⚠️ HomeFragment not visible — notification skipped.");
-                }
-            });
-        }
-    }
-
     public void addNotification(String message) {
         if (notificationList == null) {
             notificationList = new ArrayList<>();
@@ -677,6 +675,16 @@ public class HomeFragment extends Fragment {
         } else {
             tvNoNotifications.setVisibility(View.GONE);
             rvNotifications.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+
+        // ✅ Cleanup NotificationManager when fragment is destroyed
+        if (notificationManager != null) {
+            notificationManager.cleanup();
         }
     }
 }

@@ -564,6 +564,9 @@ public class ReportFragment extends Fragment {
         return result;
     }
 
+    // ✅ Add this to the submitToFirebase method in ReportFragment.java
+// Replace the existing method with this updated version
+
     private void submitToFirebase(String category, String itemName, String description,
                                   String location, String dateFound, String contact,
                                   boolean isAnonymous, String imageUrl) {
@@ -610,6 +613,7 @@ public class ReportFragment extends Fragment {
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         final String finalUserId = userId;
+        final String finalItemName = itemName;
 
         // ✅ Save to "pendingItems"
         db.collection("pendingItems")
@@ -617,7 +621,8 @@ public class ReportFragment extends Fragment {
                 .addOnSuccessListener(documentReference -> {
                     String docId = documentReference.getId();
                     reportData.put("documentId", docId);
-                    reportData.put("status", "pending_review");
+
+                    Log.d("ReportFragment", "Report saved with ID: " + docId);
 
                     // ✅ Save also in user's collection
                     db.collection("users")
@@ -629,31 +634,16 @@ public class ReportFragment extends Fragment {
                                 Log.d("ReportFragment", "Saved to user's foundItems too.");
                             });
 
+                    // ✅ Notify NotificationManager about new report
+                    com.itemfinder.midtermappdev.utils.NotificationManager notifManager =
+                            com.itemfinder.midtermappdev.utils.NotificationManager.getInstance();
+                    notifManager.notifyReportSubmitted(finalItemName, docId);
+
                     // ✅ Once saved successfully, run UI updates
                     requireActivity().runOnUiThread(() -> {
                         Toast.makeText(requireContext(),
                                 "Report submitted! Awaiting admin approval.",
                                 Toast.LENGTH_LONG).show();
-
-                        // 🔹 Navigate back to HomeFragment first
-                        if (getActivity() instanceof HomeAndReportMainActivity) {
-                            HomeAndReportMainActivity main = (HomeAndReportMainActivity) getActivity();
-                            main.replaceFragment(new HomeFragment());
-
-                            // Wait for navigation to complete before sending notification
-                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                                HomeFragment homeFragment = (HomeFragment)
-                                        main.getSupportFragmentManager().findFragmentById(R.id.frame_layout);
-
-                                if (homeFragment != null && homeFragment.isAdded()) {
-                                    homeFragment.addInAppNotification("Your found item has been submitted!");
-                                    DrawerLayout drawer = main.findViewById(R.id.drawerLayout);
-                                    drawer.openDrawer(GravityCompat.END);
-                                } else {
-                                    Log.e("InAppNotif", "Still can't find HomeFragment after navigation!");
-                                }
-                            }, 500); // Small delay (0.5s) to let fragment attach
-                        }
 
                         // 🔹 System notification
                         showSubmissionNotification();
@@ -661,6 +651,15 @@ public class ReportFragment extends Fragment {
                         // 🔹 Reset form
                         resetForm();
                         btnPostFoundItem.setEnabled(true);
+
+                        // 🔹 Navigate back to HomeFragment
+                        if (getActivity() instanceof HomeAndReportMainActivity) {
+                            HomeAndReportMainActivity main = (HomeAndReportMainActivity) getActivity();
+                            main.replaceFragment(new HomeFragment());
+
+                            // The NotificationManager will automatically add the notification
+                            // to the HomeFragment when it initializes
+                        }
                     });
 
                 })

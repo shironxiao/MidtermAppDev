@@ -16,11 +16,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
+import android.content.Intent;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.itemfinder.midtermappdev.Find.Item;
 import com.itemfinder.midtermappdev.Find.ItemAdapter;
+import com.itemfinder.midtermappdev.Find.Processclaim;
 import com.itemfinder.midtermappdev.R;
 
 import java.util.ArrayList;
@@ -36,6 +38,12 @@ public class SearchFragment extends Fragment {
 
     Button btnAll, btnAcademic, btnWriting, btnPersonal, btnClothing, btnGadgets, btnIDs;
 
+    // User data
+    private String userId;
+    private String userEmail;
+    private String studentId;
+    private String fullName;
+
     public SearchFragment() {
         // Required empty public constructor
     }
@@ -45,6 +53,9 @@ public class SearchFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_search, container, false);
+
+        // ✅ Get user data from parent activity
+        getUserData();
 
         // Initialize RecyclerView
         recyclerView = view.findViewById(R.id.recyclerView);
@@ -59,6 +70,12 @@ public class SearchFragment extends Fragment {
 
         // Start showing all items
         itemAdapter = new ItemAdapter(filteredList, requireContext());
+
+        // ✅ Set click listener to pass data to Processclaim
+        itemAdapter.setOnItemClickListener(item -> {
+            openProcessclaim(item);
+        });
+
         recyclerView.setAdapter(itemAdapter);
 
         // Find buttons
@@ -78,6 +95,45 @@ public class SearchFragment extends Fragment {
         setupButtonListeners();
 
         return view;
+    }
+
+    /**
+     * ✅ Get user data from parent activity
+     */
+    private void getUserData() {
+        if (getActivity() instanceof HomeAndReportMainActivity) {
+            HomeAndReportMainActivity activity = (HomeAndReportMainActivity) getActivity();
+            userId = activity.getUserId();
+            userEmail = activity.getEmail();
+            studentId = activity.getStudentId();
+            fullName = activity.getFullName();
+
+            Log.d(TAG, "User data loaded - ID: " + userId);
+        }
+    }
+
+    /**
+     * ✅ Open Processclaim with user data
+     */
+    private void openProcessclaim(Item item) {
+        Intent intent = new Intent(requireContext(), Processclaim.class);
+
+        // Pass item data
+        intent.putExtra("itemId", item.getId());
+        intent.putExtra("itemName", item.getName());
+        intent.putExtra("itemCategory", item.getCategory());
+        intent.putExtra("itemLocation", item.getLocation());
+        intent.putExtra("itemDate", item.getDate());
+        intent.putExtra("itemStatus", item.getStatus());
+        intent.putExtra("itemImageUrl", item.getImageUrl());
+
+        // ✅ Pass user data
+        intent.putExtra("userId", userId);
+        intent.putExtra("userEmail", userEmail);
+        intent.putExtra("studentId", studentId);
+        intent.putExtra("fullName", fullName);
+
+        startActivity(intent);
     }
 
     private void loadApprovedItems() {
