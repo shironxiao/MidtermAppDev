@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- Notification Text -->
+    <TextView
+        android:id="@+id/tvNotificationText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Your claim for 'iPhone 13' has been approved! 📍 Collect at: SG CCMS"
+        android:textSize="14sp"
+        android:textColor="#1F2937"
+        android:lineSpacingExtra="2dp"
+        android:maxLines="3"
+        android:ellipsize="end" />
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        android:background="#E5E7EB" />
+
+</LinearLayout>

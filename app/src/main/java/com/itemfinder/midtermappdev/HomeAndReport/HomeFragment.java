@@ -71,6 +71,7 @@ public class HomeFragment extends Fragment {
     private com.itemfinder.midtermappdev.utils.NotificationManager notificationManager;
     private String currentUserId;
 
+
     private void saveNotificationsToPrefs() {
         requireActivity().getSharedPreferences("notifications", 0)
                 .edit()
@@ -205,11 +206,15 @@ public class HomeFragment extends Fragment {
                 new com.itemfinder.midtermappdev.utils.NotificationManager.NotificationCallback() {
                     @Override
                     public void onNotificationReceived(String message, String type, String documentId) {
-                        Log.d(TAG, "Notification received: " + message);
+                        Log.d(TAG, "📬 Notification received: " + message);
+                        Log.d(TAG, "Type: " + type + " | DocId: " + documentId);
+
+                        // Add notification to the list
                         addInAppNotification(message);
 
                         // Auto-open notification drawer for important updates
                         if (type.contains("APPROVED") || type.contains("REJECTED")) {
+                            Log.d(TAG, "Opening notification drawer for important update");
                             openNotificationDrawer();
                         }
                     }
@@ -222,7 +227,7 @@ public class HomeFragment extends Fragment {
                 }
         );
 
-        Log.d(TAG, "NotificationManager initialized successfully");
+        Log.d(TAG, "✅ NotificationManager initialized successfully");
     }
 
     /**
@@ -321,9 +326,23 @@ public class HomeFragment extends Fragment {
     /**
      * Load claimed items from Firestore
      */
+    /**
+     * Load claimed items from Firestore (only the current user's claims)
+     */
     private void loadClaimedItemsFromFirestore() {
-        firestore.collection("claims")
-                .limit(50)
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        String userId = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
+
+        if (userId == null) {
+            Log.w(TAG, "No user logged in, skipping claimed items load");
+            return;
+        }
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // ✅ Only query claims belonging to the logged-in user
+        db.collection("claims")
+                .whereEqualTo("userId", userId)
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) {
                         Log.e(TAG, "Error loading claimed items: " + error.getMessage());
@@ -336,6 +355,7 @@ public class HomeFragment extends Fragment {
                         for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
                             String status = doc.getString("status");
 
+                            // Only include if actually claimed
                             if ("Claimed".equalsIgnoreCase(status)) {
                                 String itemId = doc.getString("itemId");
                                 String itemName = doc.getString("itemName");
@@ -357,47 +377,15 @@ public class HomeFragment extends Fragment {
 
                         if (!claimedItems.isEmpty()) {
                             updateClaimedItemsUI(claimedItems);
+                        } else {
+                            Log.d(TAG, "No claimed items found for this user.");
                         }
-                    }
-                });
-
-        firestore.collection("approvedItems")
-                .limit(50)
-                .addSnapshotListener((snapshots, error) -> {
-                    if (error != null) {
-                        return;
-                    }
-
-                    if (snapshots != null && !snapshots.isEmpty()) {
-                        List<Item> claimedItems = new ArrayList<>();
-
-                        for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
-                            Boolean isClaimed = doc.getBoolean("isClaimed");
-
-                            if (isClaimed != null && isClaimed) {
-                                String itemName = doc.getString("itemName");
-
-                                Item item = new Item(
-                                        itemName,
-                                        doc.getString("category"),
-                                        doc.getString("location"),
-                                        "claimed",
-                                        doc.getString("dateFound"),
-                                        doc.getString("imageUrl")
-                                );
-                                item.setId(doc.getId());
-                                item.setClaimed(true);
-
-                                claimedItems.add(item);
-                            }
-                        }
-
-                        if (!claimedItems.isEmpty()) {
-                            mergeClaimedItems(claimedItems);
-                        }
+                    } else {
+                        Log.d(TAG, "No claimed items snapshot found.");
                     }
                 });
     }
+
 
     private void mergeClaimedItems(List<Item> newClaimedItems) {
         if (claimedItemsPreviewContainer == null) return;

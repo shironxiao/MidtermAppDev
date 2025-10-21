@@ -85,24 +85,31 @@ public class ClaimRepository {
                 });
     }
 
-    public void approveClaimWithLocation(String claimId, String itemId, String location, ClaimActionListener listener) {
+    public void approveClaimWithLocation(
+            String claimId,
+            String itemId,
+            String location,
+            ClaimActionListener listener
+    ) {
         Log.d(TAG, "Approving claim: " + claimId + " with location: " + location);
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("status", "Approved");
         updates.put("claimLocation", location);
+        updates.put("approvedAt", System.currentTimeMillis()); // Add timestamp
 
         claimsRef.document(claimId)
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Claim approved: " + claimId);
-                    listener.onSuccess("Claim approved successfully!");
+                    Log.d(TAG, "✅ Claim approved successfully: " + claimId + " | Location: " + location);
+                    listener.onSuccess("Claim approved! Location: " + location);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error approving claim: " + e.getMessage());
+                    Log.e(TAG, "❌ Error approving claim: " + e.getMessage());
                     listener.onError(e.getMessage());
                 });
     }
+
 
     public void rejectClaim(String claimId, ClaimActionListener listener) {
         Log.d(TAG, "Rejecting claim: " + claimId);

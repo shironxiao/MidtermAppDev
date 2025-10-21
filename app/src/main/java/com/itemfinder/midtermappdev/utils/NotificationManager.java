@@ -206,13 +206,15 @@ public class NotificationManager {
      * Handle claim request status changes
      */
     private void handleClaimStatusChange(String docId, String itemName, String status, String claimLocation) {
+        Log.d(TAG, "Handling claim status change - Status: " + status + ", Location: " + claimLocation);
+
         switch (status) {
             case "Approved":
                 String locationMsg = claimLocation != null && !claimLocation.isEmpty()
-                        ? " Please collect it at: " + claimLocation
-                        : "";
+                        ? " 📍 Collect at: " + claimLocation
+                        : " (Location to be announced)";
                 sendNotification(
-                        "✅ Claim Approved: Your claim for \"" + itemName + "\" has been approved!" + locationMsg,
+                        "✅ Claim Approved: \"" + itemName + "\"" + locationMsg,
                         "CLAIM_APPROVED",
                         docId
                 );
@@ -220,7 +222,7 @@ public class NotificationManager {
 
             case "Rejected":
                 sendNotification(
-                        "❌ Claim Rejected: Your claim for \"" + itemName + "\" was not approved. The item may have been claimed by another user.",
+                        "❌ Claim Rejected: Your claim for \"" + itemName + "\" was not approved.",
                         "CLAIM_REJECTED",
                         docId
                 );
@@ -228,7 +230,7 @@ public class NotificationManager {
 
             case "Claimed":
                 sendNotification(
-                        "🎉 Item Collected: Thank you for collecting \"" + itemName + "\". We hope you're reunited with your item!",
+                        "🎉 Item Collected: \"" + itemName + "\" - Thank you!",
                         "CLAIM_COMPLETED",
                         docId
                 );
