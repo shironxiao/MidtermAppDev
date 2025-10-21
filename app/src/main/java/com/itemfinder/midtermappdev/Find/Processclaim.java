@@ -3,38 +3,25 @@ package com.itemfinder.midtermappdev.Find;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
+import android.content.pm.PackageManager;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.bitmap.CenterCrop;
-import com.cloudinary.android.MediaManager;
-import com.cloudinary.android.callback.ErrorInfo;
-import com.cloudinary.android.callback.UploadCallback;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.itemfinder.midtermappdev.HomeAndReport.HomeFragment;
 import com.itemfinder.midtermappdev.R;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import jp.wasabeef.glide.transformations.BlurTransformation;
+import com.squareup.picasso.Picasso;
 
 public class Processclaim extends AppCompatActivity {
 
     private static final int PICK_IMAGE_REQUEST = 100;
-    private static final String TAG = "Processclaim";
 
     // Claimer inputs
     private EditText claimerNameInput, claimerIdInput, claimerDescriptionInput;
@@ -50,31 +37,17 @@ public class Processclaim extends AppCompatActivity {
     private Uri[] selectedImages = new Uri[3];
     private int currentImageIndex = -1;
 
-    // Item details
-    private String itemId;
-    private String itemName;
-    private String itemCategory;
-    private String itemLocation;
-    private String itemDate;
-    private String itemStatus;
-    private String itemImageUrl;
-
-    private FirebaseFirestore db;
-    private List<String> uploadedImageUrls = new ArrayList<>();
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.process_claim);
 
-        // Initialize Firestore
-        db = FirebaseFirestore.getInstance();
-
-        // Initialize Cloudinary (already configured in your app)
-        try {
-            MediaManager.get();
-        } catch (Exception e) {
-            Log.e(TAG, "Cloudinary not initialized", e);
+        // ✅ Request notification permission (Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 100);
+            }
         }
 
         // 🔙 Back button
@@ -92,13 +65,12 @@ public class Processclaim extends AppCompatActivity {
 
         // ✅ Load item details from Intent
         Intent intent = getIntent();
-        itemId = intent.getStringExtra("itemId");
-        itemName = intent.getStringExtra("itemName");
-        itemCategory = intent.getStringExtra("itemCategory");
-        itemLocation = intent.getStringExtra("itemLocation");
-        itemDate = intent.getStringExtra("itemDate");
-        itemStatus = intent.getStringExtra("itemStatus");
-        itemImageUrl = intent.getStringExtra("itemImageUrl");
+        String itemName = intent.getStringExtra("itemName");
+        String itemCategory = intent.getStringExtra("itemCategory");
+        String itemLocation = intent.getStringExtra("itemLocation");
+        String itemDate = intent.getStringExtra("itemDate");
+        String itemStatus = intent.getStringExtra("itemStatus");
+        String itemImageUrl = intent.getStringExtra("itemImageUrl");
 
         // 🟦 Handle finder anonymity
         boolean isAnonymous = intent.getBooleanExtra("isAnonymous", false);
@@ -129,13 +101,13 @@ public class Processclaim extends AppCompatActivity {
             if (tvDate != null) tvDate.setText("Date Found: " + itemDate);
             if (tvStatus != null) tvStatus.setText(itemStatus);
 
-            // Load image with maximum blur using Glide
             if (itemImageUrl != null && !itemImageUrl.isEmpty()) {
-                Glide.with(this)
+                Picasso.get()
                         .load(itemImageUrl)
                         .placeholder(R.drawable.ic_placeholder_image)
                         .error(R.drawable.ic_error_image)
-                        .transform(new CenterCrop(), new BlurTransformation(25, 8))
+                        .fit()
+                        .centerCrop()
                         .into(ivItemImage);
             }
         }
@@ -149,17 +121,9 @@ public class Processclaim extends AppCompatActivity {
         proof2.setOnClickListener(v -> openImagePicker(1));
         proof3.setOnClickListener(v -> openImagePicker(2));
 
-        // ✅ Submit button
+        // ✅ Claim button
         btnClaim = findViewById(R.id.btnClaim);
-        btnClaim.setOnClickListener(v -> handleClaim());
-    }
-
-    private void setBlurredPlaceholder(ImageView imageView) {
-        // Set a default placeholder with blur effect
-        Glide.with(this)
-                .load(R.drawable.ic_placeholder_image)
-                .transform(new BlurTransformation(25, 8))
-                .into(imageView);
+        btnClaim.setOnClickListener(v -> handleClaim(itemName));
     }
 
     private void openImagePicker(int index) {
@@ -177,48 +141,26 @@ public class Processclaim extends AppCompatActivity {
             Uri imageUri = data.getData();
             selectedImages[currentImageIndex] = imageUri;
 
-            // Load selected image with blur effect
-            ImageView targetImageView = null;
             switch (currentImageIndex) {
-                case 0:
-                    targetImageView = proof1;
-                    break;
-                case 1:
-                    targetImageView = proof2;
-                    break;
-                case 2:
-                    targetImageView = proof3;
-                    break;
-            }
-
-            if (targetImageView != null) {
-                Glide.with(this)
-                        .load(imageUri)
-                        .transform(new CenterCrop(), new BlurTransformation(25, 8))
-                        .into(targetImageView);
+                case 0: proof1.setImageURI(imageUri); break;
+                case 1: proof2.setImageURI(imageUri); break;
+                case 2: proof3.setImageURI(imageUri); break;
             }
         }
     }
 
-    private void handleClaim() {
+    private void handleClaim(String itemName) {
         String claimerName = claimerNameInput.getText().toString().trim();
         String claimerId = claimerIdInput.getText().toString().trim();
         String description = claimerDescriptionInput.getText().toString().trim();
 
-        // Validation
         if (claimerName.isEmpty()) {
             Toast.makeText(this, "Please enter your full name.", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (claimerId.isEmpty()) {
-            Toast.makeText(this, "Please enter your School ID.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Validate ID format (12-3456)
-        if (!claimerId.matches("\\d{2}-\\d{4}")) {
-            Toast.makeText(this, "ID must be in format: 12-3456", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please enter your Claimer ID.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -240,121 +182,21 @@ public class Processclaim extends AppCompatActivity {
             return;
         }
 
-        // Show progress
-        btnClaim.setEnabled(false);
-        btnClaim.setText("Submitting...");
+        // ✅ Show success toast
+        Toast.makeText(this, "Claim submitted successfully!", Toast.LENGTH_LONG).show();
 
-        // Upload images to Cloudinary
-        uploadImagesToCloudinary(claimerName, claimerId, description);
-    }
+        // ✅ Trigger in-app notification (notif.java handles this)
+        notif.showClaimNotification(this, itemName, "Pending");
 
-    private void uploadImagesToCloudinary(String claimerName, String claimerId, String description) {
-        uploadedImageUrls.clear();
-        final int[] uploadCount = {0};
-        int totalImages = 0;
+        // ✅ Auto-redirect to notification screen
+        Intent notifIntent = new Intent(Processclaim.this, NotifActivity.class);
+        notifIntent.putExtra("itemName", itemName);
+        notifIntent.putExtra("claimerName", claimerName);
+        notifIntent.putExtra("claimerId", claimerId);
+        notifIntent.putExtra("status", "Pending");
+        startActivity(notifIntent);
 
-        for (Uri uri : selectedImages) {
-            if (uri != null) totalImages++;
-        }
-
-        final int finalTotalImages = totalImages;
-
-        for (int i = 0; i < selectedImages.length; i++) {
-            if (selectedImages[i] != null) {
-                MediaManager.get().upload(selectedImages[i])
-                        .callback(new UploadCallback() {
-                            @Override
-                            public void onStart(String requestId) {
-                                Log.d(TAG, "Upload started: " + requestId);
-                            }
-
-                            @Override
-                            public void onProgress(String requestId, long bytes, long totalBytes) {
-                                double progress = (double) bytes / totalBytes;
-                                Log.d(TAG, "Upload progress: " + (progress * 100) + "%");
-                            }
-
-                            @Override
-                            public void onSuccess(String requestId, Map resultData) {
-                                String imageUrl = (String) resultData.get("secure_url");
-                                uploadedImageUrls.add(imageUrl);
-                                uploadCount[0]++;
-
-                                Log.d(TAG, "Image uploaded successfully: " + imageUrl);
-
-                                if (uploadCount[0] == finalTotalImages) {
-                                    // All images uploaded, now save to Firestore
-                                    saveClaimToFirestore(claimerName, claimerId, description);
-                                }
-                            }
-
-                            @Override
-                            public void onError(String requestId, ErrorInfo error) {
-                                Log.e(TAG, "Upload error: " + error.getDescription());
-                                runOnUiThread(() -> {
-                                    Toast.makeText(Processclaim.this,
-                                            "Image upload failed: " + error.getDescription(),
-                                            Toast.LENGTH_LONG).show();
-                                    btnClaim.setEnabled(true);
-                                    btnClaim.setText("Submit Claim Request");
-                                });
-                            }
-
-                            @Override
-                            public void onReschedule(String requestId, ErrorInfo error) {
-                                Log.d(TAG, "Upload rescheduled: " + requestId);
-                            }
-                        })
-                        .dispatch();
-            }
-        }
-    }
-
-    private void saveClaimToFirestore(String claimerName, String claimerId, String description) {
-        Map<String, Object> claimData = new HashMap<>();
-        claimData.put("claimantName", claimerName);
-        claimData.put("claimantId", claimerId);
-        claimData.put("description", description);
-        claimData.put("proofImages", uploadedImageUrls);
-        claimData.put("itemId", itemId);
-        claimData.put("itemName", itemName);
-        claimData.put("itemCategory", itemCategory);
-        claimData.put("itemLocation", itemLocation);
-        claimData.put("itemDate", itemDate);
-        claimData.put("itemImageUrl", itemImageUrl);
-        claimData.put("status", "Pending");
-        claimData.put("claimDate", System.currentTimeMillis());
-        claimData.put("claimLocation", "");
-
-        db.collection("claims")
-                .add(claimData)
-                .addOnSuccessListener(documentReference -> {
-                    Log.d(TAG, "Claim saved successfully: " + documentReference.getId());
-
-                    runOnUiThread(() -> {
-                        Toast.makeText(Processclaim.this,
-                                "Claim submitted successfully! Please wait for admin approval.",
-                                Toast.LENGTH_LONG).show();
-
-                        // 🟢 Send notification directly to HomeFragment
-                        HomeFragment.sendInAppNotificationToHome(Processclaim.this,
-                                "🟡 Your claim request for \"" + itemName + "\" has been submitted.");
-
-                        btnClaim.setText("Submit Claim Request");
-                        btnClaim.setEnabled(true);
-                        finish();
-                    });
-                })
-
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error saving claim", e);
-                    runOnUiThread(() -> {
-                        Toast.makeText(Processclaim.this,
-                                "Failed to submit claim: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show();
-                        btnClaim.setText("Submit Claim Request");
-                        btnClaim.setEnabled(true);
-                    });
-                });
+        // Optional: finish this screen
+        finish();
     }
 }

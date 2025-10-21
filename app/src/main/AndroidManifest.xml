@@ -56,6 +56,7 @@
         <activity
             android:name=".LoginAndProfile.MyReportsActivity"
             android:exported="false" />
+        <activity android:name=".Find.NotifActivity" />
         <!-- Firebase and Google Services -->
 
         <service
