@@ -129,7 +129,6 @@ public class ClaimRepository {
     public void markAsClaimed(String claimId, ClaimActionListener listener) {
         Log.d(TAG, "Marking claim as claimed: " + claimId);
 
-        // Get the claim document first
         db.collection("claims").document(claimId).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
@@ -141,47 +140,68 @@ public class ClaimRepository {
                             return;
                         }
 
-                        // Step 1: Update claim status to "Claimed"
+                        // Step 1: Update the claim status
                         db.collection("claims").document(claimId)
                                 .update("status", "Claimed")
                                 .addOnSuccessListener(aVoid -> {
                                     Log.d(TAG, "Claim status updated to Claimed");
 
-                                    // Step 2: Update the item status in pendingItems to "claimed"
-                                    db.collection("pendingItems").document(itemId)
-                                            .update("status", "claimed")
-                                            .addOnSuccessListener(v -> {
-                                                Log.d(TAG, "Item status updated to claimed in pendingItems");
+                                    // Step 2: Try to update in approvedItems first
+                                    DocumentReference approvedRef = db.collection("approvedItems").document(itemId);
+                                    approvedRef.get().addOnSuccessListener(doc -> {
+                                        if (doc.exists()) {
+                                            approvedRef.update("status", "claimed")
+                                                    .addOnSuccessListener(v -> {
+                                                        Log.d(TAG, "Item status updated to claimed in approvedItems");
+                                                        listener.onSuccess("Item marked as claimed successfully (approved item).");
+                                                    })
+                                                    .addOnFailureListener(e -> {
+                                                        Log.e(TAG, "Failed to update approved item", e);
+                                                        listener.onError("Failed to update approved item: " + e.getMessage());
+                                                    });
+                                        } else {
+                                            // Step 3: If not found in approvedItems, update in pendingItems
+                                            DocumentReference pendingRef = db.collection("pendingItems").document(itemId);
+                                            pendingRef.get().addOnSuccessListener(pendingDoc -> {
+                                                if (pendingDoc.exists()) {
+                                                    pendingRef.update("status", "claimed")
+                                                            .addOnSuccessListener(v -> {
+                                                                Log.d(TAG, "Item status updated to claimed in pendingItems");
 
-                                                // Step 3: If userId exists, also update user's foundItems
-                                                if (userId != null) {
-                                                    db.collection("users")
-                                                            .document(userId)
-                                                            .collection("foundItems")
-                                                            .document(itemId)
-                                                            .update("status", "Claimed")
-                                                            .addOnSuccessListener(v2 -> {
-                                                                Log.d(TAG, "User found item status updated");
-                                                                listener.onSuccess("Item marked as claimed successfully.");
+                                                                // Step 4: Optional - Try to update user's foundItems if exists
+                                                                if (userId != null) {
+                                                                    db.collection("users")
+                                                                            .document(userId)
+                                                                            .collection("foundItems")
+                                                                            .document(itemId)
+                                                                            .update("status", "Claimed")
+                                                                            .addOnSuccessListener(v2 -> {
+                                                                                Log.d(TAG, "User found item status updated");
+                                                                                listener.onSuccess("Item marked as claimed successfully.");
+                                                                            })
+                                                                            .addOnFailureListener(e -> {
+                                                                                Log.e(TAG, "Failed to update user found item", e);
+                                                                                listener.onSuccess("Item claimed (user record update failed).");
+                                                                            });
+                                                                } else {
+                                                                    listener.onSuccess("Item marked as claimed successfully.");
+                                                                }
                                                             })
                                                             .addOnFailureListener(e -> {
-                                                                Log.e(TAG, "Failed to update user found item", e);
-                                                                listener.onSuccess("Item marked as claimed (user record update failed).");
+                                                                Log.e(TAG, "Failed to update item status in pendingItems", e);
+                                                                listener.onError("Claim updated, but failed to update item status: " + e.getMessage());
                                                             });
                                                 } else {
-                                                    listener.onSuccess("Item marked as claimed successfully.");
+                                                    listener.onError("Item not found in approvedItems or pendingItems.");
                                                 }
-                                            })
-                                            .addOnFailureListener(e -> {
-                                                Log.e(TAG, "Failed to update item status in pendingItems", e);
-                                                listener.onError("Claim updated, but failed to update item status: " + e.getMessage());
                                             });
+                                        }
+                                    });
                                 })
                                 .addOnFailureListener(e -> {
                                     Log.e(TAG, "Failed to mark claim as claimed", e);
                                     listener.onError("Failed to mark claim as claimed: " + e.getMessage());
                                 });
-
                     } else {
                         listener.onError("Claim document not found.");
                     }
@@ -191,6 +211,7 @@ public class ClaimRepository {
                     listener.onError("Error retrieving claim: " + e.getMessage());
                 });
     }
+
 
     // Delete claim method
     public void deleteClaim(String claimId, ClaimActionListener listener) {

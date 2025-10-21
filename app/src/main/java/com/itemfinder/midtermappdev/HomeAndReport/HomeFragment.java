@@ -37,6 +37,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.itemfinder.midtermappdev.Find.Item;
 import com.itemfinder.midtermappdev.Find.Processclaim;
 import com.itemfinder.midtermappdev.HomeAndReport.adapter.NotificationAdapter;
@@ -67,12 +68,17 @@ public class HomeFragment extends Fragment {
     private DatabaseReference databaseReference;
     private FirebaseFirestore firestore;
 
+    // ✅ Firestore listeners for cleanup
+    private ListenerRegistration approvedItemsListener;
+    private ListenerRegistration claimedItemsListener;
+
     // ✅ NotificationManager integration
     private com.itemfinder.midtermappdev.utils.NotificationManager notificationManager;
     private String currentUserId;
 
-
     private void saveNotificationsToPrefs() {
+        if (!isAdded() || getActivity() == null) return;
+
         requireActivity().getSharedPreferences("notifications", 0)
                 .edit()
                 .putString("list", new com.google.gson.Gson().toJson(notificationList))
@@ -80,6 +86,8 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadNotificationsFromPrefs() {
+        if (!isAdded() || getActivity() == null) return;
+
         String json = requireActivity()
                 .getSharedPreferences("notifications", 0)
                 .getString("list", null);
@@ -88,7 +96,9 @@ public class HomeFragment extends Fragment {
             java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<List<String>>(){}.getType();
             notificationList.clear();
             notificationList.addAll(new com.google.gson.Gson().fromJson(json, type));
-            notificationAdapter.notifyDataSetChanged();
+            if (notificationAdapter != null) {
+                notificationAdapter.notifyDataSetChanged();
+            }
         }
     }
 
@@ -206,6 +216,12 @@ public class HomeFragment extends Fragment {
                 new com.itemfinder.midtermappdev.utils.NotificationManager.NotificationCallback() {
                     @Override
                     public void onNotificationReceived(String message, String type, String documentId) {
+                        // ✅ Check if fragment is still attached
+                        if (!isAdded() || getActivity() == null) {
+                            Log.w(TAG, "Fragment not attached - skipping notification");
+                            return;
+                        }
+
                         Log.d(TAG, "📬 Notification received: " + message);
                         Log.d(TAG, "Type: " + type + " | DocId: " + documentId);
 
@@ -248,8 +264,10 @@ public class HomeFragment extends Fragment {
         query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (availableItemsPreviewContainer == null || claimedItemsPreviewContainer == null)
+                // ✅ Safety check
+                if (!isAdded() || availableItemsPreviewContainer == null || claimedItemsPreviewContainer == null) {
                     return;
+                }
 
                 List<Item> availableItems = new ArrayList<>();
                 List<Item> claimedItems = new ArrayList<>();
@@ -287,10 +305,21 @@ public class HomeFragment extends Fragment {
      * Load approved items from Firestore (approvedItems collection)
      */
     private void loadItemsFromFirestore() {
-        firestore.collection("approvedItems")
+        // ✅ Remove old listener if exists
+        if (approvedItemsListener != null) {
+            approvedItemsListener.remove();
+        }
+
+        approvedItemsListener = firestore.collection("approvedItems")
                 .orderBy("submittedAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .limit(10)
                 .addSnapshotListener((snapshots, error) -> {
+                    // ✅ Safety check
+                    if (!isAdded() || getActivity() == null) {
+                        Log.w(TAG, "Fragment not attached - skipping Firestore update");
+                        return;
+                    }
+
                     if (error != null) {
                         Log.e(TAG, "Error loading Firestore items: " + error.getMessage());
                         return;
@@ -324,10 +353,7 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Load claimed items from Firestore
-     */
-    /**
-     * Load claimed items from Firestore (only the current user's claims)
+     * ✅ Load claimed items from Firestore (only the current user's claims)
      */
     private void loadClaimedItemsFromFirestore() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -338,12 +364,23 @@ public class HomeFragment extends Fragment {
             return;
         }
 
+        // ✅ Remove old listener if exists
+        if (claimedItemsListener != null) {
+            claimedItemsListener.remove();
+        }
+
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         // ✅ Only query claims belonging to the logged-in user
-        db.collection("claims")
+        claimedItemsListener = db.collection("claims")
                 .whereEqualTo("userId", userId)
                 .addSnapshotListener((snapshots, error) -> {
+                    // ✅ Safety check - CRITICAL FIX
+                    if (!isAdded() || getActivity() == null) {
+                        Log.w(TAG, "Fragment not attached - skipping claimed items update");
+                        return;
+                    }
+
                     if (error != null) {
                         Log.e(TAG, "Error loading claimed items: " + error.getMessage());
                         return;
@@ -386,9 +423,9 @@ public class HomeFragment extends Fragment {
                 });
     }
 
-
     private void mergeClaimedItems(List<Item> newClaimedItems) {
-        if (claimedItemsPreviewContainer == null) return;
+        // ✅ Safety check
+        if (!isAdded() || claimedItemsPreviewContainer == null) return;
 
         int currentCount = claimedItemsPreviewContainer.getChildCount();
 
@@ -396,8 +433,10 @@ public class HomeFragment extends Fragment {
             if (currentCount >= 5) break;
 
             View itemView = createItemCard(item);
-            claimedItemsPreviewContainer.addView(itemView);
-            currentCount++;
+            if (itemView != null) {
+                claimedItemsPreviewContainer.addView(itemView);
+                currentCount++;
+            }
         }
     }
 
@@ -422,19 +461,23 @@ public class HomeFragment extends Fragment {
     }
 
     private void updateAvailableItemsUI(List<Item> items) {
-        if (availableItemsPreviewContainer == null) return;
+        // ✅ Safety check
+        if (!isAdded() || availableItemsPreviewContainer == null) return;
 
         availableItemsPreviewContainer.removeAllViews();
 
         int count = Math.min(items.size(), 5);
         for (int i = 0; i < count; i++) {
             View itemView = createItemCard(items.get(i));
-            availableItemsPreviewContainer.addView(itemView);
+            if (itemView != null) {
+                availableItemsPreviewContainer.addView(itemView);
+            }
         }
     }
 
     private void updateClaimedItemsUI(List<Item> items) {
-        if (claimedItemsPreviewContainer == null) return;
+        // ✅ Safety check
+        if (!isAdded() || claimedItemsPreviewContainer == null) return;
 
         claimedItemsPreviewContainer.removeAllViews();
 
@@ -451,15 +494,20 @@ public class HomeFragment extends Fragment {
         int count = Math.min(items.size(), 5);
         for (int i = 0; i < count; i++) {
             View itemView = createItemCard(items.get(i));
-            claimedItemsPreviewContainer.addView(itemView);
+            if (itemView != null) {
+                claimedItemsPreviewContainer.addView(itemView);
+            }
         }
     }
 
+    /**
+     * ✅ CRITICAL FIX: Added safety checks before using requireActivity()
+     */
     private View createItemCard(Item item) {
         // ✅ Safety: Ensure fragment is still attached before using getContext()
         if (getContext() == null || !isAdded()) {
             Log.w(TAG, "Fragment not attached — skipping item card creation for: " + item.getName());
-            return new View(requireActivity()); // return a dummy view safely
+            return null; // Return null instead of dummy view
         }
 
         LayoutInflater inflater = LayoutInflater.from(getContext());
@@ -494,7 +542,6 @@ public class HomeFragment extends Fragment {
         return itemView;
     }
 
-
     private void listenForFirestoreUpdates() {
         try {
             FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -505,6 +552,9 @@ public class HomeFragment extends Fragment {
                         .document(userId)
                         .collection("foundItems")
                         .addSnapshotListener((snapshots, e) -> {
+                            // ✅ Safety check
+                            if (!isAdded() || getActivity() == null) return;
+
                             if (e != null) {
                                 Log.w(TAG, "Listen failed.", e);
                                 return;
@@ -542,7 +592,9 @@ public class HomeFragment extends Fragment {
             if (notificationAdapter != null) {
                 notificationAdapter.notifyItemInserted(0);
             }
-            rvNotifications.scrollToPosition(0);
+            if (rvNotifications != null) {
+                rvNotifications.scrollToPosition(0);
+            }
         }
 
         updateNoNotificationsView();
@@ -550,6 +602,8 @@ public class HomeFragment extends Fragment {
     }
 
     private void saveNotification(String message) {
+        if (!isAdded()) return;
+
         SharedPreferences prefs = requireContext().getSharedPreferences("InAppNotifications", Context.MODE_PRIVATE);
         Set<String> savedSet = new HashSet<>(prefs.getStringSet("notif_list", new HashSet<>()));
         savedSet.add(message);
@@ -557,6 +611,8 @@ public class HomeFragment extends Fragment {
     }
 
     private void loadNotifications() {
+        if (!isAdded()) return;
+
         SharedPreferences prefs = requireContext().getSharedPreferences("InAppNotifications", Context.MODE_PRIVATE);
         Set<String> savedSet = prefs.getStringSet("notif_list", new HashSet<>());
         for (String msg : savedSet) {
@@ -565,6 +621,8 @@ public class HomeFragment extends Fragment {
     }
 
     private void openFragment(Fragment fragment) {
+        if (!isAdded()) return;
+
         FragmentTransaction transaction = getParentFragmentManager().beginTransaction();
         transaction.replace(R.id.frame_layout, fragment);
         transaction.addToBackStack(null);
@@ -574,11 +632,15 @@ public class HomeFragment extends Fragment {
     private void setBottomNavSelected(int itemId) {
         if (getActivity() != null) {
             BottomNavigationView navView = getActivity().findViewById(R.id.navigationView);
-            navView.setSelectedItemId(itemId);
+            if (navView != null) {
+                navView.setSelectedItemId(itemId);
+            }
         }
     }
 
     private void showSystemNotification(String title, String message) {
+        if (!isAdded()) return;
+
         Context context = requireContext();
         String channelId = "item_status_channel";
 
@@ -607,7 +669,8 @@ public class HomeFragment extends Fragment {
     private void listenForApprovedItems() {
         firestore.collection("approvedItems")
                 .addSnapshotListener((value, error) -> {
-                    if (error != null) return;
+                    // ✅ Safety check
+                    if (!isAdded() || error != null) return;
 
                     for (DocumentChange change : value.getDocumentChanges()) {
                         if (change.getType() == DocumentChange.Type.ADDED) {
@@ -625,7 +688,8 @@ public class HomeFragment extends Fragment {
     private void listenForRejectedItems() {
         firestore.collection("rejectedItems")
                 .addSnapshotListener((value, error) -> {
-                    if (error != null || value == null) return;
+                    // ✅ Safety check
+                    if (!isAdded() || error != null || value == null) return;
 
                     for (DocumentChange change : value.getDocumentChanges()) {
                         if (change.getType() == DocumentChange.Type.ADDED) {
@@ -657,6 +721,8 @@ public class HomeFragment extends Fragment {
     }
 
     private void updateNoNotificationsView() {
+        if (tvNoNotifications == null || rvNotifications == null) return;
+
         if (notificationList == null || notificationList.isEmpty()) {
             tvNoNotifications.setVisibility(View.VISIBLE);
             rvNotifications.setVisibility(View.GONE);
@@ -670,9 +736,21 @@ public class HomeFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
 
+        // ✅ Cleanup Firestore listeners
+        if (approvedItemsListener != null) {
+            approvedItemsListener.remove();
+            approvedItemsListener = null;
+        }
+
+        if (claimedItemsListener != null) {
+            claimedItemsListener.remove();
+            claimedItemsListener = null;
+        }
+
         // ✅ Cleanup NotificationManager when fragment is destroyed
         if (notificationManager != null) {
             notificationManager.cleanup();
         }
     }
+
 }

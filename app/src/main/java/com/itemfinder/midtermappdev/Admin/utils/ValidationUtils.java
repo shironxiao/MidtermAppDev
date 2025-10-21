@@ -52,7 +52,7 @@ public class ValidationUtils {
             return false;
         }
 
-        return name.length() >= 3 && name.length() <= 100;
+        return name.length() >= 0 && name.length() <= 100;
     }
 
     /**

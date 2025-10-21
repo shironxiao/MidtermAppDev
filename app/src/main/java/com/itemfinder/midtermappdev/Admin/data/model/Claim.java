@@ -1,8 +1,11 @@
 package com.itemfinder.midtermappdev.Admin.data.model;
 
+import com.google.firebase.firestore.IgnoreExtraProperties;
 import java.util.List;
 
+@IgnoreExtraProperties
 public class Claim {
+
     private String id;
     private String itemId;
     private String claimantName;
@@ -22,7 +25,12 @@ public class Claim {
     private String itemDate;
     private String itemImageUrl;
 
-    public Claim() {} // Required for Firebase
+    // 🔹 Added fields
+    private String userId;
+    private long approvedAt; // ✅ FIXED: should be long, not String
+
+    // Required no-argument constructor for Firestore
+    public Claim() {}
 
     public Claim(String id, String itemId, String claimantName, String claimantId,
                  String claimantEmail, String claimantPhone, String description,
@@ -39,7 +47,7 @@ public class Claim {
         this.itemName = itemName;
     }
 
-    // Getters
+    // 🔹 Getters
     public String getId() { return id; }
     public String getItemId() { return itemId; }
     public String getClaimantName() { return claimantName; }
@@ -56,8 +64,10 @@ public class Claim {
     public String getItemLocation() { return itemLocation; }
     public String getItemDate() { return itemDate; }
     public String getItemImageUrl() { return itemImageUrl; }
+    public String getUserId() { return userId; }
+    public long getApprovedAt() { return approvedAt; } // ✅ FIXED
 
-    // Setters
+    // 🔹 Setters
     public void setId(String id) { this.id = id; }
     public void setItemId(String itemId) { this.itemId = itemId; }
     public void setClaimantName(String claimantName) { this.claimantName = claimantName; }
@@ -74,4 +84,6 @@ public class Claim {
     public void setItemLocation(String itemLocation) { this.itemLocation = itemLocation; }
     public void setItemDate(String itemDate) { this.itemDate = itemDate; }
     public void setItemImageUrl(String itemImageUrl) { this.itemImageUrl = itemImageUrl; }
+    public void setUserId(String userId) { this.userId = userId; }
+    public void setApprovedAt(long approvedAt) { this.approvedAt = approvedAt; } // ✅ FIXED
 }
