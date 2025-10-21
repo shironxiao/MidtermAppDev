@@ -69,10 +69,9 @@ public class NotificationManager {
 
         Log.d(TAG, "Starting listener for reported items");
 
-        // Listen to user's foundItems subcollection
-        reportedItemsListener = db.collection("users")
-                .document(userId)
-                .collection("foundItems")
+        // Listen to pendingItems where userId matches
+        reportedItemsListener = db.collection("pendingItems")
+                .whereEqualTo("userId", userId)
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) {
                         Log.e(TAG, "Error listening to reported items", error);
@@ -88,8 +87,7 @@ public class NotificationManager {
                             switch (dc.getType()) {
                                 case ADDED:
                                     // New report submitted
-                                    if ("pending".equalsIgnoreCase(status) ||
-                                            "pending_review".equalsIgnoreCase(status)) {
+                                    if ("pending".equalsIgnoreCase(status)) {
                                         sendNotification(
                                                 "📝 Report Submitted: \"" + itemName + "\" is awaiting admin approval.",
                                                 "REPORT_PENDING",
@@ -128,7 +126,7 @@ public class NotificationManager {
 
         // Listen to claims collection where claimantId matches userId
         claimRequestsListener = db.collection("claims")
-                .whereEqualTo("claimantId", userId)
+                .whereEqualTo("userId", userId)
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) {
                         Log.e(TAG, "Error listening to claim requests", error);
