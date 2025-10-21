@@ -5,12 +5,14 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,7 +25,7 @@ import com.itemfinder.midtermappdev.R;
 public class ProfileFragment extends Fragment {
 
     private TextView tvEmail, tvStudentId, tvPassword;
-    private Button btnLogout;
+    private ImageView btnMenu;
     private LinearLayout btnMyReports; // Changed from Button to LinearLayout
 
     public ProfileFragment() {
@@ -43,7 +45,7 @@ public class ProfileFragment extends Fragment {
         loadUserData();
 
         // Setup buttons
-        setupLogoutButton();
+        setupMenuButton();
         setupMyReportsButton();
 
         return view;
@@ -53,7 +55,7 @@ public class ProfileFragment extends Fragment {
         tvEmail = view.findViewById(R.id.tvEmail);
         tvStudentId = view.findViewById(R.id.tvStudentId);
         tvPassword = view.findViewById(R.id.tvPassword);
-        btnLogout = view.findViewById(R.id.btnLogout);
+        btnMenu = view.findViewById(R.id.btnMenu);
         btnMyReports = view.findViewById(R.id.btnMyReports); // Now finds LinearLayout correctly
     }
 
@@ -77,22 +79,49 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    private void setupLogoutButton() {
-        btnLogout.setOnClickListener(v -> {
-            // Show confirmation or directly logout
+    private void setupMenuButton() {
+
+        btnMenu.setOnClickListener(v -> {
+
+            PopupMenu popupMenu = new PopupMenu(requireContext(), v);
+            popupMenu.getMenuInflater().inflate(R.menu.profile_menu, popupMenu.getMenu());
+
+            popupMenu.setOnMenuItemClickListener(item -> {
+                if (item.getItemId() == R.id.menu_logout) {
+                    handleLogout();
+                    return true;
+                }
+                return false;
+            });
+
+            popupMenu.show();
+        });
+    }
+
+    private void handleLogout() {
+
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(requireContext());
+        builder.setTitle("Log Out");
+        builder.setMessage("Are you sure you want to log out?");
+        builder.setCancelable(false);
+
+        builder.setPositiveButton("Yes", (dialog, which) -> {
             Toast.makeText(getContext(), "Logging out...", Toast.LENGTH_SHORT).show();
 
-            // Navigate back to login
             Intent intent = new Intent(getActivity(), LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
 
-            // Finish the current activity
             if (getActivity() != null) {
                 getActivity().finish();
             }
         });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
     }
+
 
     private void setupMyReportsButton() {
         btnMyReports.setOnClickListener(v -> {
@@ -101,7 +130,7 @@ public class ProfileFragment extends Fragment {
                 String userId = activity.getUserId();
 
                 if (userId != null && !userId.isEmpty()) {
-                    // Navigate to My Reports Activity
+
                     Intent intent = new Intent(getActivity(), MyReportsActivity.class);
                     intent.putExtra("userId", userId);
                     startActivity(intent);
