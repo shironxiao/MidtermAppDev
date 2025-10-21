@@ -16,16 +16,8 @@ import android.content.pm.PackageManager;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.itemfinder.midtermappdev.R;
-import com.itemfinder.midtermappdev.utils.NotificationManager; // ✅ Added import
 import com.squareup.picasso.Picasso;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Processclaim extends AppCompatActivity {
 
@@ -44,9 +36,6 @@ public class Processclaim extends AppCompatActivity {
     // For storing selected images
     private Uri[] selectedImages = new Uri[3];
     private int currentImageIndex = -1;
-
-    // ✅ Firebase User ID
-    private String currentUserId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,20 +121,9 @@ public class Processclaim extends AppCompatActivity {
         proof2.setOnClickListener(v -> openImagePicker(1));
         proof3.setOnClickListener(v -> openImagePicker(2));
 
-        // ✅ Initialize Firebase user
-        initializeUser();
-
         // ✅ Claim button
         btnClaim = findViewById(R.id.btnClaim);
         btnClaim.setOnClickListener(v -> handleClaim(itemName));
-    }
-
-    // ✅ Initialize Firebase User
-    private void initializeUser() {
-        FirebaseAuth auth = FirebaseAuth.getInstance();
-        if (auth.getCurrentUser() != null) {
-            currentUserId = auth.getCurrentUser().getUid();
-        }
     }
 
     private void openImagePicker(int index) {
@@ -171,7 +149,6 @@ public class Processclaim extends AppCompatActivity {
         }
     }
 
-    // ✅ UPDATED CLAIM HANDLER
     private void handleClaim(String itemName) {
         String claimerName = claimerNameInput.getText().toString().trim();
         String claimerId = claimerIdInput.getText().toString().trim();
@@ -205,63 +182,21 @@ public class Processclaim extends AppCompatActivity {
             return;
         }
 
-        // Get item details from intent
-        Intent intent = getIntent();
-        String itemId = intent.getStringExtra("itemId");
-        String itemCategory = intent.getStringExtra("itemCategory");
-        String itemLocation = intent.getStringExtra("itemLocation");
-        String itemDate = intent.getStringExtra("itemDate");
-        String itemImageUrl = intent.getStringExtra("itemImageUrl");
+        // ✅ Show success toast
+        Toast.makeText(this, "Claim submitted successfully!", Toast.LENGTH_LONG).show();
 
-        // Prepare claim data
-        Map<String, Object> claimData = new HashMap<>();
-        claimData.put("itemId", itemId);
-        claimData.put("itemName", itemName);
-        claimData.put("itemCategory", itemCategory);
-        claimData.put("itemLocation", itemLocation);
-        claimData.put("itemDate", itemDate);
-        claimData.put("itemImageUrl", itemImageUrl);
-        claimData.put("claimantId", currentUserId != null ? currentUserId : claimerId);
-        claimData.put("claimantName", claimerName);
-        claimData.put("claimantEmail", ""); // optional
-        claimData.put("claimantPhone", ""); // optional
-        claimData.put("description", description);
-        claimData.put("status", "Pending");
-        claimData.put("claimDate", System.currentTimeMillis());
+        // ✅ Trigger in-app notification (notif.java handles this)
+        notif.showClaimNotification(this, itemName, "Pending");
 
-        // Convert URIs to string list (for now, store local URIs)
-        List<String> proofUrls = new ArrayList<>();
-        for (Uri uri : selectedImages) {
-            if (uri != null) {
-                proofUrls.add(uri.toString());
-            }
-        }
-        claimData.put("proofImages", proofUrls);
+        // ✅ Auto-redirect to notification screen
+        Intent notifIntent = new Intent(Processclaim.this, NotifActivity.class);
+        notifIntent.putExtra("itemName", itemName);
+        notifIntent.putExtra("claimerName", claimerName);
+        notifIntent.putExtra("claimerId", claimerId);
+        notifIntent.putExtra("status", "Pending");
+        startActivity(notifIntent);
 
-        // Submit to Firestore
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("claims")
-                .add(claimData)
-                .addOnSuccessListener(documentReference -> {
-                    String claimDocId = documentReference.getId();
-                    Toast.makeText(this, "Claim submitted successfully!", Toast.LENGTH_LONG).show();
-
-                    // ✅ Trigger notification
-                    NotificationManager.getInstance()
-                            .notifyClaimSubmitted(itemName, claimDocId);
-
-                    // ✅ Navigate to notification screen
-                    Intent notifIntent = new Intent(Processclaim.this, NotifActivity.class);
-                    notifIntent.putExtra("itemName", itemName);
-                    notifIntent.putExtra("claimerName", claimerName);
-                    notifIntent.putExtra("claimerId", claimerId);
-                    notifIntent.putExtra("status", "Pending");
-                    startActivity(notifIntent);
-
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Failed to submit claim: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
+        // Optional: finish this screen
+        finish();
     }
 }
