@@ -38,6 +38,9 @@
         <activity android:name=".LoginAndProfile.RegisterActivity" android:exported="true" />
         <activity android:name=".LoginAndProfile.ProfileActivity" android:exported="true" />
         <activity android:name=".LoginAndProfile.AdminLoginActivity" android:exported="true" />
+        <activity android:name=".LoginAndProfile.MyClaimsActivity" android:exported="true" />
+
+
         <activity
             android:name=".HomeAndReport.HomeAndReportMainActivity"
             android:exported="false" />

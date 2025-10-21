@@ -91,25 +91,49 @@ public class ClaimRepository {
             String location,
             ClaimActionListener listener
     ) {
-        Log.d(TAG, "Approving claim: " + claimId + " with location: " + location);
+        Log.d(TAG, "=== APPROVING CLAIM ===");
+        Log.d(TAG, "Claim ID: " + claimId);
+        Log.d(TAG, "Item ID: " + itemId);
+        Log.d(TAG, "Location: " + location);
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("status", "Approved");
         updates.put("claimLocation", location);
-        updates.put("approvedAt", System.currentTimeMillis()); // Add timestamp
+        updates.put("approvedAt", System.currentTimeMillis());
+
+        Log.d(TAG, "Update data: " + updates);
 
         claimsRef.document(claimId)
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "✅ Claim approved successfully: " + claimId + " | Location: " + location);
+                    Log.d(TAG, "✅ CLAIM APPROVED SUCCESSFULLY");
+                    Log.d(TAG, "   Claim ID: " + claimId);
+                    Log.d(TAG, "   Location: " + location);
+                    Log.d(TAG, "   Status: Approved");
+                    Log.d(TAG, "   Timestamp: " + System.currentTimeMillis());
+
+                    // Verify the update by reading back
+                    claimsRef.document(claimId).get()
+                            .addOnSuccessListener(doc -> {
+                                if (doc.exists()) {
+                                    Log.d(TAG, "Verification - Document data after update:");
+                                    Log.d(TAG, "   status: " + doc.getString("status"));
+                                    Log.d(TAG, "   claimLocation: " + doc.getString("claimLocation"));
+                                    Log.d(TAG, "   approvedAt: " + doc.getLong("approvedAt"));
+                                }
+                            });
+
                     listener.onSuccess("Claim approved! Location: " + location);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Error approving claim: " + e.getMessage());
+                    Log.e(TAG, "❌ ERROR APPROVING CLAIM");
+                    Log.e(TAG, "   Claim ID: " + claimId);
+                    Log.e(TAG, "   Error: " + e.getMessage());
+                    Log.e(TAG, "   Error class: " + e.getClass().getName());
+                    e.printStackTrace();
                     listener.onError(e.getMessage());
                 });
     }
-
 
     public void rejectClaim(String claimId, ClaimActionListener listener) {
         Log.d(TAG, "Rejecting claim: " + claimId);

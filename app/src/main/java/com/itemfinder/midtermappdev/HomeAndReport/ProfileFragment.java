@@ -11,7 +11,6 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -20,13 +19,14 @@ import android.widget.Toast;
 import com.itemfinder.midtermappdev.LoginAndProfile.LoginActivity;
 import com.itemfinder.midtermappdev.LoginAndProfile.MainActivity;
 import com.itemfinder.midtermappdev.LoginAndProfile.MyReportsActivity;
+import com.itemfinder.midtermappdev.LoginAndProfile.MyClaimsActivity;
 import com.itemfinder.midtermappdev.R;
 
 public class ProfileFragment extends Fragment {
 
     private TextView tvEmail, tvStudentId, tvPassword;
     private ImageView btnMenu;
-    private LinearLayout btnMyReports; // Changed from Button to LinearLayout
+    private LinearLayout btnMyReports, btnMyClaims;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -47,6 +47,7 @@ public class ProfileFragment extends Fragment {
         // Setup buttons
         setupMenuButton();
         setupMyReportsButton();
+        setupMyClaimsButton();
 
         return view;
     }
@@ -56,7 +57,8 @@ public class ProfileFragment extends Fragment {
         tvStudentId = view.findViewById(R.id.tvStudentId);
         tvPassword = view.findViewById(R.id.tvPassword);
         btnMenu = view.findViewById(R.id.btnMenu);
-        btnMyReports = view.findViewById(R.id.btnMyReports); // Now finds LinearLayout correctly
+        btnMyReports = view.findViewById(R.id.btnMyReports);
+        btnMyClaims = view.findViewById(R.id.btnMyClaims);
     }
 
     private void loadUserData() {
@@ -80,9 +82,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setupMenuButton() {
-
         btnMenu.setOnClickListener(v -> {
-
             PopupMenu popupMenu = new PopupMenu(requireContext(), v);
             popupMenu.getMenuInflater().inflate(R.menu.profile_menu, popupMenu.getMenu());
 
@@ -99,7 +99,6 @@ public class ProfileFragment extends Fragment {
     }
 
     private void handleLogout() {
-
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(requireContext());
         builder.setTitle("Log Out");
         builder.setMessage("Are you sure you want to log out?");
@@ -108,7 +107,7 @@ public class ProfileFragment extends Fragment {
         builder.setPositiveButton("Yes", (dialog, which) -> {
             Toast.makeText(getContext(), "Logging out...", Toast.LENGTH_SHORT).show();
 
-            Intent intent = new Intent(getActivity(), LoginActivity.class);
+            Intent intent = new Intent(getActivity(), MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
 
@@ -122,7 +121,6 @@ public class ProfileFragment extends Fragment {
         builder.show();
     }
 
-
     private void setupMyReportsButton() {
         btnMyReports.setOnClickListener(v -> {
             if (getActivity() instanceof HomeAndReportMainActivity) {
@@ -130,8 +128,24 @@ public class ProfileFragment extends Fragment {
                 String userId = activity.getUserId();
 
                 if (userId != null && !userId.isEmpty()) {
-
                     Intent intent = new Intent(getActivity(), MyReportsActivity.class);
+                    intent.putExtra("userId", userId);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(getContext(), "User not logged in", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void setupMyClaimsButton() {
+        btnMyClaims.setOnClickListener(v -> {
+            if (getActivity() instanceof HomeAndReportMainActivity) {
+                HomeAndReportMainActivity activity = (HomeAndReportMainActivity) getActivity();
+                String userId = activity.getUserId();
+
+                if (userId != null && !userId.isEmpty()) {
+                    Intent intent = new Intent(getActivity(), MyClaimsActivity.class);
                     intent.putExtra("userId", userId);
                     startActivity(intent);
                 } else {

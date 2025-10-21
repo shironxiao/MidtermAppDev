@@ -28,30 +28,28 @@
             app:tint="#2d3748"
             tools:ignore="ContentDescription" />
 
+        <!-- ✅ This ensures everything below can scroll correctly -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="40dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            android:layout_below="@id/btnMenu"
             tools:ignore="MissingConstraints">
 
             <!-- Profile Icon with Border -->
             <FrameLayout
                 android:layout_width="120dp"
                 android:layout_height="110dp"
-                android:layout_marginTop="45dp"
                 android:layout_gravity="center_horizontal"
+                android:layout_marginTop="45dp"
                 android:layout_marginBottom="25dp">
 
-                <!-- Outer Circle (Border) -->
                 <View
                     android:layout_width="120dp"
                     android:layout_height="110dp"
                     android:background="@drawable/profile_circle_border" />
 
-                <!-- Inner Icon -->
                 <ImageView
                     android:layout_width="86dp"
                     android:layout_height="85dp"
@@ -60,10 +58,6 @@
                     app:tint="#3F51B5"
                     tools:ignore="ContentDescription" />
             </FrameLayout>
-
-            <!-- Title -->
-
-            <!-- Email Section -->
 
             <TextView
                 android:layout_width="wrap_content"
@@ -76,6 +70,7 @@
                 android:textStyle="bold"
                 tools:ignore="HardcodedText" />
 
+            <!-- Email Section -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -98,14 +93,12 @@
                         android:text="@string/email_address"
                         android:textColor="#718096"
                         android:textSize="16sp"
-                        android:textStyle="bold"
-                        tools:ignore="TextContrastCheck" />
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvEmail"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=""
                         android:textColor="#2d3748"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -135,14 +128,12 @@
                         android:text="@string/student_id_"
                         android:textColor="#718096"
                         android:textSize="16sp"
-                        android:textStyle="bold"
-                        tools:ignore="TextContrastCheck" />
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvStudentId"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=""
                         android:textColor="#2d3748"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -172,8 +163,7 @@
                         android:text="@string/tvpassword"
                         android:textColor="#718096"
                         android:textSize="16sp"
-                        android:textStyle="bold"
-                        tools:ignore="TextContrastCheck" />
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/tvPassword"
@@ -201,8 +191,7 @@
                     android:layout_height="22dp"
                     android:layout_marginEnd="10dp"
                     android:src="@drawable/ic_reports"
-                    app:tint="@android:color/white"
-                    tools:ignore="ContentDescription" />
+                    app:tint="@android:color/white" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -211,12 +200,39 @@
                     android:text="MY REPORTS"
                     android:textColor="@android:color/white"
                     android:textSize="16sp"
-                    android:textStyle="bold"
-                    tools:ignore="HardcodedText" />
-
+                    android:textStyle="bold" />
             </LinearLayout>
+
+            <!-- My Claims Button -->
+            <LinearLayout
+                android:id="@+id/btnMyClaims"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="40dp"
+                android:background="@drawable/my_reports_button_background"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_marginEnd="10dp"
+                    android:src="@drawable/ic_reports"
+                    app:tint="@android:color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="0.08"
+                    android:text="MY CLAIMS"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
         </LinearLayout>
-
     </RelativeLayout>
-
 </ScrollView>

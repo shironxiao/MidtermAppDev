@@ -44,9 +44,12 @@ import com.itemfinder.midtermappdev.HomeAndReport.adapter.NotificationAdapter;
 import com.itemfinder.midtermappdev.R;
 import com.squareup.picasso.Picasso;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public class HomeFragment extends Fragment {
@@ -228,8 +231,14 @@ public class HomeFragment extends Fragment {
                         // Add notification to the list
                         addInAppNotification(message);
 
-                        // Auto-open notification drawer for important updates
-                        if (type.contains("APPROVED") || type.contains("REJECTED")) {
+                        // ✅ Auto-open drawer for claim approvals with location
+                        if (type.equals("CLAIM_APPROVED")) {
+                            Log.d(TAG, "Opening notification drawer for claim approval");
+                            openNotificationDrawer();
+
+                            // ✅ Show system notification too
+                            showSystemNotification("Claim Approved", message);
+                        } else if (type.contains("APPROVED") || type.contains("REJECTED")) {
                             Log.d(TAG, "Opening notification drawer for important update");
                             openNotificationDrawer();
                         }
@@ -238,7 +247,6 @@ public class HomeFragment extends Fragment {
                     @Override
                     public void onNotificationRemoved(String documentId) {
                         Log.d(TAG, "Notification removed for: " + documentId);
-                        // Optional: Remove specific notification from list
                     }
                 }
         );
@@ -599,6 +607,14 @@ public class HomeFragment extends Fragment {
 
         updateNoNotificationsView();
         saveNotificationsToPrefs();
+    }
+    /**
+     * ✅ Format claim approval notification with location
+     */
+    private String formatClaimNotification(String itemName, String location) {
+        String timestamp = new SimpleDateFormat("MMM dd, h:mm a", Locale.getDefault())
+                .format(new Date());
+        return "✅ Claim Approved: \"" + itemName + "\" 📍 Collect at: " + location + " • " + timestamp;
     }
 
     private void saveNotification(String message) {

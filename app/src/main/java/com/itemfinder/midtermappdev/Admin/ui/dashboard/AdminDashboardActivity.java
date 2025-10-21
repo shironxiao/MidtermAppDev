@@ -118,7 +118,7 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
 
         Button btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> {
-            Intent intent = new Intent(AdminDashboardActivity.this, com.itemfinder.midtermappdev.LoginAndProfile.LoginActivity.class);
+            Intent intent = new Intent(AdminDashboardActivity.this, com.itemfinder.midtermappdev.LoginAndProfile.MainActivity.class);
             startActivity(intent);
             finish();
         });

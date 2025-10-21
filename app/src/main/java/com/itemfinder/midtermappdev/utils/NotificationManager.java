@@ -119,55 +119,90 @@ public class NotificationManager {
     /**
      * Listen for changes to user's claim requests
      */
+    /**
+     * Listen for changes to user's claim requests
+     */
+    /**
+     * Listen for changes to user's claim requests
+     */
     private void startListeningForClaimRequests() {
-        if (userId == null) return;
+        if (userId == null) {
+            Log.e(TAG, "❌ Cannot start claim listener - userId is null");
+            return;
+        }
 
-        Log.d(TAG, "Starting listener for claim requests");
+        Log.d(TAG, "=== STARTING CLAIM LISTENER ===");
+        Log.d(TAG, "User ID: " + userId);
 
-        // Listen to claims collection where claimantId matches userId
+        // Listen to claims collection where userId matches
         claimRequestsListener = db.collection("claims")
                 .whereEqualTo("userId", userId)
                 .addSnapshotListener((snapshots, error) -> {
                     if (error != null) {
-                        Log.e(TAG, "Error listening to claim requests", error);
+                        Log.e(TAG, "❌ ERROR LISTENING TO CLAIMS");
+                        Log.e(TAG, "   Error: " + error.getMessage());
+                        Log.e(TAG, "   Code: " + error.getCode());
+                        error.printStackTrace();
                         return;
                     }
 
-                    if (snapshots != null) {
-                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                            String docId = dc.getDocument().getId();
-                            String itemName = dc.getDocument().getString("itemName");
-                            String status = dc.getDocument().getString("status");
-                            String claimLocation = dc.getDocument().getString("claimLocation");
+                    if (snapshots == null) {
+                        Log.w(TAG, "⚠️ Snapshots is null");
+                        return;
+                    }
 
-                            switch (dc.getType()) {
-                                case ADDED:
-                                    // New claim submitted
-                                    sendNotification(
-                                            "📋 Claim Submitted: Your claim for \"" + itemName + "\" is awaiting admin approval.",
-                                            "CLAIM_PENDING",
-                                            docId
-                                    );
-                                    break;
+                    Log.d(TAG, "📦 CLAIM SNAPSHOT RECEIVED");
+                    Log.d(TAG, "   Total documents: " + snapshots.size());
+                    Log.d(TAG, "   Document changes: " + snapshots.getDocumentChanges().size());
 
-                                case MODIFIED:
-                                    // Status changed
-                                    handleClaimStatusChange(docId, itemName, status, claimLocation);
-                                    break;
+                    for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                        String docId = dc.getDocument().getId();
+                        String itemName = dc.getDocument().getString("itemName");
+                        String status = dc.getDocument().getString("status");
+                        String claimLocation = dc.getDocument().getString("claimLocation");
+                        String claimUserId = dc.getDocument().getString("userId");
+                        Long approvedAt = dc.getDocument().getLong("approvedAt");
 
-                                case REMOVED:
-                                    // Claim deleted
-                                    removeNotification(docId);
-                                    sendNotification(
-                                            "🗑️ Your claim for \"" + itemName + "\" has been removed.",
-                                            "CLAIM_DELETED",
-                                            docId
-                                    );
-                                    break;
-                            }
+                        Log.d(TAG, "=== CLAIM CHANGE DETECTED ===");
+                        Log.d(TAG, "   Change Type: " + dc.getType());
+                        Log.d(TAG, "   Document ID: " + docId);
+                        Log.d(TAG, "   Item Name: " + itemName);
+                        Log.d(TAG, "   Status: " + status);
+                        Log.d(TAG, "   Location: " + claimLocation);
+                        Log.d(TAG, "   Claim userId: " + claimUserId);
+                        Log.d(TAG, "   Current userId: " + userId);
+                        Log.d(TAG, "   Approved At: " + approvedAt);
+                        Log.d(TAG, "   Match: " + (claimUserId != null && claimUserId.equals(userId)));
+
+                        switch (dc.getType()) {
+                            case ADDED:
+                                Log.d(TAG, "🆕 ADDED - New claim submitted");
+                                sendNotification(
+                                        "📋 Claim Submitted: Your claim for \"" + itemName + "\" is awaiting admin approval.",
+                                        "CLAIM_PENDING",
+                                        docId
+                                );
+                                break;
+
+                            case MODIFIED:
+                                Log.d(TAG, "🔄 MODIFIED - Claim status changed");
+                                handleClaimStatusChange(docId, itemName, status, claimLocation);
+                                break;
+
+                            case REMOVED:
+                                Log.d(TAG, "🗑️ REMOVED - Claim deleted");
+                                removeNotification(docId);
+                                sendNotification(
+                                        "🗑️ Your claim for \"" + itemName + "\" has been removed.",
+                                        "CLAIM_DELETED",
+                                        docId
+                                );
+                                break;
                         }
                     }
                 });
+
+        Log.d(TAG, "✅ Claim listener registered successfully");
     }
 
     /**
@@ -205,22 +240,35 @@ public class NotificationManager {
     /**
      * Handle claim request status changes
      */
+    /**
+     * Handle claim request status changes
+     */
+    /**
+     * Handle claim request status changes
+     */
     private void handleClaimStatusChange(String docId, String itemName, String status, String claimLocation) {
-        Log.d(TAG, "Handling claim status change - Status: " + status + ", Location: " + claimLocation);
+        Log.d(TAG, "=== HANDLING CLAIM STATUS CHANGE ===");
+        Log.d(TAG, "   Doc ID: " + docId);
+        Log.d(TAG, "   Item: " + itemName);
+        Log.d(TAG, "   Status: " + status);
+        Log.d(TAG, "   Location: " + claimLocation);
 
         switch (status) {
             case "Approved":
-                String locationMsg = claimLocation != null && !claimLocation.isEmpty()
+                Log.d(TAG, "✅ Status is APPROVED");
+                // Format message with location prominently
+                String locationMsg = (claimLocation != null && !claimLocation.isEmpty())
                         ? " 📍 Collect at: " + claimLocation
-                        : " (Location to be announced)";
-                sendNotification(
-                        "✅ Claim Approved: \"" + itemName + "\"" + locationMsg,
-                        "CLAIM_APPROVED",
-                        docId
-                );
+                        : " (Location pending)";
+
+                String approvalMsg = "✅ Claim Approved: \"" + itemName + "\"" + locationMsg;
+
+                Log.d(TAG, "Sending notification: " + approvalMsg);
+                sendNotification(approvalMsg, "CLAIM_APPROVED", docId);
                 break;
 
             case "Rejected":
+                Log.d(TAG, "❌ Status is REJECTED");
                 sendNotification(
                         "❌ Claim Rejected: Your claim for \"" + itemName + "\" was not approved.",
                         "CLAIM_REJECTED",
@@ -229,15 +277,19 @@ public class NotificationManager {
                 break;
 
             case "Claimed":
+                Log.d(TAG, "🎉 Status is CLAIMED");
                 sendNotification(
                         "🎉 Item Collected: \"" + itemName + "\" - Thank you!",
                         "CLAIM_COMPLETED",
                         docId
                 );
                 break;
+
+            default:
+                Log.w(TAG, "⚠️ Unknown status: " + status);
+                break;
         }
     }
-
     /**
      * Send notification to callback
      */
@@ -305,13 +357,26 @@ public class NotificationManager {
     /**
      * Get notification title based on type
      */
+    /**
+     * Get notification title based on type
+     */
     private String getNotificationTitle(String type) {
-        if (type.startsWith("REPORT_")) {
-            return "Report Update";
-        } else if (type.startsWith("CLAIM_")) {
-            return "Claim Update";
+        switch (type) {
+            case "CLAIM_APPROVED":
+                return "✅ Claim Approved - Ready for Pickup";
+            case "CLAIM_REJECTED":
+                return "❌ Claim Rejected";
+            case "CLAIM_COMPLETED":
+                return "🎉 Item Collected";
+            case "REPORT_APPROVED":
+                return "✅ Report Approved";
+            case "REPORT_REJECTED":
+                return "❌ Report Rejected";
+            case "REPORT_CLAIMED":
+                return "🎉 Item Claimed";
+            default:
+                return "Item Finder Update";
         }
-        return "Item Finder";
     }
 
     /**
