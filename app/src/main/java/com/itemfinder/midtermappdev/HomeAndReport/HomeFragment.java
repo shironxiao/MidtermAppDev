@@ -172,15 +172,14 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        // Show "More Items" for available
         moreFoundItems.setOnClickListener(v -> {
-            MoreItemsDialog dialog = MoreItemsDialog.newInstance("available");
+            AvailableItemsDialog dialog = AvailableItemsDialog.newInstance();
             dialog.show(getParentFragmentManager(), "AvailableItemsDialog");
         });
 
         // Show "More Items" for claimed
         moreClaimedItems.setOnClickListener(v -> {
-            MoreItemsDialog dialog = MoreItemsDialog.newInstance("claimed");
+            ClaimedItemsDialog dialog = ClaimedItemsDialog.newInstance();
             dialog.show(getParentFragmentManager(), "ClaimedItemsDialog");
         });
 
@@ -438,7 +437,7 @@ public class HomeFragment extends Fragment {
         int currentCount = claimedItemsPreviewContainer.getChildCount();
 
         for (Item item : newClaimedItems) {
-            if (currentCount >= 5) break;
+            if (currentCount >= 3) break;
 
             View itemView = createItemCard(item);
             if (itemView != null) {
@@ -474,7 +473,7 @@ public class HomeFragment extends Fragment {
 
         availableItemsPreviewContainer.removeAllViews();
 
-        int count = Math.min(items.size(), 5);
+        int count = Math.min(items.size(), 3);
         for (int i = 0; i < count; i++) {
             View itemView = createItemCard(items.get(i));
             if (itemView != null) {
@@ -499,7 +498,7 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        int count = Math.min(items.size(), 5);
+        int count = Math.min(items.size(), 3);
         for (int i = 0; i < count; i++) {
             View itemView = createItemCard(items.get(i));
             if (itemView != null) {
@@ -527,7 +526,12 @@ public class HomeFragment extends Fragment {
         TextView statusBadge = itemView.findViewById(R.id.statusBadge);
 
         itemName.setText(item.getName());
-        itemDetails.setText("Found in " + item.getLocation());
+        if (item.isClaimed() || "claimed".equalsIgnoreCase(item.getStatus())) {
+            itemDetails.setText("Claimed in " + item.getLocation());
+        } else {
+            statusBadge.setText("Available");
+            itemDetails.setText("Found in " + item.getLocation());
+        }
 
         if (item.isClaimed() || "claimed".equalsIgnoreCase(item.getStatus())) {
             statusBadge.setText("Claimed");
