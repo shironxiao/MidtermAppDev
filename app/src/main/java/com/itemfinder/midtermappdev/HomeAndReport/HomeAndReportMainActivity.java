@@ -76,6 +76,8 @@ public class HomeAndReportMainActivity extends AppCompatActivity {
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.frame_layout, fragment);
         fragmentTransaction.commit();
+
+
     }
 
     public void switchToHomeTab() {

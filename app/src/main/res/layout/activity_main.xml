@@ -29,7 +29,7 @@
         app:labelVisibilityMode="labeled"
         app:itemIconTint="@color/nav_item_color"
         app:itemTextColor="@color/nav_item_color"
-        app:backgroundTint="@color/white"
+        app:backgroundTint="#F4F4F4"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
