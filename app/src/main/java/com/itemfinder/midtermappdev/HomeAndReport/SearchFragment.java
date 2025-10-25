@@ -139,7 +139,7 @@ public class SearchFragment extends Fragment {
     }
 
     /**
-     * ✅ NEW METHOD: Load only items that are approved AND don't have approved claims
+     * ✅ UPDATED: Load only items without APPROVED claims (excludes items with approved/claimed status)
      */
     private void loadAvailableItems() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -178,7 +178,7 @@ public class SearchFragment extends Fragment {
     }
 
     /**
-     * ✅ Load approved items excluding those with approved claims
+     * ✅ FIXED: Load approved items excluding those with approved claims, with proper image URL handling
      */
     private void loadApprovedItemsExcluding(Set<String> excludedItemIds) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -213,19 +213,21 @@ public class SearchFragment extends Fragment {
                             String date = doc.getString("dateFound");
                             String imageUrl = doc.getString("imageUrl");
 
+                            // ✅ Debug log for image URL
+                            Log.d(TAG, "Item: " + name + " | ImageURL: " + (imageUrl != null ? imageUrl : "NULL"));
+
                             if (name != null && category != null) {
+                                // ✅ Pass imageUrl directly to constructor
                                 Item item = new Item(
                                         name,
                                         category,
                                         location != null ? location : "Unknown",
                                         "Available",
-                                        date != null ? date : ""
+                                        date != null ? date : "",
+                                        imageUrl != null ? imageUrl : "" // ✅ Pass imageUrl
                                 );
 
                                 item.setId(id);
-                                if (imageUrl != null && !imageUrl.isEmpty()) {
-                                    item.setImageUrl(imageUrl);
-                                }
 
                                 itemList.add(item);
                                 Log.d(TAG, "✅ Added available item: " + name + " | ID: " + id);
