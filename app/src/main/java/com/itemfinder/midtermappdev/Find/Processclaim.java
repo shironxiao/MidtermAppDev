@@ -24,6 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.itemfinder.midtermappdev.R;
 import com.squareup.picasso.Picasso;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +46,11 @@ public class Processclaim extends AppCompatActivity {
     private String itemId, itemName, itemCategory, itemLocation, itemDate, itemStatus, itemImageUrl;
     private String userId, userEmail, studentId, fullName;
 
+    // ✅ Track uploaded image URLs
+    private List<String> uploadedImageUrls = new ArrayList<>();
+    private int uploadedCount = 0;
+    private boolean isUploading = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,19 +63,15 @@ public class Processclaim extends AppCompatActivity {
             }
         }
 
-        // 🔹 Get user data from FirebaseAuth or SharedPreferences
         getUserData();
 
-        // 🔙 Back
         backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> finish());
 
-        // 🔹 Inputs
         claimerNameInput = findViewById(R.id.claimerNameInput);
         claimerIdInput = findViewById(R.id.claimerIdInput);
         claimerDescriptionInput = findViewById(R.id.claimerDescriptionInput);
 
-        // 🔹 Finder details
         finderContact = findViewById(R.id.finderContact);
         claimLocation = findViewById(R.id.claimLocation);
 
@@ -94,7 +96,6 @@ public class Processclaim extends AppCompatActivity {
             userId = currentUser.getUid();
             userEmail = currentUser.getEmail();
         } else {
-            // fallback to stored session
             SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
             userId = prefs.getString("userId", "");
             userEmail = prefs.getString("userEmail", "");
@@ -209,19 +210,184 @@ public class Processclaim extends AppCompatActivity {
             return;
         }
 
+        // ✅ Disable button and start upload
         btnClaim.setEnabled(false);
-        Toast.makeText(this, "Submitting claim...", Toast.LENGTH_SHORT).show();
+        isUploading = true;
+        Toast.makeText(this, "Uploading proof images...", Toast.LENGTH_SHORT).show();
 
-        submitClaimToFirebase(claimerName, claimerId, description);
+        // ✅ Upload images first, then submit claim
+        uploadProofImages(claimerName, claimerId, description);
+    }
+
+    /**
+     * ✅ NEW METHOD: Upload all proof images to Cloudinary
+     */
+    private void uploadProofImages(final String claimerName, final String claimerId, final String description) {
+        uploadedImageUrls.clear();
+        uploadedCount = 0;
+
+        // Count how many images need to be uploaded
+        int totalImages = 0;
+        for (Uri uri : selectedImages) {
+            if (uri != null) totalImages++;
+        }
+
+        final int imagesToUpload = totalImages;
+
+        Log.d(TAG, "Starting upload for " + imagesToUpload + " images");
+
+        // Upload each image
+        for (int i = 0; i < selectedImages.length; i++) {
+            final Uri imageUri = selectedImages[i];
+            if (imageUri != null) {
+                final int index = i;
+                new Thread(() -> {
+                    try {
+                        String imageUrl = uploadToCloudinaryDirect(imageUri);
+
+                        runOnUiThread(() -> {
+                            if (imageUrl != null) {
+                                uploadedImageUrls.add(imageUrl);
+                                uploadedCount++;
+
+                                Log.d(TAG, "Image " + uploadedCount + "/" + imagesToUpload + " uploaded: " + imageUrl);
+                                Toast.makeText(Processclaim.this,
+                                        "Uploaded " + uploadedCount + "/" + imagesToUpload + " images",
+                                        Toast.LENGTH_SHORT).show();
+
+                                // ✅ If all images uploaded, submit claim
+                                if (uploadedCount == imagesToUpload) {
+                                    Log.d(TAG, "All images uploaded successfully!");
+                                    submitClaimToFirebase(claimerName, claimerId, description);
+                                }
+                            } else {
+                                Log.e(TAG, "Failed to upload image " + (index + 1));
+                                Toast.makeText(Processclaim.this,
+                                        "Failed to upload image " + (index + 1) + ". Please try again.",
+                                        Toast.LENGTH_LONG).show();
+                                btnClaim.setEnabled(true);
+                                isUploading = false;
+                            }
+                        });
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error uploading image " + (index + 1), e);
+                        runOnUiThread(() -> {
+                            Toast.makeText(Processclaim.this,
+                                    "Error uploading image: " + e.getMessage(),
+                                    Toast.LENGTH_LONG).show();
+                            btnClaim.setEnabled(true);
+                            isUploading = false;
+                        });
+                    }
+                }).start();
+            }
+        }
+    }
+
+    /**
+     * ✅ Upload image to Cloudinary using direct HTTP
+     */
+    private String uploadToCloudinaryDirect(Uri imageUri) {
+        try {
+            Log.d(TAG, "Starting Cloudinary upload for URI: " + imageUri);
+
+            String cloudName = "durqaiei1";
+            String uploadPreset = "found_items_preset";
+            String uploadUrl = "https://api.cloudinary.com/v1_1/" + cloudName + "/image/upload";
+
+            java.net.URL url = new java.net.URL(uploadUrl);
+            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) url.openConnection();
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+
+            String boundary = "----WebKitFormBoundary" + System.currentTimeMillis();
+            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+            connection.setConnectTimeout(30000);
+            connection.setReadTimeout(30000);
+
+            java.io.OutputStream outputStream = connection.getOutputStream();
+            java.io.PrintWriter writer = new java.io.PrintWriter(
+                    new java.io.OutputStreamWriter(outputStream, "UTF-8"), true);
+
+            // Add upload preset
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"upload_preset\"").append("\r\n");
+            writer.append("\r\n");
+            writer.append(uploadPreset).append("\r\n");
+            writer.flush();
+
+            // Add folder
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"folder\"").append("\r\n");
+            writer.append("\r\n");
+            writer.append("claim_proofs").append("\r\n");
+            writer.flush();
+
+            // Get filename
+            String filename = "proof_" + System.currentTimeMillis() + ".jpg";
+
+            // Add file
+            writer.append("--" + boundary).append("\r\n");
+            writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"")
+                    .append("\r\n");
+            writer.append("Content-Type: image/jpeg").append("\r\n");
+            writer.append("\r\n");
+            writer.flush();
+
+            // Read and upload file
+            InputStream inputStream = getContentResolver().openInputStream(imageUri);
+            if (inputStream == null) {
+                Log.e(TAG, "Failed to open input stream");
+                return null;
+            }
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+
+            inputStream.close();
+            outputStream.flush();
+
+            writer.append("\r\n");
+            writer.append("--" + boundary + "--").append("\r\n");
+            writer.flush();
+            writer.close();
+
+            // Get response
+            int responseCode = connection.getResponseCode();
+            Log.d(TAG, "Cloudinary response code: " + responseCode);
+
+            if (responseCode == 200) {
+                java.io.BufferedReader reader = new java.io.BufferedReader(
+                        new java.io.InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                org.json.JSONObject jsonResponse = new org.json.JSONObject(response.toString());
+                String secureUrl = jsonResponse.getString("secure_url");
+                Log.d(TAG, "Upload successful: " + secureUrl);
+                return secureUrl;
+            } else {
+                Log.e(TAG, "Upload failed with code: " + responseCode);
+                return null;
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "Upload exception", e);
+            return null;
+        }
     }
 
     private void submitClaimToFirebase(String claimerName, String claimerId, String description) {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        runOnUiThread(() -> Toast.makeText(this, "Submitting claim...", Toast.LENGTH_SHORT).show());
 
-        List<String> proofImagesList = new ArrayList<>();
-        for (Uri uri : selectedImages) {
-            if (uri != null) proofImagesList.add(uri.toString());
-        }
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         Map<String, Object> claimData = new HashMap<>();
         claimData.put("itemId", itemId);
@@ -230,88 +396,79 @@ public class Processclaim extends AppCompatActivity {
         claimData.put("itemLocation", itemLocation);
         claimData.put("itemDate", itemDate);
         claimData.put("itemImageUrl", itemImageUrl);
-
-        // ✅ This field is required for Firestore security rules
         claimData.put("userId", userId);
-
         claimData.put("claimantName", claimerName);
         claimData.put("claimantId", claimerId);
         claimData.put("claimantEmail", userEmail);
         claimData.put("description", description);
-        claimData.put("proofImages", proofImagesList);
+
+        // ✅ Use uploaded Cloudinary URLs instead of local URIs
+        claimData.put("proofImages", uploadedImageUrls);
+
         claimData.put("status", "Pending");
         claimData.put("claimDate", System.currentTimeMillis());
 
-        Log.d(TAG, "Submitting claim to Firebase under user: " + userId);
+        Log.d(TAG, "Submitting claim with " + uploadedImageUrls.size() + " proof images");
 
-        // ✅ Step 1: Save to user's own collection
         db.collection("users")
                 .document(userId)
                 .collection("myClaims")
                 .add(claimData)
                 .addOnSuccessListener(documentReference -> {
                     String claimId = documentReference.getId();
-                    Log.d(TAG, "Claim saved in user collection with ID: " + claimId);
+                    Log.d(TAG, "Claim saved in user collection: " + claimId);
 
-                    // ✅ Step 2: Also add to global 'claims' collection
                     db.collection("claims")
                             .document(claimId)
                             .set(claimData)
                             .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "Claim also added to global 'claims' collection");
-                                Toast.makeText(this, "Claim submitted successfully! Awaiting admin approval.", Toast.LENGTH_LONG).show();
+                                Log.d(TAG, "Claim saved to global collection");
+                                Toast.makeText(this, "Claim submitted successfully!", Toast.LENGTH_LONG).show();
                                 finish();
                             })
                             .addOnFailureListener(e -> {
                                 Log.e(TAG, "Error saving to global claims", e);
-                                Toast.makeText(this, "Failed to upload to claims: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                                 btnClaim.setEnabled(true);
                             });
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error submitting claim", e);
-                    Toast.makeText(this, "Failed to submit claim: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Failed to submit: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     btnClaim.setEnabled(true);
                 });
     }
 
-    // 🔹 Lifecycle Methods with Logic
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d(TAG, "onStart called - refreshing user data");
-        getUserData(); // refresh session
+        Log.d(TAG, "onStart called");
+        getUserData();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume called - reloading UI");
-        displayItemCard(); // ensure item details stay visible
+        Log.d(TAG, "onResume called");
+        displayItemCard();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d(TAG, "onPause called - saving temporary inputs");
-        SharedPreferences prefs = getSharedPreferences("ClaimDraft", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("claimerName", claimerNameInput.getText().toString());
-        editor.putString("claimerId", claimerIdInput.getText().toString());
-        editor.putString("description", claimerDescriptionInput.getText().toString());
-        editor.apply();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.d(TAG, "onStop called - activity is now invisible");
+        if (!isUploading) {
+            SharedPreferences prefs = getSharedPreferences("ClaimDraft", MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("claimerName", claimerNameInput.getText().toString());
+            editor.putString("claimerId", claimerIdInput.getText().toString());
+            editor.putString("description", claimerDescriptionInput.getText().toString());
+            editor.apply();
+        }
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        Log.d(TAG, "onRestart called - restoring draft data");
         SharedPreferences prefs = getSharedPreferences("ClaimDraft", MODE_PRIVATE);
         claimerNameInput.setText(prefs.getString("claimerName", ""));
         claimerIdInput.setText(prefs.getString("claimerId", ""));
@@ -321,7 +478,8 @@ public class Processclaim extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "onDestroy called - clearing temporary data");
-        getSharedPreferences("ClaimDraft", MODE_PRIVATE).edit().clear().apply();
+        if (!isUploading) {
+            getSharedPreferences("ClaimDraft", MODE_PRIVATE).edit().clear().apply();
+        }
     }
 }
