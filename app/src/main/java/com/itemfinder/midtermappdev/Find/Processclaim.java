@@ -13,6 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
 import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -94,7 +95,7 @@ public class Processclaim extends AppCompatActivity {
             userEmail = currentUser.getEmail();
         } else {
             // fallback to stored session
-            android.content.SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
+            SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
             userId = prefs.getString("userId", "");
             userEmail = prefs.getString("userEmail", "");
         }
@@ -243,7 +244,7 @@ public class Processclaim extends AppCompatActivity {
 
         Log.d(TAG, "Submitting claim to Firebase under user: " + userId);
 
-        // ✅ Step 1: Save to user's own collection (optional, personal view)
+        // ✅ Step 1: Save to user's own collection
         db.collection("users")
                 .document(userId)
                 .collection("myClaims")
@@ -252,7 +253,7 @@ public class Processclaim extends AppCompatActivity {
                     String claimId = documentReference.getId();
                     Log.d(TAG, "Claim saved in user collection with ID: " + claimId);
 
-                    // ✅ Step 2: Also add to global 'claims' collection (admin view)
+                    // ✅ Step 2: Also add to global 'claims' collection
                     db.collection("claims")
                             .document(claimId)
                             .set(claimData)
@@ -274,4 +275,53 @@ public class Processclaim extends AppCompatActivity {
                 });
     }
 
+    // 🔹 Lifecycle Methods with Logic
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart called - refreshing user data");
+        getUserData(); // refresh session
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume called - reloading UI");
+        displayItemCard(); // ensure item details stay visible
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause called - saving temporary inputs");
+        SharedPreferences prefs = getSharedPreferences("ClaimDraft", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("claimerName", claimerNameInput.getText().toString());
+        editor.putString("claimerId", claimerIdInput.getText().toString());
+        editor.putString("description", claimerDescriptionInput.getText().toString());
+        editor.apply();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop called - activity is now invisible");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        Log.d(TAG, "onRestart called - restoring draft data");
+        SharedPreferences prefs = getSharedPreferences("ClaimDraft", MODE_PRIVATE);
+        claimerNameInput.setText(prefs.getString("claimerName", ""));
+        claimerIdInput.setText(prefs.getString("claimerId", ""));
+        claimerDescriptionInput.setText(prefs.getString("description", ""));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy called - clearing temporary data");
+        getSharedPreferences("ClaimDraft", MODE_PRIVATE).edit().clear().apply();
+    }
 }
