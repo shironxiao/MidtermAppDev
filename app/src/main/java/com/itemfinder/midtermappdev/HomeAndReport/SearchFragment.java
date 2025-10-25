@@ -26,7 +26,9 @@ import com.itemfinder.midtermappdev.Find.Processclaim;
 import com.itemfinder.midtermappdev.R;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class SearchFragment extends Fragment {
 
@@ -65,8 +67,8 @@ public class SearchFragment extends Fragment {
         itemList = new ArrayList<>();
         filteredList = new ArrayList<>();
 
-        // Load approved items from Firebase
-        loadApprovedItems();
+        // Load approved items from Firebase (excluding items with approved claims)
+        loadAvailableItems();
 
         // Start showing all items
         itemAdapter = new ItemAdapter(filteredList, requireContext());
@@ -136,21 +138,74 @@ public class SearchFragment extends Fragment {
         startActivity(intent);
     }
 
-    private void loadApprovedItems() {
+    /**
+     * ✅ NEW METHOD: Load only items that are approved AND don't have approved claims
+     */
+    private void loadAvailableItems() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        Log.d(TAG, "Loading approved items from Firestore...");
+        Log.d(TAG, "========================================");
+        Log.d(TAG, "Loading available items (approved items without approved claims)...");
+        Log.d(TAG, "========================================");
 
-        // Load from pendingItems collection where status is "approved"
+        // Step 1: Get all item IDs that have approved or claimed claims
+        db.collection("claims")
+                .whereIn("status", java.util.Arrays.asList("Approved", "Claimed"))
+                .get()
+                .addOnSuccessListener(claimsSnapshot -> {
+                    // Collect item IDs that should be excluded
+                    Set<String> claimedItemIds = new HashSet<>();
+
+                    for (QueryDocumentSnapshot claimDoc : claimsSnapshot) {
+                        String itemId = claimDoc.getString("itemId");
+                        if (itemId != null) {
+                            claimedItemIds.add(itemId);
+                            Log.d(TAG, "Excluding item ID: " + itemId + " (has approved/claimed claim)");
+                        }
+                    }
+
+                    Log.d(TAG, "Total items to exclude: " + claimedItemIds.size());
+
+                    // Step 2: Load approved items from pendingItems
+                    loadApprovedItemsExcluding(claimedItemIds);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error checking claims", e);
+                    Toast.makeText(requireContext(),
+                            "Error loading items",
+                            Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    /**
+     * ✅ Load approved items excluding those with approved claims
+     */
+    private void loadApprovedItemsExcluding(Set<String> excludedItemIds) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        Log.d(TAG, "Loading approved items from pendingItems...");
+
         db.collection("pendingItems")
                 .whereEqualTo("status", "approved")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     itemList.clear();
 
+                    int totalItems = querySnapshot.size();
+                    int excludedCount = 0;
+
                     for (QueryDocumentSnapshot doc : querySnapshot) {
                         try {
                             String id = doc.getId();
+
+                            // ✅ Skip if this item has an approved claim
+                            if (excludedItemIds.contains(id)) {
+                                excludedCount++;
+                                Log.d(TAG, "⏭️ Skipping item: " + doc.getString("itemName") +
+                                        " (has approved claim)");
+                                continue;
+                            }
+
                             String name = doc.getString("itemName");
                             String category = doc.getString("category");
                             String location = doc.getString("location");
@@ -163,18 +218,17 @@ public class SearchFragment extends Fragment {
                                         name,
                                         category,
                                         location != null ? location : "Unknown",
-                                        "Available", // Display as "Available" to users
+                                        "Available",
                                         date != null ? date : ""
                                 );
 
-                                // Set the ID and image URL
                                 item.setId(id);
                                 if (imageUrl != null && !imageUrl.isEmpty()) {
                                     item.setImageUrl(imageUrl);
                                 }
 
                                 itemList.add(item);
-                                Log.d(TAG, "Loaded approved item: " + name + " | ID: " + id);
+                                Log.d(TAG, "✅ Added available item: " + name + " | ID: " + id);
                             }
                         } catch (Exception e) {
                             Log.e(TAG, "Error parsing item: " + doc.getId(), e);
@@ -186,11 +240,16 @@ public class SearchFragment extends Fragment {
                     filteredList.addAll(itemList);
                     itemAdapter.notifyDataSetChanged();
 
-                    Log.d(TAG, "Total approved items loaded: " + itemList.size());
+                    Log.d(TAG, "========================================");
+                    Log.d(TAG, "📊 SUMMARY:");
+                    Log.d(TAG, "Total approved items in database: " + totalItems);
+                    Log.d(TAG, "Items excluded (have claims): " + excludedCount);
+                    Log.d(TAG, "Items shown to users: " + itemList.size());
+                    Log.d(TAG, "========================================");
 
                     if (itemList.isEmpty()) {
                         Toast.makeText(requireContext(),
-                                "No items available at the moment.",
+                                "No available items at the moment.",
                                 Toast.LENGTH_SHORT).show();
                     }
                 })
@@ -285,6 +344,6 @@ public class SearchFragment extends Fragment {
     public void onResume() {
         super.onResume();
         // Reload items when fragment becomes visible
-        loadApprovedItems();
+        loadAvailableItems();
     }
 }
