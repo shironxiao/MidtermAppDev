@@ -12,7 +12,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#FFFBFB">
+        android:background="#FFFFFF">
 
         <ScrollView
             android:layout_width="match_parent"
@@ -28,16 +28,20 @@
                 <!-- Top Bar -->
                 <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="69dp"
-                    android:background="#959595"
-                    android:elevation="4dp"
-                    android:padding="16dp">
+                    android:layout_height="75dp"
+                    android:background="#5F1C1C"
+                    android:elevation="5dp"
+                    android:padding="1dp">
 
                     <ImageView
                         android:id="@+id/logo"
                         android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_height="45dp"
                         android:layout_alignParentStart="true"
+                        android:layout_alignParentBottom="true"
+                        android:layout_marginStart="19dp"
+                        android:layout_marginBottom="15dp"
+                        android:outlineSpotShadowColor="@color/white"
                         android:src="@drawable/schoollogo" />
 
                     <ImageButton
@@ -55,7 +59,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp">
+                    android:padding="30dp"
+                    android:paddingTop="40dp"
+                    android:paddingBottom="20dp">
 
                     <TextView
                         android:id="@+id/welcomeText"
@@ -63,51 +69,21 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="Hello!"
-                        android:textColor="#000000"
-                        android:textSize="28sp"
+                        android:textColor="#1A1A1A"
+                        android:textSize="38sp"
+                        android:letterSpacing="0.01"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="sans-serif"
                         android:gravity="center"
                         android:text="Welcome back to CNSC Lost and Found!"
-                        android:textColor="#444444"
-                        android:textSize="16sp" />
-                </LinearLayout>
-
-                <!-- "What did you lose?" clickable layout -->
-                <LinearLayout
-                    android:id="@+id/btnLost"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="30dp"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="15dp"
-                    android:background="#C8C7C7"
-                    android:backgroundTint="#E6E3E3"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="start|center_vertical"
-                    android:textAlignment="textStart"
-                    android:minWidth="2dp"
-                    android:orientation="horizontal"
-                    android:padding="15dp">
-
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginEnd="10dp"
-                        android:src="@drawable/outline_manage_search_24" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="What did you lose?"
-                        android:textColor="#000000"
-                        android:textSize="16sp" />
+                        android:textColor="#616161"
+                        android:textSize="16sp"
+                        android:lineSpacingExtra="3dp" />
                 </LinearLayout>
 
                 <!-- "What did you find?" clickable layout -->
@@ -117,16 +93,12 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="30dp"
                     android:layout_marginBottom="20dp"
-                    android:background="#F6F3F3"
-                    android:backgroundTint="#EFEEEE"
-                    app:cardCornerRadius="25dp"
-                    app:cardElevation="2dp"
+                    android:background="@drawable/bg_rounded_found"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center_vertical"
-                    android:minWidth="2dp"
                     android:orientation="horizontal"
-                    android:padding="15dp">
+                    android:padding="18dp">
 
                     <ImageView
                         android:layout_width="24dp"
@@ -135,8 +107,7 @@
                         android:src="@drawable/outline_person_24" />
 
                     <TextView
-
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="What did you find?"
@@ -147,6 +118,36 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/outline_report_24" />
+                </LinearLayout>
+
+                <!-- "What did you lose?" clickable layout -->
+                <LinearLayout
+                    android:id="@+id/btnLost"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="30dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="20dp"
+                    android:background="@drawable/bg_rounded_lost"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="18dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="10dp"
+                        android:src="@drawable/outline_manage_search_24" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="What did you lose?"
+                        android:textColor="#000000"
+                        android:textSize="16sp" />
                 </LinearLayout>
 
                 <androidx.cardview.widget.CardView
@@ -161,6 +162,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
+
                         android:padding="16dp">
 
                         <LinearLayout
@@ -190,6 +192,7 @@
                             android:layout_marginTop="10dp"
                             android:orientation="vertical">
 
+
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -205,7 +208,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="5dp"
-                                    android:text="Items"
+                                    android:text=" Available Items"
                                     android:textColor="#000000"
                                     android:textSize="15sp"
                                     android:textStyle="bold" />
@@ -252,7 +255,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="8dp"
-                                android:text="Claimed"
+                                android:text="Claimed Items"
                                 android:textColor="#000000"
                                 android:textStyle="bold" />
                         </LinearLayout>
