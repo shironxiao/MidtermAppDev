@@ -21,6 +21,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -68,6 +69,9 @@ public class HomeFragment extends Fragment {
 
     private Button btnClearNotifications;
 
+    // ✅ SwipeRefreshLayout for pull-to-refresh
+    private SwipeRefreshLayout swipeRefreshLayout;
+
     // ✅ Updated to use AppNotificationManager
     private AppNotificationManager appNotificationManager;
     private String currentUserId;
@@ -94,6 +98,9 @@ public class HomeFragment extends Fragment {
         claimedItemsPreviewContainer = view.findViewById(R.id.claimedItemsContainer);
         rvNotifications = view.findViewById(R.id.rvNotifications);
         tvNoNotifications = view.findViewById(R.id.tvNoNotifications);
+
+        // ✅ Initialize SwipeRefreshLayout (you'll need to add this to your layout)
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
 
         // Setup RecyclerView
         rvNotifications.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -150,7 +157,76 @@ public class HomeFragment extends Fragment {
             dialog.show(getParentFragmentManager(), "ClaimedItemsDialog");
         });
 
+        // ✅ Setup SwipeRefreshLayout
+        setupSwipeRefresh();
+
         return view;
+    }
+
+    /**
+     * ✅ Setup SwipeRefreshLayout for pull-to-refresh functionality
+     */
+    private void setupSwipeRefresh() {
+        if (swipeRefreshLayout != null) {
+            // Set refresh colors
+            swipeRefreshLayout.setColorSchemeResources(
+                    R.color.colorPrimary,
+                    R.color.colorAccent,
+                    android.R.color.holo_green_dark
+            );
+
+            // Set refresh listener
+            swipeRefreshLayout.setOnRefreshListener(() -> {
+                Log.d(TAG, "🔄 Pull-to-refresh triggered");
+                refreshAllData();
+            });
+        }
+    }
+
+    /**
+     * ✅ Refresh all data sources
+     */
+    private void refreshAllData() {
+        Log.d(TAG, "========================================");
+        Log.d(TAG, "🔄 Refreshing all data...");
+        Log.d(TAG, "========================================");
+
+        // Clear existing containers
+        if (availableItemsPreviewContainer != null) {
+            availableItemsPreviewContainer.removeAllViews();
+        }
+        if (claimedItemsPreviewContainer != null) {
+            claimedItemsPreviewContainer.removeAllViews();
+        }
+
+        // Reload all data sources
+        loadItemsFromRealtimeDatabase();
+        loadItemsFromFirestore();
+        loadClaimedItemsFromFirestore();
+
+        // Stop refresh animation after a short delay
+        new android.os.Handler().postDelayed(() -> {
+            if (swipeRefreshLayout != null) {
+                swipeRefreshLayout.setRefreshing(false);
+            }
+            Toast.makeText(getContext(), "Data refreshed", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "✅ Data refresh complete");
+        }, 1000);
+    }
+
+    /**
+     * ✅ Public method to manually trigger refresh (can be called from other activities/fragments)
+     */
+    public void refreshData() {
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.setRefreshing(true);
+            refreshAllData();
+        } else {
+            // If SwipeRefreshLayout is not available, just reload data
+            loadItemsFromRealtimeDatabase();
+            loadItemsFromFirestore();
+            loadClaimedItemsFromFirestore();
+        }
     }
 
     /**
@@ -172,6 +248,7 @@ public class HomeFragment extends Fragment {
             Toast.makeText(getContext(), "Notifications cleared", Toast.LENGTH_SHORT).show();
         }
     }
+
     /**
      * ✅ Initialize AppNotificationManager with real-time tracking
      */
@@ -211,6 +288,14 @@ public class HomeFragment extends Fragment {
 
                         // Add notification to the list with clean formatting
                         addInAppNotification(title, message, timestamp);
+
+                        // ✅ Auto-refresh data when important updates arrive
+                        if (type.equals("CLAIM_APPROVED") ||
+                                type.equals("REPORT_APPROVED") ||
+                                type.equals("ITEM_CLAIMED")) {
+                            Log.d(TAG, "🔄 Auto-refreshing data due to important update");
+                            refreshData();
+                        }
 
                         // ✅ Auto-open drawer for claim approvals and important updates
                         if (type.equals("CLAIM_APPROVED") || type.equals("REPORT_APPROVED")) {
@@ -575,6 +660,14 @@ public class HomeFragment extends Fragment {
      */
     public void addNotification(String message) {
         addInAppNotification(message);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // ✅ Auto-refresh data when fragment becomes visible
+        Log.d(TAG, "🔄 onResume - Refreshing data");
+        refreshData();
     }
 
     @Override

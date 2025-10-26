@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -30,7 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class    SearchFragment extends Fragment {
+public class SearchFragment extends Fragment {
 
     private static final String TAG = "SearchFragment";
     RecyclerView recyclerView;
@@ -40,11 +41,17 @@ public class    SearchFragment extends Fragment {
 
     Button btnAll, btnAcademic, btnWriting, btnPersonal, btnClothing, btnGadgets, btnIDs;
 
+    // ✅ Add SwipeRefreshLayout
+    private SwipeRefreshLayout swipeRefreshLayout;
+
     // User data
     private String userId;
     private String userEmail;
     private String studentId;
     private String fullName;
+
+    // ✅ Track current selected category for refresh
+    private String currentCategory = "All";
 
     public SearchFragment() {
         // Required empty public constructor
@@ -58,6 +65,9 @@ public class    SearchFragment extends Fragment {
 
         // ✅ Get user data from parent activity
         getUserData();
+
+        // ✅ Initialize SwipeRefreshLayout
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
 
         // Initialize RecyclerView
         recyclerView = view.findViewById(R.id.recyclerView);
@@ -96,7 +106,76 @@ public class    SearchFragment extends Fragment {
         // Set listeners
         setupButtonListeners();
 
+        // ✅ Setup SwipeRefreshLayout
+        setupSwipeRefresh();
+
         return view;
+    }
+
+    /**
+     * ✅ Setup SwipeRefreshLayout for pull-to-refresh functionality
+     */
+    private void setupSwipeRefresh() {
+        if (swipeRefreshLayout != null) {
+            // Set refresh colors
+            swipeRefreshLayout.setColorSchemeColors(
+                    0xFF5F1C1C,  // Your app's primary color (maroon/red)
+                    0xFFFF9800,  // Orange accent
+                    0xFF4CAF50   // Green
+            );
+
+            // Set refresh listener
+            swipeRefreshLayout.setOnRefreshListener(() -> {
+                Log.d(TAG, "🔄 Pull-to-refresh triggered");
+                refreshData();
+            });
+        }
+    }
+
+    /**
+     * ✅ Refresh all data
+     */
+    private void refreshData() {
+        Log.d(TAG, "========================================");
+        Log.d(TAG, "🔄 Refreshing search data...");
+        Log.d(TAG, "========================================");
+
+        // Clear existing data
+        itemList.clear();
+        filteredList.clear();
+        if (itemAdapter != null) {
+            itemAdapter.notifyDataSetChanged();
+        }
+
+        // Reload data from Firebase
+        loadAvailableItems();
+
+        // Stop refresh animation after a short delay
+        new android.os.Handler().postDelayed(() -> {
+            if (swipeRefreshLayout != null) {
+                swipeRefreshLayout.setRefreshing(false);
+            }
+
+            // Reapply current filter after refresh
+            if (!currentCategory.equals("All")) {
+                filterCategory(currentCategory);
+            }
+
+            Toast.makeText(getContext(), "Items refreshed", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "✅ Refresh complete");
+        }, 1000);
+    }
+
+    /**
+     * ✅ Public method to manually trigger refresh
+     */
+    public void refreshItems() {
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.setRefreshing(true);
+            refreshData();
+        } else {
+            loadAvailableItems();
+        }
     }
 
     /**
@@ -174,6 +253,11 @@ public class    SearchFragment extends Fragment {
                     Toast.makeText(requireContext(),
                             "Error loading items",
                             Toast.LENGTH_SHORT).show();
+
+                    // ✅ Stop refresh animation on error
+                    if (swipeRefreshLayout != null) {
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
                 });
     }
 
@@ -240,7 +324,9 @@ public class    SearchFragment extends Fragment {
                     // Update filtered list and notify adapter
                     filteredList.clear();
                     filteredList.addAll(itemList);
-                    itemAdapter.notifyDataSetChanged();
+                    if (itemAdapter != null) {
+                        itemAdapter.notifyDataSetChanged();
+                    }
 
                     Log.d(TAG, "========================================");
                     Log.d(TAG, "📊 SUMMARY:");
@@ -254,53 +340,70 @@ public class    SearchFragment extends Fragment {
                                 "No available items at the moment.",
                                 Toast.LENGTH_SHORT).show();
                     }
+
+                    // ✅ Stop refresh animation
+                    if (swipeRefreshLayout != null) {
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error loading approved items", e);
                     Toast.makeText(requireContext(),
                             "Failed to load items",
                             Toast.LENGTH_SHORT).show();
+
+                    // ✅ Stop refresh animation on error
+                    if (swipeRefreshLayout != null) {
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
                 });
     }
 
     private void setupButtonListeners() {
         btnAll.setOnClickListener(v -> {
+            currentCategory = "All";
             showAllItems();
             resetCategoryButtons();
             highlightButton(btnAll);
         });
 
         btnAcademic.setOnClickListener(v -> {
+            currentCategory = "Academic Materials";
             filterCategory("Academic Materials");
             resetCategoryButtons();
             highlightButton(btnAcademic);
         });
 
         btnWriting.setOnClickListener(v -> {
+            currentCategory = "Writing & Drawing Tools";
             filterCategory("Writing & Drawing Tools");
             resetCategoryButtons();
             highlightButton(btnWriting);
         });
 
         btnPersonal.setOnClickListener(v -> {
+            currentCategory = "Personal Belongings";
             filterCategory("Personal Belongings");
             resetCategoryButtons();
             highlightButton(btnPersonal);
         });
 
         btnClothing.setOnClickListener(v -> {
+            currentCategory = "Clothing & Accessories";
             filterCategory("Clothing & Accessories");
             resetCategoryButtons();
             highlightButton(btnClothing);
         });
 
         btnGadgets.setOnClickListener(v -> {
+            currentCategory = "Gadgets & Electronics";
             filterCategory("Gadgets & Electronics");
             resetCategoryButtons();
             highlightButton(btnGadgets);
         });
 
         btnIDs.setOnClickListener(v -> {
+            currentCategory = "IDs & Cards";
             filterCategory("IDs & Cards");
             resetCategoryButtons();
             highlightButton(btnIDs);
@@ -315,7 +418,9 @@ public class    SearchFragment extends Fragment {
                 filteredList.add(item);
             }
         }
-        itemAdapter.notifyDataSetChanged();
+        if (itemAdapter != null) {
+            itemAdapter.notifyDataSetChanged();
+        }
 
         Log.d(TAG, "Filtered " + filteredList.size() + " items for category: " + category);
     }
@@ -324,7 +429,9 @@ public class    SearchFragment extends Fragment {
     private void showAllItems() {
         filteredList.clear();
         filteredList.addAll(itemList);
-        itemAdapter.notifyDataSetChanged();
+        if (itemAdapter != null) {
+            itemAdapter.notifyDataSetChanged();
+        }
 
         Log.d(TAG, "Showing all " + filteredList.size() + " items");
     }
@@ -345,7 +452,8 @@ public class    SearchFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Reload items when fragment becomes visible
+        // ✅ Reload items when fragment becomes visible
+        Log.d(TAG, "🔄 onResume - Refreshing items");
         loadAvailableItems();
     }
 }

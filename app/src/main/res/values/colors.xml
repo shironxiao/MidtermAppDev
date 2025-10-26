@@ -32,4 +32,8 @@
     <color name="accent_red">#F44336</color>
     <color name="accent_orange">#FF9800</color>
     <color name="accent_blue">#2196F3</color>
+    <!-- ✅ Add these colors for SwipeRefreshLayout -->
+    <color name="colorPrimary">#5F1C1C</color>
+    <color name="colorPrimaryDark">#3D1212</color>
+    <color name="colorAccent">#FF9800</color>
 </resources>
