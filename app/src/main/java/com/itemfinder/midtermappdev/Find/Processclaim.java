@@ -6,12 +6,12 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.View;
 import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
 
@@ -22,7 +22,11 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.itemfinder.midtermappdev.R;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.squareup.picasso.Picasso;
+
+import jp.wasabeef.glide.transformations.BlurTransformation;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -97,7 +101,6 @@ public class Processclaim extends AppCompatActivity {
             userId = currentUser.getUid();
             userEmail = currentUser.getEmail();
         } else {
-            android.content.SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
             SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
             userId = prefs.getString("userId", "");
             userEmail = prefs.getString("userEmail", "");
@@ -145,12 +148,11 @@ public class Processclaim extends AppCompatActivity {
             tvStatus.setText(itemStatus);
 
             if (itemImageUrl != null && !itemImageUrl.isEmpty()) {
-                Picasso.get()
+                Glide.with(this)
                         .load(itemImageUrl)
                         .placeholder(R.drawable.ic_placeholder_image)
                         .error(R.drawable.ic_error_image)
-                        .fit()
-                        .centerCrop()
+                        .transform(new CenterCrop(), new BlurTransformation(300, 3))
                         .into(ivItemImage);
             }
         }
@@ -222,7 +224,7 @@ public class Processclaim extends AppCompatActivity {
     }
 
     /**
-     * ✅ NEW METHOD: Upload all proof images to Cloudinary
+     * ✅ Upload all proof images to Cloudinary
      */
     private void uploadProofImages(final String claimerName, final String claimerId, final String description) {
         uploadedImageUrls.clear();
@@ -414,14 +416,14 @@ public class Processclaim extends AppCompatActivity {
 
         Log.d(TAG, "Submitting claim with " + uploadedImageUrls.size() + " proof images");
 
-        // Save to global claims collection (admin view + notification tracking)
+        // ✅ Save to global claims collection first (admin view + notification tracking)
         db.collection("claims")
                 .add(claimData)
                 .addOnSuccessListener(documentReference -> {
                     String claimId = documentReference.getId();
                     Log.d(TAG, "Claim submitted successfully with ID: " + claimId);
 
-                    // Also save to user's personal collection for easy access
+                    // ✅ Also save to user's personal collection for easy access
                     db.collection("users")
                             .document(userId)
                             .collection("myClaims")
@@ -432,26 +434,6 @@ public class Processclaim extends AppCompatActivity {
                             })
                             .addOnFailureListener(e -> {
                                 Log.e(TAG, "Failed to save to user collection", e);
-        db.collection("users")
-                .document(userId)
-                .collection("myClaims")
-                .add(claimData)
-                .addOnSuccessListener(documentReference -> {
-                    String claimId = documentReference.getId();
-                    Log.d(TAG, "Claim saved in user collection: " + claimId);
-
-                    db.collection("claims")
-                            .document(claimId)
-                            .set(claimData)
-                            .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "Claim saved to global collection");
-                                Toast.makeText(this, "Claim submitted successfully!", Toast.LENGTH_LONG).show();
-                                finish();
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Error saving to global claims", e);
-                                Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                btnClaim.setEnabled(true);
                             });
 
                     Toast.makeText(this, "✅ Claim submitted! Awaiting admin approval.", Toast.LENGTH_LONG).show();
@@ -461,6 +443,7 @@ public class Processclaim extends AppCompatActivity {
                     Log.e(TAG, "Error submitting claim", e);
                     Toast.makeText(this, "Failed to submit: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     btnClaim.setEnabled(true);
+                    isUploading = false;
                 });
     }
 
