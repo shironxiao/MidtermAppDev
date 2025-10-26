@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/layout-sw600dp/activity_main.xml (Tablet - 7" and larger) -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="48dp">
+
+        <!-- Logo -->
+        <ImageView
+            android:id="@+id/iv_logo"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/cnsc_logo"
+            android:scaleType="fitCenter"
+            android:src="@drawable/cnsc_logo"
+            app:layout_constraintBottom_toTopOf="@id/tv_institution_name"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_max="320dp"
+            app:layout_constraintHeight_min="200dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"
+            app:layout_constraintWidth_max="320dp"
+            app:layout_constraintWidth_min="200dp" />
+
+        <!-- Institution Name -->
+        <TextView
+            android:id="@+id/tv_institution_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="48dp"
+            android:autoSizeMinTextSize="16sp"
+            android:autoSizeTextType="uniform"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:text="@string/camarines_norte_state_college"
+            android:textColor="#000000"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@id/btn_student"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/iv_logo"
+            app:layout_constraintWidth_max="600dp"
+            tools:targetApi="26"
+            tools:ignore="ObsoleteSdkInt" />
+
+        <!-- Student Button -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_student"
+            android:layout_width="0dp"
+            android:layout_height="68dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/button_yellow"
+            android:elevation="2dp"
+            android:fontFamily="sans-serif-medium"
+            android:stateListAnimator="@null"
+            android:text="@string/student"
+            android:textAllCaps="false"
+            android:textColor="#000000"
+            android:textSize="26sp"
+            app:layout_constraintBottom_toTopOf="@id/btn_admin"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_institution_name"
+            app:layout_constraintWidth_max="500dp"
+            app:layout_constraintWidth_min="300dp" />
+
+        <!-- Admin Button -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_admin"
+            android:layout_width="0dp"
+            android:layout_height="68dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/button_yellow"
+            android:elevation="2dp"
+            android:fontFamily="sans-serif-medium"
+            android:stateListAnimator="@null"
+            android:text="@string/admin"
+            android:textAllCaps="false"
+            android:textColor="#000000"
+            android:textSize="26sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btn_student"
+            app:layout_constraintWidth_max="500dp"
+            app:layout_constraintWidth_min="300dp" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

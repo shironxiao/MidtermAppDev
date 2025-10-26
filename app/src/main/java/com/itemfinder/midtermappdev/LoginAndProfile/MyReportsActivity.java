@@ -49,10 +49,6 @@ public class MyReportsActivity extends AppCompatActivity {
     private int claimedCount = 0;
     private int rejectedCount = 0;
 
-    public MyReportsActivity() {
-
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,7 +78,6 @@ public class MyReportsActivity extends AppCompatActivity {
         emptyStateTitle = findViewById(R.id.emptyStateTitle);
         emptyStateMessage = findViewById(R.id.emptyStateMessage);
 
-
         // Badge TextViews
         badgePending = findViewById(R.id.badgePending);
         badgeApproved = findViewById(R.id.badgeApproved);
@@ -94,16 +89,13 @@ public class MyReportsActivity extends AppCompatActivity {
         tabApproved = findViewById(R.id.tabApproved);
         tabClaimed = findViewById(R.id.tabClaimed);
         tabRejected = findViewById(R.id.tabRejected);
+
         ImageView btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
-
-
     }
 
     private void setupRecyclerView() {
-        // Handle delete click
         adapter = new FoundItemAdapter(this, filteredItems, this::showDeleteConfirmation);
-
         recyclerViewItems.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewItems.setAdapter(adapter);
     }
@@ -118,7 +110,6 @@ public class MyReportsActivity extends AppCompatActivity {
     private void loadUserReports() {
         Log.d(TAG, "Loading reports for user: " + userId);
 
-        // Load from pendingItems collection filtered by userId
         db.collection("pendingItems")
                 .whereEqualTo("userId", userId)
                 .get()
@@ -139,26 +130,35 @@ public class MyReportsActivity extends AppCompatActivity {
                         String imageUrl = document.getString("imageUrl");
                         String documentId = document.getId();
 
-                        // Log the status for debugging
-                        Log.d(TAG, "Item: " + itemName + ", Status: " + status);
+                        Log.d(TAG, "Item: " + itemName + ", Status: " + status + ", DateFound: " + dateFound);
 
-                        // Extract date and time from dateFound
+                        // ✅ IMPROVED: Better date/time parsing
                         String itemDate = "";
                         String itemTime = "";
-                        if (dateFound != null && dateFound.contains(" ")) {
-                            String[] parts = dateFound.split(" ");
-                            itemDate = parts[0];
-                            if (parts.length > 1) {
-                                itemTime = parts[1] + (parts.length > 2 ? " " + parts[2] : "");
+
+                        if (dateFound != null && !dateFound.isEmpty()) {
+                            // Handle different date formats
+                            if (dateFound.contains(" ")) {
+                                // Format: "2025-10-10 02:08 PM" or "2025-10-10 14:08"
+                                String[] parts = dateFound.split(" ", 2);
+                                itemDate = parts[0];
+                                if (parts.length > 1) {
+                                    itemTime = parts[1];
+                                }
+                            } else {
+                                // Only date provided
+                                itemDate = dateFound;
+                                itemTime = "N/A";
                             }
-                        } else if (dateFound != null) {
-                            itemDate = dateFound;
+                        } else {
+                            itemDate = "N/A";
+                            itemTime = "N/A";
                         }
 
-                        // Normalize status to lowercase for consistent comparison
+                        Log.d(TAG, "Parsed - Date: " + itemDate + ", Time: " + itemTime);
+
                         String normalizedStatus = status != null ? status.toLowerCase().trim() : "pending";
 
-                        // Determine handed status based on status
                         String handedStatus = "Pending";
                         switch (normalizedStatus) {
                             case "approved":
@@ -177,9 +177,9 @@ public class MyReportsActivity extends AppCompatActivity {
                                 description != null ? description : "No description",
                                 location != null ? location : "Unknown location",
                                 itemDate,
-                                itemTime,
+                                itemTime,  // ✅ Now properly set
                                 category != null ? category : "Other",
-                                normalizedStatus, // Use normalized status
+                                normalizedStatus,
                                 imageUrl,
                                 handedStatus,
                                 documentId
@@ -187,7 +187,6 @@ public class MyReportsActivity extends AppCompatActivity {
 
                         allItems.add(item);
 
-                        // Count by status - using normalized status
                         switch (normalizedStatus) {
                             case "pending":
                             case "pending_review":
@@ -209,19 +208,29 @@ public class MyReportsActivity extends AppCompatActivity {
                     Log.d(TAG, "Counts - Pending: " + pendingCount + ", Approved: " + approvedCount +
                             ", Claimed: " + claimedCount + ", Rejected: " + rejectedCount);
 
-                    // Now load claimed items from claims collection
+                    // Load claimed items from claims collection
                     db.collection("claims")
                             .whereEqualTo("userId", userId)
                             .whereEqualTo("status", "Claimed")
                             .get()
                             .addOnSuccessListener(claimSnapshots -> {
                                 for (QueryDocumentSnapshot claimDoc : claimSnapshots) {
+                                    String itemDate = claimDoc.getString("itemDate");
+                                    String itemTime = "N/A"; // Claims might not have time
+
+                                    // Try to parse if available
+                                    if (itemDate != null && itemDate.contains(" ")) {
+                                        String[] parts = itemDate.split(" ", 2);
+                                        itemTime = parts.length > 1 ? parts[1] : "N/A";
+                                        itemDate = parts[0];
+                                    }
+
                                     FoundItem claimedItem = new FoundItem(
                                             claimDoc.getString("itemName"),
                                             claimDoc.getString("description"),
                                             claimDoc.getString("itemLocation"),
-                                            claimDoc.getString("itemDate"),
-                                            "", // no time
+                                            itemDate != null ? itemDate : "N/A",
+                                            itemTime,
                                             claimDoc.getString("itemCategory"),
                                             "claimed",
                                             claimDoc.getString("itemImageUrl"),
@@ -242,7 +251,6 @@ public class MyReportsActivity extends AppCompatActivity {
                                 Log.e(TAG, "Failed to fetch claimed items", e);
                                 Toast.makeText(this, "Failed to load claimed items: " + e.getMessage(),
                                         Toast.LENGTH_SHORT).show();
-                                // Still update UI with pendingItems data
                                 updateSummary();
                                 filterByTab(currentTab);
                             });
@@ -256,8 +264,6 @@ public class MyReportsActivity extends AppCompatActivity {
 
     private void switchTab(String tab) {
         currentTab = tab;
-
-        // Update tab UI
         resetTabStyles();
 
         switch (tab) {
@@ -279,12 +285,10 @@ public class MyReportsActivity extends AppCompatActivity {
     }
 
     private void resetTabStyles() {
-
         tabPending.setBackgroundColor(ContextCompat.getColor(this, android.R.color.transparent));
         tabApproved.setBackgroundColor(ContextCompat.getColor(this, android.R.color.transparent));
         tabClaimed.setBackgroundColor(ContextCompat.getColor(this, android.R.color.transparent));
         tabRejected.setBackgroundColor(ContextCompat.getColor(this, android.R.color.transparent));
-
     }
 
     private void highlightTab(LinearLayout tab) {
@@ -332,7 +336,6 @@ public class MyReportsActivity extends AppCompatActivity {
             recyclerViewItems.setVisibility(View.GONE);
             emptyStateLayout.setVisibility(View.VISIBLE);
 
-            // Update empty state message based on tab
             switch (tab) {
                 case "pending":
                     emptyStateTitle.setText("No pending items");
@@ -380,13 +383,9 @@ public class MyReportsActivity extends AppCompatActivity {
 
         Log.d(TAG, "Removing report from view - DocID: " + documentId + ", Status: " + status);
 
-        // Remove from allItems list
         allItems.removeIf(foundItem -> foundItem.getDocumentId().equals(documentId));
-
-        // Remove from filteredItems list
         filteredItems.removeIf(foundItem -> foundItem.getDocumentId().equals(documentId));
 
-        // Update counts based on removed item's status
         switch (status) {
             case "pending":
             case "pending_review":
@@ -403,7 +402,6 @@ public class MyReportsActivity extends AppCompatActivity {
                 break;
         }
 
-        // Update UI
         updateSummary();
         adapter.notifyDataSetChanged();
         updateEmptyState(currentTab);
@@ -413,5 +411,4 @@ public class MyReportsActivity extends AppCompatActivity {
         Log.d(TAG, "Updated counts - Pending: " + pendingCount + ", Approved: " + approvedCount +
                 ", Claimed: " + claimedCount + ", Rejected: " + rejectedCount);
     }
-
 }
