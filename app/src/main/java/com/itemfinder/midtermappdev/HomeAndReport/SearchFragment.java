@@ -28,7 +28,7 @@ import com.itemfinder.midtermappdev.R;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SearchFragment extends Fragment {
+public class    SearchFragment extends Fragment {
 
     private static final String TAG = "SearchFragment";
     RecyclerView recyclerView;

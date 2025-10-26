@@ -30,7 +30,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="75dp"
                     android:background="#5F1C1C"
-                    android:elevation="5dp"
+                    android:elevation="15dp"
                     android:padding="1dp">
 
                     <ImageView
@@ -46,13 +46,15 @@
 
                     <ImageButton
                         android:id="@+id/notificationButton"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="61dp"
+                        android:layout_height="60dp"
                         android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:visibility="gone"
+                        android:layout_alignParentBottom="true"
+                        android:layout_marginEnd="17dp"
+                        android:layout_marginBottom="5dp"
                         android:background="@android:color/transparent"
-                        android:src="@android:drawable/ic_popup_reminder" />
+                        android:src="@android:drawable/ic_popup_reminder"
+                        android:visibility="visible" />
                 </RelativeLayout>
 
                 <LinearLayout
@@ -284,62 +286,65 @@
         </ScrollView>
     </RelativeLayout>
 
-    <!-- Right side drawer content -->
+    <!-- Inside your notification drawer layout -->
     <LinearLayout
         android:id="@+id/notificationContainer"
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="end"
-        android:background="#FFFFFF"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:background="@android:color/white"
+        android:layout_gravity="end">
 
-        <!-- Notification Header (must be FIRST in this container) -->
+        <!-- Header with Clear button -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#5B7FA6"
-            android:orientation="vertical"
+            android:background="#21458C"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:padding="16dp">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="Notifications"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
+                android:textColor="@color/white"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
-            <TextView
+            <Button
+                android:id="@+id/btnClearNotifications"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Stay updated with your reports"
-                android:textColor="#FFFFFF"
+                android:backgroundTint="#7C0303"
+                android:padding="8dp"
+                android:text="Clear All"
+                android:textColor="@android:color/white"
                 android:textSize="12sp" />
         </LinearLayout>
 
-        <!-- RecyclerView fills remaining height -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvNotifications"
+        <View
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:padding="8dp"
-            android:clipToPadding="false"
-            android:scrollbars="vertical"
-            android:overScrollMode="ifContentScrolls" />
+            android:layout_height="1dp"
+            android:background="#E0E0E0"/>
 
-        <!-- No Notifications Message (wrap_content, below the list) -->
         <TextView
             android:id="@+id/tvNoNotifications"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="12dp"
-            android:gravity="center"
             android:text="No notifications yet"
             android:textColor="#999999"
-            android:textSize="16sp"
-            android:visibility="gone" />
+            android:textSize="14sp"
+            android:padding="16dp"
+            android:gravity="center"
+            android:visibility="gone"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvNotifications"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp"/>
 
     </LinearLayout>
 

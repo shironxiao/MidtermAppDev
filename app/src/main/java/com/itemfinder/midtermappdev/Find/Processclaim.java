@@ -6,12 +6,12 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.view.View;
 import android.content.pm.PackageManager;
 
 import androidx.annotation.Nullable;
@@ -42,13 +42,14 @@ public class Processclaim extends AppCompatActivity {
     private int currentImageIndex = -1;
 
     private String itemId, itemName, itemCategory, itemLocation, itemDate, itemStatus, itemImageUrl;
-    private String userId, userEmail, studentId, fullName;
+    private String userId, userEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.process_claim);
 
+        // Request notification permission for Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -56,19 +57,15 @@ public class Processclaim extends AppCompatActivity {
             }
         }
 
-        // 🔹 Get user data from FirebaseAuth or SharedPreferences
         getUserData();
 
-        // 🔙 Back
         backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> finish());
 
-        // 🔹 Inputs
         claimerNameInput = findViewById(R.id.claimerNameInput);
         claimerIdInput = findViewById(R.id.claimerIdInput);
         claimerDescriptionInput = findViewById(R.id.claimerDescriptionInput);
 
-        // 🔹 Finder details
         finderContact = findViewById(R.id.finderContact);
         claimLocation = findViewById(R.id.claimLocation);
 
@@ -93,7 +90,6 @@ public class Processclaim extends AppCompatActivity {
             userId = currentUser.getUid();
             userEmail = currentUser.getEmail();
         } else {
-            // fallback to stored session
             android.content.SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
             userId = prefs.getString("userId", "");
             userEmail = prefs.getString("userEmail", "");
@@ -230,7 +226,7 @@ public class Processclaim extends AppCompatActivity {
         claimData.put("itemDate", itemDate);
         claimData.put("itemImageUrl", itemImageUrl);
 
-        // ✅ This field is required for Firestore security rules
+        // ✅ Required for security rules and notifications
         claimData.put("userId", userId);
 
         claimData.put("claimantName", claimerName);
@@ -243,29 +239,28 @@ public class Processclaim extends AppCompatActivity {
 
         Log.d(TAG, "Submitting claim to Firebase under user: " + userId);
 
-        // ✅ Step 1: Save to user's own collection (optional, personal view)
-        db.collection("users")
-                .document(userId)
-                .collection("myClaims")
+        // Save to global claims collection (admin view + notification tracking)
+        db.collection("claims")
                 .add(claimData)
                 .addOnSuccessListener(documentReference -> {
                     String claimId = documentReference.getId();
-                    Log.d(TAG, "Claim saved in user collection with ID: " + claimId);
+                    Log.d(TAG, "Claim submitted successfully with ID: " + claimId);
 
-                    // ✅ Step 2: Also add to global 'claims' collection (admin view)
-                    db.collection("claims")
+                    // Also save to user's personal collection for easy access
+                    db.collection("users")
+                            .document(userId)
+                            .collection("myClaims")
                             .document(claimId)
                             .set(claimData)
                             .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "Claim also added to global 'claims' collection");
-                                Toast.makeText(this, "Claim submitted successfully! Awaiting admin approval.", Toast.LENGTH_LONG).show();
-                                finish();
+                                Log.d(TAG, "Claim also saved in user's collection");
                             })
                             .addOnFailureListener(e -> {
-                                Log.e(TAG, "Error saving to global claims", e);
-                                Toast.makeText(this, "Failed to upload to claims: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                btnClaim.setEnabled(true);
+                                Log.e(TAG, "Failed to save to user collection", e);
                             });
+
+                    Toast.makeText(this, "✅ Claim submitted! Awaiting admin approval.", Toast.LENGTH_LONG).show();
+                    finish();
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error submitting claim", e);
@@ -273,5 +268,4 @@ public class Processclaim extends AppCompatActivity {
                     btnClaim.setEnabled(true);
                 });
     }
-
 }
