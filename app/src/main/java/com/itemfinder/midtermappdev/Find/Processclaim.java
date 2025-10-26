@@ -6,12 +6,12 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.view.View;
 import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
 
@@ -44,7 +44,7 @@ public class Processclaim extends AppCompatActivity {
     private int currentImageIndex = -1;
 
     private String itemId, itemName, itemCategory, itemLocation, itemDate, itemStatus, itemImageUrl;
-    private String userId, userEmail, studentId, fullName;
+    private String userId, userEmail;
 
     // ✅ Track uploaded image URLs
     private List<String> uploadedImageUrls = new ArrayList<>();
@@ -56,6 +56,7 @@ public class Processclaim extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.process_claim);
 
+        // Request notification permission for Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -96,6 +97,7 @@ public class Processclaim extends AppCompatActivity {
             userId = currentUser.getUid();
             userEmail = currentUser.getEmail();
         } else {
+            android.content.SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
             SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
             userId = prefs.getString("userId", "");
             userEmail = prefs.getString("userEmail", "");
@@ -396,6 +398,8 @@ public class Processclaim extends AppCompatActivity {
         claimData.put("itemLocation", itemLocation);
         claimData.put("itemDate", itemDate);
         claimData.put("itemImageUrl", itemImageUrl);
+
+        // ✅ Required for security rules and notifications
         claimData.put("userId", userId);
         claimData.put("claimantName", claimerName);
         claimData.put("claimantId", claimerId);
@@ -410,6 +414,24 @@ public class Processclaim extends AppCompatActivity {
 
         Log.d(TAG, "Submitting claim with " + uploadedImageUrls.size() + " proof images");
 
+        // Save to global claims collection (admin view + notification tracking)
+        db.collection("claims")
+                .add(claimData)
+                .addOnSuccessListener(documentReference -> {
+                    String claimId = documentReference.getId();
+                    Log.d(TAG, "Claim submitted successfully with ID: " + claimId);
+
+                    // Also save to user's personal collection for easy access
+                    db.collection("users")
+                            .document(userId)
+                            .collection("myClaims")
+                            .document(claimId)
+                            .set(claimData)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d(TAG, "Claim also saved in user's collection");
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to save to user collection", e);
         db.collection("users")
                 .document(userId)
                 .collection("myClaims")
@@ -431,6 +453,9 @@ public class Processclaim extends AppCompatActivity {
                                 Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
                                 btnClaim.setEnabled(true);
                             });
+
+                    Toast.makeText(this, "✅ Claim submitted! Awaiting admin approval.", Toast.LENGTH_LONG).show();
+                    finish();
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error submitting claim", e);

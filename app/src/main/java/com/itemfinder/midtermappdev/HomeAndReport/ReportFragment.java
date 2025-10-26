@@ -634,11 +634,6 @@ public class ReportFragment extends Fragment {
                                 Log.d("ReportFragment", "Saved to user's foundItems too.");
                             });
 
-                    // ✅ Notify NotificationManager about new report
-                    com.itemfinder.midtermappdev.utils.NotificationManager notifManager =
-                            com.itemfinder.midtermappdev.utils.NotificationManager.getInstance();
-                    notifManager.notifyReportSubmitted(finalItemName, docId);
-
                     // ✅ Once saved successfully, run UI updates
                     requireActivity().runOnUiThread(() -> {
                         Toast.makeText(requireContext(),
@@ -652,13 +647,22 @@ public class ReportFragment extends Fragment {
                         resetForm();
                         btnPostFoundItem.setEnabled(true);
 
-                        // 🔹 Navigate back to HomeFragment
+                        // 🔹 Navigate back to HomeFragment AND trigger notification
                         if (getActivity() instanceof HomeAndReportMainActivity) {
                             HomeAndReportMainActivity main = (HomeAndReportMainActivity) getActivity();
+
+                            // Navigate to home first
                             main.replaceFragment(new HomeFragment());
 
-                            // The NotificationManager will automatically add the notification
-                            // to the HomeFragment when it initializes
+                            // ✅ IMPORTANT: Wait for HomeFragment to initialize, then trigger notification
+                            new android.os.Handler().postDelayed(() -> {
+                                // Now trigger the notification after HomeFragment is ready
+                                com.itemfinder.midtermappdev.utils.AppNotificationManager notifManager =
+                                        com.itemfinder.midtermappdev.utils.AppNotificationManager.getInstance();
+                                notifManager.notifyReportSubmitted(finalItemName, docId);
+
+                                Log.d("ReportFragment", "✅ Notification triggered for report: " + finalItemName);
+                            }, 500); // 500ms delay to ensure HomeFragment initializes
                         }
                     });
 

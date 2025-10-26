@@ -1,28 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="12dp"
-    android:background="?attr/selectableItemBackground">
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp"
+    android:background="@android:color/white">
 
-    <!-- Notification Text -->
-    <TextView
-        android:id="@+id/tvNotificationText"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Your claim for 'iPhone 13' has been approved! 📍 Collect at: SG CCMS"
-        android:textSize="14sp"
-        android:textColor="#1F2937"
-        android:lineSpacingExtra="2dp"
-        android:maxLines="3"
-        android:ellipsize="end" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <!-- Divider -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="12dp"
-        android:background="#E5E7EB" />
+        <TextView
+            android:id="@+id/tvNotification"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="#212121"
+            android:lineSpacingExtra="4dp"
+            android:fontFamily="sans-serif"
+            android:text="• ✅ Claim Approved: 'PASS' 📍 Collect at: SG CCMS • Oct 26, 3:22 am"/>
 
-</LinearLayout>
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

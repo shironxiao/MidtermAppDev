@@ -1,57 +1,52 @@
 package com.itemfinder.midtermappdev.HomeAndReport.adapter;
 
 import android.content.Context;
-import android.graphics.Color;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.itemfinder.midtermappdev.R;
+
 import java.util.List;
 
-public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.ViewHolder> {
-    private final List<String> notifications;
-    private final Context context;
+public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder> {
 
-    public NotificationAdapter(Context context, List<String> notifications) {
-        this.notifications = notifications;
+    private Context context;
+    private List<String> notificationList;
+
+    public NotificationAdapter(Context context, List<String> notificationList) {
         this.context = context;
+        this.notificationList = notificationList;
     }
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Create a simple TextView for each notification
-        TextView textView = new TextView(context);
-        textView.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        ));
-        textView.setPadding(24, 16, 24, 16);
-        textView.setTextColor(Color.BLACK);
-        textView.setTextSize(15f);
-        textView.setBackgroundColor(Color.parseColor("#F5F5F5"));
-
-        return new ViewHolder(textView);
+    public NotificationViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.notification_item_simple, parent, false);
+        return new NotificationViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.textView.setText("• " + notifications.get(position));
+    public void onBindViewHolder(@NonNull NotificationViewHolder holder, int position) {
+        String notification = notificationList.get(position);
+        holder.tvNotification.setText(notification);
     }
 
     @Override
     public int getItemCount() {
-        return notifications.size();
+        return notificationList.size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView textView;
-        public ViewHolder(@NonNull TextView itemView) {
+    public static class NotificationViewHolder extends RecyclerView.ViewHolder {
+        TextView tvNotification;
+
+        public NotificationViewHolder(@NonNull View itemView) {
             super(itemView);
-            textView = itemView;
+            tvNotification = itemView.findViewById(R.id.tvNotification);
         }
     }
 }

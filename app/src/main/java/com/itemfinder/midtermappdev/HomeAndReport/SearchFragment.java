@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SearchFragment extends Fragment {
+public class    SearchFragment extends Fragment {
 
     private static final String TAG = "SearchFragment";
     RecyclerView recyclerView;
