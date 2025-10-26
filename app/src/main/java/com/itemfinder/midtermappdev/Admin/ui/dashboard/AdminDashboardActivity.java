@@ -237,11 +237,13 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
     public void onApproveItem(Item_admin itemAdmin) {
         Log.d(TAG, "Approve item dialog showing for: " + itemAdmin.getName());
 
+        // ✅ Updated: No notes parameter needed
         ApproveItemDialog.show(this, itemAdmin, new ApproveItemDialog.ApproveListener() {
             @Override
-            public void onApprove(String notes) {
-                Log.d(TAG, "Item approved with notes: " + notes);
+            public void onApprove() {
+                Log.d(TAG, "Item approved (no notes required)");
 
+                // Basic validation - just check if item has required fields
                 ValidationUtils.ValidationResult result = ValidationUtils.validateItem(
                         itemAdmin.getName(), itemAdmin.getDescription(), itemAdmin.getStatus());
 
@@ -285,39 +287,30 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
     public void onRejectItem(Item_admin itemAdmin) {
         Log.d(TAG, "Reject item dialog showing for: " + itemAdmin.getName());
 
+        // ✅ Updated: No reason parameter needed
         RejectItemDialog.show(this, itemAdmin, new RejectItemDialog.RejectListener() {
             @Override
-            public void onReject(String reason) {
-                Log.d(TAG, "Item rejected with reason: " + reason);
+            public void onReject() {
+                Log.d(TAG, "Item rejected (no reason required)");
 
-                ValidationUtils.ValidationResult result = ValidationUtils.validateRejectionReason(reason);
+                firebaseHelper.rejectItem(itemAdmin.getId(),
+                        new AdminFirebaseHelper.ItemActionListener() {
+                            @Override
+                            public void onSuccess(String message) {
+                                Log.d(TAG, "Item rejected successfully: " + itemAdmin.getName());
+                                Toast.makeText(AdminDashboardActivity.this,
+                                        message, Toast.LENGTH_SHORT).show();
 
-                if (result.isValid) {
-                    Log.d(TAG, "Rejection reason validation passed, proceeding with rejection");
+                                loadAllItems();
+                            }
 
-                    firebaseHelper.rejectItem(itemAdmin.getId(),
-                            new AdminFirebaseHelper.ItemActionListener() {
-                                @Override
-                                public void onSuccess(String message) {
-                                    Log.d(TAG, "Item rejected successfully: " + itemAdmin.getName());
-                                    Toast.makeText(AdminDashboardActivity.this,
-                                            message, Toast.LENGTH_SHORT).show();
-
-                                    loadAllItems();
-                                }
-
-                                @Override
-                                public void onError(String error) {
-                                    Log.e(TAG, "Error rejecting item: " + error);
-                                    Toast.makeText(AdminDashboardActivity.this,
-                                            "Error: " + error, Toast.LENGTH_LONG).show();
-                                }
-                            });
-                } else {
-                    Log.d(TAG, "Rejection reason validation failed: " + result.errorMessage);
-                    Toast.makeText(AdminDashboardActivity.this,
-                            "Validation Error: " + result.errorMessage, Toast.LENGTH_LONG).show();
-                }
+                            @Override
+                            public void onError(String error) {
+                                Log.e(TAG, "Error rejecting item: " + error);
+                                Toast.makeText(AdminDashboardActivity.this,
+                                        "Error: " + error, Toast.LENGTH_LONG).show();
+                            }
+                        });
             }
 
             @Override

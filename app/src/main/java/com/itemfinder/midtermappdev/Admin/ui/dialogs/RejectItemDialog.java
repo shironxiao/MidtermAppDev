@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.TextView;
 import com.itemfinder.midtermappdev.R;
 import com.itemfinder.midtermappdev.Admin.data.model.Item_admin;
@@ -12,7 +11,7 @@ import com.itemfinder.midtermappdev.Admin.data.model.Item_admin;
 public class RejectItemDialog {
 
     public interface RejectListener {
-        void onReject(String reason);
+        void onReject();
         void onCancel();
     }
 
@@ -24,15 +23,13 @@ public class RejectItemDialog {
 
         TextView tvItemName = dialogView.findViewById(R.id.tvRejectItemName);
         TextView tvItemStatus = dialogView.findViewById(R.id.tvRejectItemStatus);
-        EditText etReason = dialogView.findViewById(R.id.etRejectReason);
 
         tvItemName.setText("Item: " + itemAdmin.getName());
         tvItemStatus.setText("Current Status: " + itemAdmin.getStatus());
 
         AlertDialog dialog = builder
                 .setPositiveButton("Reject", (dialogInterface, which) -> {
-                    String reason = etReason.getText().toString().trim();
-                    listener.onReject(reason);
+                    listener.onReject();
                     dialogInterface.dismiss();
                 })
                 .setNegativeButton("Cancel", (dialogInterface, which) -> {

@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.TextView;
 import com.itemfinder.midtermappdev.R;
 import com.itemfinder.midtermappdev.Admin.data.model.Item_admin;
@@ -12,7 +11,7 @@ import com.itemfinder.midtermappdev.Admin.data.model.Item_admin;
 public class ApproveItemDialog {
 
     public interface ApproveListener {
-        void onApprove(String notes);
+        void onApprove();
         void onCancel();
     }
 
@@ -24,15 +23,13 @@ public class ApproveItemDialog {
 
         TextView tvItemName = dialogView.findViewById(R.id.tvApproveItemName);
         TextView tvItemStatus = dialogView.findViewById(R.id.tvApproveItemStatus);
-        EditText etNotes = dialogView.findViewById(R.id.etApproveNotes);
 
         tvItemName.setText("Item: " + itemAdmin.getName());
         tvItemStatus.setText("Current Status: " + itemAdmin.getStatus());
 
         AlertDialog dialog = builder
                 .setPositiveButton("Approve", (dialogInterface, which) -> {
-                    String notes = etNotes.getText().toString().trim();
-                    listener.onApprove(notes);
+                    listener.onApprove();
                     dialogInterface.dismiss();
                 })
                 .setNegativeButton("Cancel", (dialogInterface, which) -> {

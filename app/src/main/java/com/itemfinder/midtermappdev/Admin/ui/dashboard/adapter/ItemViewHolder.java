@@ -26,7 +26,7 @@ public class ItemViewHolder extends RecyclerView.ViewHolder {
         tvDateFound = itemView.findViewById(R.id.tvDateFound);
         tvLocation = itemView.findViewById(R.id.tvLocation);
         tvDescription = itemView.findViewById(R.id.tvDescription);
-        tvContact = itemView.findViewById(R.id.tvContact);
+
         tvItemStatus = itemView.findViewById(R.id.tvItemStatus);
         btnApprove = itemView.findViewById(R.id.btnApprove);
         btnReject = itemView.findViewById(R.id.btnReject);

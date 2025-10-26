@@ -76,14 +76,7 @@
             android:ellipsize="end" />
 
         <!-- Contact -->
-        <TextView
-            android:id="@+id/tvContact"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Contact: Anonymous"
-            android:textSize="13sp"
-            android:textColor="@android:color/darker_gray" />
+
 
         <!-- Anonymous / Student Info Section -->
         <LinearLayout

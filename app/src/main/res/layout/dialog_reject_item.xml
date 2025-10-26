@@ -43,30 +43,9 @@
         android:background="#CCCCCC"
         android:layout_marginBottom="16dp" />
 
-    <!-- Reason Label -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Reason for Rejection (Required)"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:textColor="#D32F2F"
-        android:layout_marginBottom="8dp" />
 
-    <!-- Reason EditText -->
-    <EditText
-        android:id="@+id/etRejectReason"
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:hint="Please provide a reason for rejection..."
-        android:textSize="14sp"
-        android:padding="12dp"
-        android:background="@drawable/edit_text_background"
-        android:gravity="top|start"
-        android:textColor="#000000"
-        android:textColorHint="#999999"
-        android:layout_marginBottom="16dp"
-        android:inputType="textMultiLine" />
+
+
 
     <!-- Warning Text -->
     <TextView

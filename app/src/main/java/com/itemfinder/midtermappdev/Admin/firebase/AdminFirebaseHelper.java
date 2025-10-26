@@ -163,7 +163,7 @@ public class AdminFirebaseHelper {
                 });
     }
 
-    // Helper: Convert Firestore document to Item_admin
+    // ✅ FIXED: Helper method to convert Firestore document to Item_admin
     private Item_admin documentToItem_admin(DocumentSnapshot doc) {
         Item_admin item = new Item_admin();
         item.setId(doc.getId());
@@ -173,13 +173,32 @@ public class AdminFirebaseHelper {
         item.setImageUrl(doc.getString("imageUrl"));
         item.setTimestamp(doc.getLong("submittedAt") != null ? doc.getLong("submittedAt") : 0);
 
-        // New fields
+        // Existing fields
         item.setCategory(doc.getString("category"));
         item.setFoundLocation(doc.getString("location"));
         item.setDateFound(doc.getString("dateFound"));
         item.setPhotoUrl(doc.getString("imageUrl"));
         item.setContactInfo(doc.getString("contact"));
-        item.setAnonymous(doc.getBoolean("isAnonymous") != null && doc.getBoolean("isAnonymous"));
+
+        // ✅ Get anonymous status
+        Boolean isAnonymous = doc.getBoolean("isAnonymous");
+        item.setAnonymous(isAnonymous != null && isAnonymous);
+
+        // ✅ CRITICAL FIX: Get studentId and email from Firestore
+        // These fields are saved as "studentId" and "userEmail" in ReportFragment
+        String studentId = doc.getString("studentId");
+        String userEmail = doc.getString("userEmail");
+
+        // ✅ Set the values (will be null if anonymous or not present)
+        item.setStudentId(studentId);
+        item.setEmail(userEmail);
+
+        // ✅ Debug logging to verify data
+        Log.d(TAG, "Document " + doc.getId() + " mapping:");
+        Log.d(TAG, "  isAnonymous: " + item.isAnonymous());
+        Log.d(TAG, "  studentId: " + studentId);
+        Log.d(TAG, "  email: " + userEmail);
+        Log.d(TAG, "  contact: " + item.getContactInfo());
 
         return item;
     }
