@@ -1,14 +1,44 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.MidtermAppDev" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark Theme -->
+    <style name="Base.Theme.MyApplication" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Primary brand color -->
+        <item name="colorPrimary">#5B7FA6</item>
+        <item name="colorPrimaryVariant">#7A9BC4</item>
+        <item name="colorOnPrimary">#000000</item>
+
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">#82A5C8</item>
+        <item name="colorSecondaryVariant">#9BB8D3</item>
+        <item name="colorOnSecondary">#000000</item>
+
+        <!-- Background colors -->
+        <item name="android:colorBackground">#121212</item>
+        <item name="colorSurface">#1E1E1E</item>
+        <item name="colorOnBackground">#FFFFFF</item>
+        <item name="colorOnSurface">#FFFFFF</item>
+
+        <!-- Status bar -->
+        <item name="android:statusBarColor">#121212</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <!-- Text colors -->
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#B0B0B0</item>
+        <item name="android:textColorHint">#757575</item>
+
+        <!-- Card colors -->
+        <item name="cardBackgroundColor">#2C2C2C</item>
+
+        <!-- Button colors -->
+        <item name="materialButtonStyle">@style/Widget.App.Button.Dark</item>
     </style>
- =
-        <!-- Base application theme. -->
-        <style name="Base.Theme.Homeproj" parent="Theme.Material3.DayNight.NoActionBar">
-            <!-- Customize your dark theme here. -->
-            <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
-        </style>
-   =
+
+    <style name="Theme.MyApplication" parent="Base.Theme.MyApplication" />
+
+    <!-- Custom Button Style for Dark Theme -->
+    <style name="Widget.App.Button.Dark" parent="Widget.Material3.Button">
+        <item name="backgroundTint">#5B7FA6</item>
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
 </resources>
