@@ -22,6 +22,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.itemfinder.midtermappdev.R;
+import com.itemfinder.midtermappdev.utils.AppNotificationManager;
 import com.squareup.picasso.Picasso;
 
 import java.io.InputStream;
@@ -98,7 +99,7 @@ public class Processclaim extends AppCompatActivity {
             userEmail = currentUser.getEmail();
         } else {
             android.content.SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
-            SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
+            prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
             userId = prefs.getString("userId", "");
             userEmail = prefs.getString("userEmail", "");
         }
@@ -398,30 +399,25 @@ public class Processclaim extends AppCompatActivity {
         claimData.put("itemLocation", itemLocation);
         claimData.put("itemDate", itemDate);
         claimData.put("itemImageUrl", itemImageUrl);
-
-        // ✅ Required for security rules and notifications
         claimData.put("userId", userId);
         claimData.put("claimantName", claimerName);
         claimData.put("claimantId", claimerId);
         claimData.put("claimantEmail", userEmail);
         claimData.put("description", description);
-
-        // ✅ Use uploaded Cloudinary URLs instead of local URIs
         claimData.put("proofImages", uploadedImageUrls);
-
         claimData.put("status", "Pending");
         claimData.put("claimDate", System.currentTimeMillis());
 
         Log.d(TAG, "Submitting claim with " + uploadedImageUrls.size() + " proof images");
 
-        // Save to global claims collection (admin view + notification tracking)
+        // ✅ Save claim to global collection
         db.collection("claims")
                 .add(claimData)
                 .addOnSuccessListener(documentReference -> {
                     String claimId = documentReference.getId();
                     Log.d(TAG, "Claim submitted successfully with ID: " + claimId);
 
-                    // Also save to user's personal collection for easy access
+                    // Save also in user’s subcollection
                     db.collection("users")
                             .document(userId)
                             .collection("myClaims")
@@ -429,40 +425,33 @@ public class Processclaim extends AppCompatActivity {
                             .set(claimData)
                             .addOnSuccessListener(aVoid -> {
                                 Log.d(TAG, "Claim also saved in user's collection");
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Failed to save to user collection", e);
-        db.collection("users")
-                .document(userId)
-                .collection("myClaims")
-                .add(claimData)
-                .addOnSuccessListener(documentReference -> {
-                    String claimId = documentReference.getId();
-                    Log.d(TAG, "Claim saved in user collection: " + claimId);
 
-                    db.collection("claims")
-                            .document(claimId)
-                            .set(claimData)
-                            .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "Claim saved to global collection");
-                                Toast.makeText(this, "Claim submitted successfully!", Toast.LENGTH_LONG).show();
+                                // ✅ Send notification (system + in-app)
+                                AppNotificationManager.getInstance()
+                                        .notifyReportSubmitted(itemName, claimId);
+
+                                Toast.makeText(this,
+                                        "✅ Claim submitted! Awaiting admin approval.",
+                                        Toast.LENGTH_LONG).show();
                                 finish();
                             })
                             .addOnFailureListener(e -> {
-                                Log.e(TAG, "Error saving to global claims", e);
-                                Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                Log.e(TAG, "Failed to save claim in user collection", e);
+                                Toast.makeText(this,
+                                        "Error saving claim: " + e.getMessage(),
+                                        Toast.LENGTH_LONG).show();
                                 btnClaim.setEnabled(true);
                             });
-
-                    Toast.makeText(this, "✅ Claim submitted! Awaiting admin approval.", Toast.LENGTH_LONG).show();
-                    finish();
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error submitting claim", e);
-                    Toast.makeText(this, "Failed to submit: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this,
+                            "Failed to submit: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
                     btnClaim.setEnabled(true);
                 });
     }
+
 
     @Override
     protected void onStart() {

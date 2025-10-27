@@ -68,7 +68,6 @@ public class HomeFragment extends Fragment {
 
     private Button btnClearNotifications;
 
-    // ✅ Updated to use AppNotificationManager
     private AppNotificationManager appNotificationManager;
     private String currentUserId;
 
@@ -95,6 +94,9 @@ public class HomeFragment extends Fragment {
         rvNotifications = view.findViewById(R.id.rvNotifications);
         tvNoNotifications = view.findViewById(R.id.tvNoNotifications);
 
+        // ✅ CLEAR NOTIFICATION LIST FOR NEW USER
+        notificationList.clear();
+
         // Setup RecyclerView
         rvNotifications.setLayoutManager(new LinearLayoutManager(getContext()));
         notificationAdapter = new NotificationAdapter(requireContext(), notificationList);
@@ -104,7 +106,7 @@ public class HomeFragment extends Fragment {
         databaseReference = FirebaseDatabase.getInstance().getReference("items");
         firestore = FirebaseFirestore.getInstance();
 
-        // ✅ Initialize AppNotificationManager
+        // ✅ Initialize AppNotificationManager BEFORE loading data
         initializeNotificationManager();
 
         // Load data
@@ -172,6 +174,7 @@ public class HomeFragment extends Fragment {
             Toast.makeText(getContext(), "Notifications cleared", Toast.LENGTH_SHORT).show();
         }
     }
+
     /**
      * ✅ Initialize AppNotificationManager with real-time tracking
      */
@@ -182,16 +185,17 @@ public class HomeFragment extends Fragment {
         }
 
         if (currentUserId == null || currentUserId.isEmpty()) {
-            Log.w(TAG, "User ID not found, cannot initialize AppNotificationManager");
+            Log.w(TAG, "⚠️ User ID not found, cannot initialize AppNotificationManager");
             return;
         }
+        Toast.makeText(getContext(), "User ID: " + currentUserId, Toast.LENGTH_SHORT).show();
 
-        Log.d(TAG, "Initializing AppNotificationManager for user: " + currentUserId);
+        Log.d(TAG, "🔄 Initializing AppNotificationManager for user: " + currentUserId);
 
         // Get AppNotificationManager instance
         appNotificationManager = AppNotificationManager.getInstance();
 
-        // Initialize with callback
+        // ✅ CRITICAL: Initialize with callback
         appNotificationManager.initialize(
                 requireContext(),
                 currentUserId,
@@ -205,17 +209,22 @@ public class HomeFragment extends Fragment {
                             return;
                         }
 
-                        Log.d(TAG, "📬 Notification received: " + title);
+                        Log.d(TAG, "📬 Notification received in callback!");
+                        Log.d(TAG, "Title: " + title);
                         Log.d(TAG, "Message: " + message);
                         Log.d(TAG, "Type: " + type + " | DocId: " + documentId);
 
-                        // Add notification to the list with clean formatting
-                        addInAppNotification(title, message, timestamp);
+                        // ✅ Use runOnUiThread to ensure UI updates happen on main thread
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                addInAppNotification(title, message, timestamp);
 
-                        // ✅ Auto-open drawer for claim approvals and important updates
-                        if (type.equals("CLAIM_APPROVED") || type.equals("REPORT_APPROVED")) {
-                            Log.d(TAG, "Opening notification drawer for important update");
-                            openNotificationDrawer();
+                                // Auto-open drawer for important updates
+                                if (type.equals("CLAIM_APPROVED") || type.equals("REPORT_APPROVED")) {
+                                    Log.d(TAG, "Opening notification drawer for important update");
+                                    openNotificationDrawer();
+                                }
+                            });
                         }
                     }
 
@@ -226,7 +235,7 @@ public class HomeFragment extends Fragment {
                 }
         );
 
-        Log.d(TAG, "✅ AppNotificationManager initialized successfully");
+        Log.d(TAG, "✅ AppNotificationManager initialized - ready to receive notifications");
     }
 
     /**
@@ -241,18 +250,27 @@ public class HomeFragment extends Fragment {
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, h:mm a", Locale.getDefault());
         String timeStr = sdf.format(new Date(timestamp));
 
-        // Create clean notification format matching system notifications
+        // Create clean notification format
         String formattedNotification = "• " + title + " " + message + " • " + timeStr;
+
+        Log.d(TAG, "➕ Adding notification to list: " + formattedNotification);
 
         // Check for duplicates
         if (!notificationList.contains(formattedNotification)) {
             notificationList.add(0, formattedNotification);
+
             if (notificationAdapter != null) {
                 notificationAdapter.notifyItemInserted(0);
+                Log.d(TAG, "✅ Adapter notified - list size: " + notificationList.size());
+            } else {
+                Log.e(TAG, "❌ Adapter is null!");
             }
+
             if (rvNotifications != null) {
                 rvNotifications.scrollToPosition(0);
             }
+        } else {
+            Log.d(TAG, "⚠️ Duplicate notification - skipped");
         }
 
         updateNoNotificationsView();
@@ -268,12 +286,14 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Add notification to in-app list
+     * Add notification to in-app list (backward compatibility)
      */
     public void addInAppNotification(String message) {
         if (notificationList == null) {
             notificationList = new ArrayList<>();
         }
+
+        Log.d(TAG, "➕ Adding simple notification: " + message);
 
         // Check for duplicates
         if (!notificationList.contains(message)) {
@@ -296,9 +316,11 @@ public class HomeFragment extends Fragment {
         if (tvNoNotifications == null || rvNotifications == null) return;
 
         if (notificationList == null || notificationList.isEmpty()) {
+            Log.d(TAG, "📭 No notifications - showing empty state");
             tvNoNotifications.setVisibility(View.VISIBLE);
             rvNotifications.setVisibility(View.GONE);
         } else {
+            Log.d(TAG, "📬 " + notificationList.size() + " notifications - showing list");
             tvNoNotifications.setVisibility(View.GONE);
             rvNotifications.setVisibility(View.VISIBLE);
         }
@@ -580,6 +602,8 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+
+        Log.d(TAG, "🔄 onDestroyView called");
 
         // Cleanup Firestore listeners
         if (approvedItemsListener != null) {

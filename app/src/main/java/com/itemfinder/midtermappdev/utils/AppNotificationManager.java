@@ -18,12 +18,15 @@ import java.util.Set;
 /**
  * Central notification manager for handling all app notifications
  * Tracks reported items and claim requests with real-time updates
+ * ✅ NOW WITH USER-SPECIFIC NOTIFICATION STORAGE
  */
 public class AppNotificationManager {
     private static final String TAG = "AppNotificationManager";
     private static final String PREFS_NAME = "NotificationPrefs";
-    private static final String KEY_SHOWN_NOTIFICATIONS = "shown_notifications";
-    private static final String KEY_LOCAL_NOTIFICATIONS = "local_notifications";
+
+    // ✅ USER-SPECIFIC KEYS (will be prefixed with userId)
+    private static final String KEY_SHOWN_NOTIFICATIONS = "shown_notifications_";
+    private static final String KEY_LOCAL_NOTIFICATIONS = "local_notifications_";
 
     private static AppNotificationManager instance;
 
@@ -58,19 +61,56 @@ public class AppNotificationManager {
 
     /**
      * Initialize notification tracking for a user
+     * ✅ CLEARS OLD USER DATA BEFORE LOADING NEW USER
      */
     public void initialize(Context context, String userId, NotificationCallback callback) {
+        Log.d(TAG, "🔄 Initialize called for user: " + userId);
+
+        // ✅ CRITICAL: Clean up previous listeners FIRST (but this will clear callback!)
+        cleanupListenersOnly();
+
+        // NOW set the new callback and context AFTER cleanup
         this.context = context.getApplicationContext();
         this.userId = userId;
         this.callback = callback;
         this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
-        Log.d(TAG, "Initializing AppNotificationManager for user: " + userId);
+        Log.d(TAG, "✅ Callback set: " + (callback != null ? "YES" : "NO"));
+        Log.d(TAG, "✅ Initializing AppNotificationManager for user: " + userId);
 
         // Start listening for changes
         startListeningForReportedItems();
         startListeningForClaimRequests();
         loadSavedNotifications();
+    }
+
+    /**
+     * ✅ NEW: Cleanup only listeners, preserve callback
+     */
+    private void cleanupListenersOnly() {
+        Log.d(TAG, "🧹 Cleaning up listeners only");
+
+        if (reportedItemsListener != null) {
+            reportedItemsListener.remove();
+            reportedItemsListener = null;
+        }
+
+        if (claimRequestsListener != null) {
+            claimRequestsListener.remove();
+            claimRequestsListener = null;
+        }
+
+        if (appNotificationsListener != null) {
+            appNotificationsListener.remove();
+            appNotificationsListener = null;
+        }
+    }
+
+    /**
+     * ✅ Get user-specific key for SharedPreferences
+     */
+    private String getUserKey(String baseKey) {
+        return baseKey + userId;
     }
 
     /**
@@ -99,7 +139,6 @@ public class AppNotificationManager {
 
                             switch (dc.getType()) {
                                 case ADDED:
-                                    // ✅ NEW: Show "Report Submitted" notification
                                     if ("pending".equalsIgnoreCase(status)) {
                                         String notifIdSubmitted = "report_submitted_" + docId;
                                         if (!hasShownNotification(notifIdSubmitted)) {
@@ -116,12 +155,10 @@ public class AppNotificationManager {
                                     break;
 
                                 case MODIFIED:
-                                    // Status changed (approved/rejected)
                                     handleReportStatusChange(docId, itemName, status);
                                     break;
 
                                 case REMOVED:
-                                    // ❌ REMOVED: Don't show "Report Removed" notification
                                     Log.d(TAG, "Report removed: " + itemName + " (no notification sent)");
                                     removeNotification(docId);
                                     break;
@@ -168,7 +205,6 @@ public class AppNotificationManager {
 
                         switch (dc.getType()) {
                             case ADDED:
-                                // ✅ NEW: Show "Claim Submitted" notification
                                 if ("pending".equalsIgnoreCase(status)) {
                                     String notifIdSubmitted = "claim_submitted_" + docId;
                                     if (!hasShownNotification(notifIdSubmitted)) {
@@ -185,12 +221,10 @@ public class AppNotificationManager {
                                 break;
 
                             case MODIFIED:
-                                // Status changed (approved/rejected/claimed)
                                 handleClaimStatusChange(docId, itemName, status, claimLocation);
                                 break;
 
                             case REMOVED:
-                                // ❌ REMOVED: Don't show "Claim Removed" notification
                                 Log.d(TAG, "Claim removed: " + itemName + " (no notification sent)");
                                 removeNotification(docId);
                                 break;
@@ -307,20 +341,22 @@ public class AppNotificationManager {
     }
 
     /**
-     * Check if notification has already been shown
+     * ✅ Check if notification has already been shown (USER-SPECIFIC)
      */
     private boolean hasShownNotification(String notificationId) {
-        Set<String> shown = prefs.getStringSet(KEY_SHOWN_NOTIFICATIONS, new HashSet<>());
+        String userKey = getUserKey(KEY_SHOWN_NOTIFICATIONS);
+        Set<String> shown = prefs.getStringSet(userKey, new HashSet<>());
         return shown.contains(notificationId);
     }
 
     /**
-     * Mark notification as shown to prevent duplicates
+     * ✅ Mark notification as shown to prevent duplicates (USER-SPECIFIC)
      */
     private void markNotificationShown(String notificationId) {
-        Set<String> shown = new HashSet<>(prefs.getStringSet(KEY_SHOWN_NOTIFICATIONS, new HashSet<>()));
+        String userKey = getUserKey(KEY_SHOWN_NOTIFICATIONS);
+        Set<String> shown = new HashSet<>(prefs.getStringSet(userKey, new HashSet<>()));
         shown.add(notificationId);
-        prefs.edit().putStringSet(KEY_SHOWN_NOTIFICATIONS, shown).apply();
+        prefs.edit().putStringSet(userKey, shown).apply();
         Log.d(TAG, "Marked notification as shown: " + notificationId);
     }
 
@@ -444,16 +480,20 @@ public class AppNotificationManager {
     }
 
     /**
-     * Clear notification history (for testing/reset)
+     * ✅ Clear notification history (USER-SPECIFIC)
      */
     public void clearNotificationHistory() {
-        prefs.edit().remove(KEY_SHOWN_NOTIFICATIONS).apply();
-        prefs.edit().remove(KEY_LOCAL_NOTIFICATIONS).apply();
-        Log.d(TAG, "Notification history cleared");
+        String shownKey = getUserKey(KEY_SHOWN_NOTIFICATIONS);
+        String localKey = getUserKey(KEY_LOCAL_NOTIFICATIONS);
+
+        prefs.edit().remove(shownKey).apply();
+        prefs.edit().remove(localKey).apply();
+
+        Log.d(TAG, "Notification history cleared for user: " + userId);
     }
 
     /**
-     * Stop all listeners and cleanup
+     * ✅ Stop all listeners and cleanup
      */
     public void cleanup() {
         Log.d(TAG, "Cleaning up AppNotificationManager");
@@ -474,20 +514,33 @@ public class AppNotificationManager {
         }
 
         callback = null;
-        context = null;
+        // Don't clear context - we might need it for the next user
     }
 
+    /**
+     * Listen for app notifications from Firestore
+     */
     private void startListeningForAppNotifications() {
         if (userId == null) return;
+
+        Log.d(TAG, "📡 Starting listener for appNotifications with userId: " + userId);
 
         appNotificationsListener = db.collection("appNotifications")
                 .whereEqualTo("userId", userId)
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null) {
-                        Log.e(TAG, "Error loading app notifications", e);
+                        Log.e(TAG, "❌ ERROR loading app notifications", e);
+                        Log.e(TAG, "Error code: " + e.getCode());
+                        Log.e(TAG, "Error message: " + e.getMessage());
                         return;
                     }
-                    if (snapshots == null) return;
+                    if (snapshots == null) {
+                        Log.w(TAG, "⚠️ appNotifications snapshots is null");
+                        return;
+                    }
+
+                    Log.d(TAG, "✅ appNotifications listener active - received " +
+                            snapshots.getDocumentChanges().size() + " changes");
 
                     for (DocumentChange dc : snapshots.getDocumentChanges()) {
                         String docId = dc.getDocument().getId();
@@ -508,17 +561,26 @@ public class AppNotificationManager {
                 });
     }
 
-    // Save notification message locally
+    /**
+     * ✅ Save notification message locally (USER-SPECIFIC)
+     */
     private void saveNotificationLocally(String title, String message, String type, String documentId, long timestamp) {
-        Set<String> current = new HashSet<>(prefs.getStringSet(KEY_LOCAL_NOTIFICATIONS, new HashSet<>()));
+        String userKey = getUserKey(KEY_LOCAL_NOTIFICATIONS);
+        Set<String> current = new HashSet<>(prefs.getStringSet(userKey, new HashSet<>()));
         String entry = type + "|" + documentId + "|" + title + "|" + message + "|" + timestamp;
         current.add(entry);
-        prefs.edit().putStringSet(KEY_LOCAL_NOTIFICATIONS, current).apply();
+        prefs.edit().putStringSet(userKey, current).apply();
     }
 
-    // Load all stored notifications on app start
+    /**
+     * ✅ Load all stored notifications on app start (USER-SPECIFIC)
+     */
     public void loadSavedNotifications() {
-        Set<String> saved = prefs.getStringSet(KEY_LOCAL_NOTIFICATIONS, new HashSet<>());
+        String userKey = getUserKey(KEY_LOCAL_NOTIFICATIONS);
+        Set<String> saved = prefs.getStringSet(userKey, new HashSet<>());
+
+        Log.d(TAG, "Loading " + saved.size() + " saved notifications for user: " + userId);
+
         for (String entry : saved) {
             String[] parts = entry.split("\\|", 5);
             if (parts.length == 5 && callback != null) {

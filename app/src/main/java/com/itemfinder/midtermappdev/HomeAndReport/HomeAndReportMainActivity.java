@@ -1,6 +1,7 @@
 package com.itemfinder.midtermappdev.HomeAndReport;
 
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,6 +12,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.itemfinder.midtermappdev.databinding.ActivityMainBinding;
 import com.itemfinder.midtermappdev.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.itemfinder.midtermappdev.utils.AppNotificationManager;
 
 public class HomeAndReportMainActivity extends AppCompatActivity {
 
@@ -61,6 +63,8 @@ public class HomeAndReportMainActivity extends AppCompatActivity {
         email = getIntent().getStringExtra("email");
         phoneNumber = getIntent().getStringExtra("phoneNumber");
         course = getIntent().getStringExtra("course");
+
+        Log.d("MainActivity", "📋 User data loaded - UserID: " + userId);
     }
 
     // Getters for fragments to access user data
@@ -76,8 +80,6 @@ public class HomeAndReportMainActivity extends AppCompatActivity {
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.frame_layout, fragment);
         fragmentTransaction.commit();
-
-
     }
 
     public void switchToHomeTab() {
@@ -102,5 +104,17 @@ public class HomeAndReportMainActivity extends AppCompatActivity {
                     .commitNow();
             homeFragment.addNotification(message);
         }
+    }
+
+    // ✅ REMOVED: Duplicate initialization that was conflicting with HomeFragment
+    // The HomeFragment will handle its own notification manager initialization
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // Cleanup notification manager when activity is destroyed
+        Log.d("MainActivity", "🧹 Activity destroyed - cleaning up");
+        AppNotificationManager.getInstance().cleanup();
     }
 }
