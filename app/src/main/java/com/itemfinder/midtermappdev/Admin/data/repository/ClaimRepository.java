@@ -85,53 +85,35 @@ public class ClaimRepository {
                 });
     }
 
-    public void approveClaimWithLocation(
-            String claimId,
-            String itemId,
-            String location,
-            ClaimActionListener listener
-    ) {
-        Log.d(TAG, "=== APPROVING CLAIM ===");
+    public void approveClaimWithLocation(String claimId, String itemId, String location,
+                                         ClaimActionListener listener) {
+        Log.d(TAG, "========== APPROVING CLAIM ==========");
         Log.d(TAG, "Claim ID: " + claimId);
         Log.d(TAG, "Item ID: " + itemId);
         Log.d(TAG, "Location: " + location);
 
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("status", "Approved");
-        updates.put("claimLocation", location);
-        updates.put("approvedAt", System.currentTimeMillis());
+        // Update claim status to "Approved" and set claim location
+        Map<String, Object> claimUpdates = new HashMap<>();
+        claimUpdates.put("status", "Approved");
+        claimUpdates.put("claimLocation", location);
 
-        Log.d(TAG, "Update data: " + updates);
-
-        claimsRef.document(claimId)
-                .update(updates)
+        db.collection("claims")
+                .document(claimId)
+                .update(claimUpdates)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "✅ CLAIM APPROVED SUCCESSFULLY");
-                    Log.d(TAG, "   Claim ID: " + claimId);
-                    Log.d(TAG, "   Location: " + location);
-                    Log.d(TAG, "   Status: Approved");
-                    Log.d(TAG, "   Timestamp: " + System.currentTimeMillis());
+                    Log.d(TAG, "✓ Claim approved with location: " + location);
 
-                    // Verify the update by reading back
-                    claimsRef.document(claimId).get()
-                            .addOnSuccessListener(doc -> {
-                                if (doc.exists()) {
-                                    Log.d(TAG, "Verification - Document data after update:");
-                                    Log.d(TAG, "   status: " + doc.getString("status"));
-                                    Log.d(TAG, "   claimLocation: " + doc.getString("claimLocation"));
-                                    Log.d(TAG, "   approvedAt: " + doc.getLong("approvedAt"));
-                                }
-                            });
-
-                    listener.onSuccess("Claim approved! Location: " + location);
+                    // CRITICAL FIX: Update the item status to "Claimed"
+                    if (itemId != null && !itemId.isEmpty()) {
+                        updateItemStatusToClaimedInAllCollections(itemId, listener);
+                    } else {
+                        Log.w(TAG, "⚠ Item ID is null or empty, cannot update item status");
+                        listener.onSuccess("Claim approved with location: " + location);
+                    }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ ERROR APPROVING CLAIM");
-                    Log.e(TAG, "   Claim ID: " + claimId);
-                    Log.e(TAG, "   Error: " + e.getMessage());
-                    Log.e(TAG, "   Error class: " + e.getClass().getName());
-                    e.printStackTrace();
-                    listener.onError(e.getMessage());
+                    Log.e(TAG, "✗ Error approving claim: " + e.getMessage());
+                    listener.onError("Failed to approve claim: " + e.getMessage());
                 });
     }
 
@@ -150,97 +132,120 @@ public class ClaimRepository {
                 });
     }
 
-    /**
-     * ✅ UPDATED: Mark item as claimed in BOTH claims and approvedItems collections
-     * This ensures the item appears in the Claimed Items dialog
-     */
     public void markAsClaimed(String claimId, ClaimActionListener listener) {
-        Log.d(TAG, "========================================");
-        Log.d(TAG, "🎯 Marking claim as claimed: " + claimId);
-        Log.d(TAG, "========================================");
+        Log.d(TAG, "========== MARKING AS CLAIMED ==========");
+        Log.d(TAG, "Claim ID: " + claimId);
 
-        db.collection("claims").document(claimId).get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        String itemId = documentSnapshot.getString("itemId");
-                        String userId = documentSnapshot.getString("userId");
+        // First, get the claim to retrieve the itemId
+        db.collection("claims")
+                .document(claimId)
+                .get()
+                .addOnSuccessListener(claimDoc -> {
+                    if (claimDoc.exists()) {
+                        String itemId = claimDoc.getString("itemId");
+                        Log.d(TAG, "Retrieved Item ID: " + itemId);
 
-                        if (itemId == null) {
-                            listener.onError("Missing itemId in claim document.");
-                            return;
-                        }
-
-                        Log.d(TAG, "Item ID: " + itemId);
-                        Log.d(TAG, "User ID: " + userId);
-
-                        // Step 1: Update the claim status to "Claimed"
-                        db.collection("claims").document(claimId)
+                        // Update the claim status to "Claimed"
+                        db.collection("claims")
+                                .document(claimId)
                                 .update("status", "Claimed")
                                 .addOnSuccessListener(aVoid -> {
-                                    Log.d(TAG, "✅ Claim status updated to Claimed");
+                                    Log.d(TAG, "✓ Claim marked as claimed successfully");
 
-                                    // Step 2: Update approvedItems collection
-                                    DocumentReference approvedRef = db.collection("approvedItems").document(itemId);
-                                    approvedRef.get().addOnSuccessListener(doc -> {
-                                        if (doc.exists()) {
-                                            // ✅ CRITICAL: Set isClaimed = true and status = "claimed"
-                                            Map<String, Object> itemUpdates = new HashMap<>();
-                                            itemUpdates.put("isClaimed", true);
-                                            itemUpdates.put("status", "claimed");
-                                            itemUpdates.put("claimedAt", System.currentTimeMillis());
-
-                                            approvedRef.update(itemUpdates)
-                                                    .addOnSuccessListener(v -> {
-                                                        Log.d(TAG, "✅ Item marked as CLAIMED in approvedItems");
-                                                        Log.d(TAG, "   Item ID: " + itemId);
-                                                        Log.d(TAG, "   isClaimed: true");
-                                                        Log.d(TAG, "   status: claimed");
-
-                                                        listener.onSuccess("Item marked as claimed successfully!");
-                                                    })
-                                                    .addOnFailureListener(e -> {
-                                                        Log.e(TAG, "❌ Failed to update approved item", e);
-                                                        listener.onError("Failed to update approved item: " + e.getMessage());
-                                                    });
-                                        } else {
-                                            // Item not in approvedItems, try pendingItems
-                                            Log.w(TAG, "⚠️ Item not found in approvedItems, checking pendingItems");
-
-                                            DocumentReference pendingRef = db.collection("pendingItems").document(itemId);
-                                            pendingRef.get().addOnSuccessListener(pendingDoc -> {
-                                                if (pendingDoc.exists()) {
-                                                    Map<String, Object> itemUpdates = new HashMap<>();
-                                                    itemUpdates.put("status", "claimed");
-                                                    itemUpdates.put("isClaimed", true);
-
-                                                    pendingRef.update(itemUpdates)
-                                                            .addOnSuccessListener(v -> {
-                                                                Log.d(TAG, "✅ Item marked as claimed in pendingItems");
-                                                                listener.onSuccess("Item marked as claimed successfully.");
-                                                            })
-                                                            .addOnFailureListener(e -> {
-                                                                Log.e(TAG, "❌ Failed to update item in pendingItems", e);
-                                                                listener.onError("Failed to update item: " + e.getMessage());
-                                                            });
-                                                } else {
-                                                    Log.e(TAG, "❌ Item not found in approvedItems or pendingItems");
-                                                    listener.onError("Item not found in database.");
-                                                }
-                                            });
-                                        }
-                                    });
+                                    // CRITICAL FIX: Also update the item status to "Claimed"
+                                    if (itemId != null && !itemId.isEmpty()) {
+                                        updateItemStatusToClaimedInAllCollections(itemId, listener);
+                                    } else {
+                                        Log.w(TAG, "⚠ Item ID is null or empty");
+                                        listener.onSuccess("Claim marked as claimed successfully");
+                                    }
                                 })
                                 .addOnFailureListener(e -> {
-                                    Log.e(TAG, "❌ Failed to mark claim as claimed", e);
+                                    Log.e(TAG, "✗ Error marking claim as claimed: " + e.getMessage());
                                     listener.onError("Failed to mark claim as claimed: " + e.getMessage());
                                 });
                     } else {
-                        listener.onError("Claim document not found.");
+                        Log.e(TAG, "✗ Claim not found");
+                        listener.onError("Claim not found");
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Error retrieving claim", e);
-                    listener.onError("Error retrieving claim: " + e.getMessage());
+                    Log.e(TAG, "✗ Error getting claim: " + e.getMessage());
+                    listener.onError("Failed to get claim: " + e.getMessage());
+                });
+    }
+
+    /**
+     * CRITICAL FIX: Updates item status to "Claimed" in ALL possible collections
+     * This ensures the item is properly marked as claimed regardless of which collection it's in
+     */
+    private void updateItemStatusToClaimedInAllCollections(String itemId, ClaimActionListener listener) {
+        Log.d(TAG, "========== UPDATING ITEM STATUS ==========");
+        Log.d(TAG, "Attempting to update item: " + itemId + " to status: Claimed");
+
+        // Try updating in "pendingItems" collection first
+        db.collection("pendingItems")
+                .document(itemId)
+                .get()
+                .addOnSuccessListener(docSnapshot -> {
+                    if (docSnapshot.exists()) {
+                        Log.d(TAG, "✓ Found item in 'pendingItems' collection");
+                        // Item exists in pendingItems, update it
+                        // IMPORTANT: Use lowercase "claimed" to match what's being stored
+                        db.collection("pendingItems")
+                                .document(itemId)
+                                .update("status", "claimed")
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d(TAG, "✓✓ SUCCESS: Item status updated to 'Claimed' in pendingItems");
+                                    listener.onSuccess("Claim processed and item status updated to Claimed");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "✗ Error updating item in pendingItems: " + e.getMessage());
+                                    listener.onSuccess("Claim processed but item status update failed");
+                                });
+                    } else {
+                        Log.w(TAG, "⚠ Item not found in 'pendingItems', trying 'items' collection");
+                        // Try "items" collection as fallback
+                        tryUpdatingInItemsCollection(itemId, listener);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "✗ Error checking pendingItems: " + e.getMessage());
+                    // Try "items" collection as fallback
+                    tryUpdatingInItemsCollection(itemId, listener);
+                });
+    }
+
+    /**
+     * Fallback method to try updating in "items" collection
+     */
+    private void tryUpdatingInItemsCollection(String itemId, ClaimActionListener listener) {
+        db.collection("items")
+                .document(itemId)
+                .get()
+                .addOnSuccessListener(docSnapshot -> {
+                    if (docSnapshot.exists()) {
+                        Log.d(TAG, "✓ Found item in 'items' collection");
+                        db.collection("items")
+                                .document(itemId)
+                                .update("status", "Claimed")
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d(TAG, "✓✓ SUCCESS: Item status updated to 'Claimed' in items");
+                                    listener.onSuccess("Claim processed and item status updated to Claimed");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "✗ Error updating item in items: " + e.getMessage());
+                                    listener.onSuccess("Claim processed but item status update failed");
+                                });
+                    } else {
+                        Log.e(TAG, "✗✗ Item not found in ANY collection!");
+                        Log.e(TAG, "Item ID: " + itemId);
+                        listener.onSuccess("Claim processed but item not found in database");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "✗✗ Error checking items collection: " + e.getMessage());
+                    listener.onSuccess("Claim processed but item status update failed");
                 });
     }
 

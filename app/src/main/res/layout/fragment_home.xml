@@ -322,6 +322,7 @@
                 android:backgroundTint="#7C0303"
                 android:padding="8dp"
                 android:text="Clear All"
+                android:visibility="gone"
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />
         </LinearLayout>

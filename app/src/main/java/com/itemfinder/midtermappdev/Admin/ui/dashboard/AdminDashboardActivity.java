@@ -49,6 +49,7 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
     private int pendingCount = 0;
     private int activeCount = 0;
     private int rejectedCount = 0;
+    private int claimedCount = 0;
 
     // Store all items for filtering
     private List<Item_admin> allItems = new ArrayList<>();
@@ -124,6 +125,14 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // CRITICAL FIX: Reload items when returning to this activity
+        Log.d(TAG, "onResume called - reloading items to reflect changes from Claims Management");
+        loadAllItems();
+    }
+
     private void loadAllItems() {
         Log.d(TAG, "Loading all items...");
         showLoading(true);
@@ -132,6 +141,12 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
             @Override
             public void onItemsFetched(List<Item_admin> itemAdmins) {
                 Log.d(TAG, "Received " + itemAdmins.size() + " items from Firebase");
+
+                // DEBUGGING: Log each item's status
+                for (Item_admin item : itemAdmins) {
+                    Log.d(TAG, "Item: " + item.getName() + ", Status: '" + item.getStatus() + "'");
+                }
+
                 showLoading(false);
 
                 allItems = itemAdmins;
@@ -161,15 +176,37 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
 
         if ("all".equals(currentCategory)) {
             filteredItems = new ArrayList<>(allItems);
-        } else {
+            Log.d(TAG, "Showing all " + filteredItems.size() + " items");
+        } else if ("approved".equals(currentCategory)) {
+            // CRITICAL FIX: Only show items with status "approved" or "Approved"
+            // EXCLUDE items with status "claimed" or "Claimed"
             for (Item_admin item : allItems) {
-                if (currentCategory.equalsIgnoreCase(item.getStatus())) {
+                String status = item.getStatus();
+                if (status != null) {
+                    String statusLower = status.toLowerCase().trim();
+                    Log.d(TAG, "Checking item: " + item.getName() + " with status: '" + status + "' (lowercase: '" + statusLower + "')");
+
+                    // Only include if status is "approved" AND NOT "claimed"
+                    // Check for both "claimed" and "Claimed" to be safe
+                    if (statusLower.equals("approved")) {
+                        filteredItems.add(item);
+                        Log.d(TAG, "Added to Active: " + item.getName());
+                    } else if (statusLower.equals("claimed")) {
+                        Log.d(TAG, "EXCLUDED from Active (claimed): " + item.getName());
+                    }
+                }
+            }
+            Log.d(TAG, "Filtered " + filteredItems.size() + " active items (excluding claimed)");
+        } else {
+            // For other categories (pending, rejected), use normal filtering
+            for (Item_admin item : allItems) {
+                if (item.getStatus() != null &&
+                        currentCategory.equalsIgnoreCase(item.getStatus().trim())) {
                     filteredItems.add(item);
                 }
             }
+            Log.d(TAG, "Filtered " + filteredItems.size() + " items for category: " + currentCategory);
         }
-
-        Log.d(TAG, "Displaying " + filteredItems.size() + " items for category: " + currentCategory);
 
         ItemsAdapter adapter = new ItemsAdapter(filteredItems, this, this);
         recyclerView.setAdapter(adapter);
@@ -182,17 +219,26 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         pendingCount = 0;
         activeCount = 0;
         rejectedCount = 0;
+        claimedCount = 0;
 
         for (Item_admin itemAdmin : allItemAdmins) {
             totalItemsCount++;
             String status = itemAdmin.getStatus();
 
-            if ("pending".equalsIgnoreCase(status)) {
-                pendingCount++;
-            } else if ("approved".equalsIgnoreCase(status)) {
-                activeCount++;
-            } else if ("rejected".equalsIgnoreCase(status)) {
-                rejectedCount++;
+            if (status != null) {
+                String statusLower = status.toLowerCase().trim();
+
+                if (statusLower.equals("pending")) {
+                    pendingCount++;
+                } else if (statusLower.equals("approved")) {
+                    activeCount++;
+                } else if (statusLower.equals("rejected")) {
+                    rejectedCount++;
+                } else if (statusLower.equals("claimed")) {
+                    // Count claimed items separately - they should NOT be counted as active
+                    claimedCount++;
+                    Log.d(TAG, "Found claimed item: " + itemAdmin.getName());
+                }
             }
         }
 
@@ -200,7 +246,7 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         updateFilterButtonLabels();
 
         Log.d(TAG, "Stats updated - Total: " + totalItemsCount + ", Pending: " + pendingCount +
-                ", Active: " + activeCount + ", Rejected: " + rejectedCount);
+                ", Active: " + activeCount + ", Rejected: " + rejectedCount + ", Claimed: " + claimedCount);
     }
 
     private void updateStatsCards() {

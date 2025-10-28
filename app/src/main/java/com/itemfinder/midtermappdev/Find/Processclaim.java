@@ -18,6 +18,8 @@ import android.content.SharedPreferences;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -30,6 +32,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class Processclaim extends AppCompatActivity {
 
@@ -146,12 +150,11 @@ public class Processclaim extends AppCompatActivity {
             tvStatus.setText(itemStatus);
 
             if (itemImageUrl != null && !itemImageUrl.isEmpty()) {
-                Picasso.get()
+                Glide.with(this)
                         .load(itemImageUrl)
                         .placeholder(R.drawable.ic_placeholder_image)
                         .error(R.drawable.ic_error_image)
-                        .fit()
-                        .centerCrop()
+                        .transform(new CenterCrop(), new BlurTransformation(300, 3))
                         .into(ivItemImage);
             }
         }
