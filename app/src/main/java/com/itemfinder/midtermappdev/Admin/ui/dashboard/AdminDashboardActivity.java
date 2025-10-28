@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.button.MaterialButton;
 import com.itemfinder.midtermappdev.R;
@@ -50,7 +51,7 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
     private int activeCount = 0;
     private int rejectedCount = 0;
     private int claimedCount = 0;
-
+    private SwipeRefreshLayout swipeRefreshLayout;
     // Store all items for filtering
     private List<Item_admin> allItems = new ArrayList<>();
 
@@ -62,7 +63,19 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
         // Initialize views
         recyclerView = findViewById(R.id.recyclerViewItems);
         progressBar = findViewById(R.id.progressBar);
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            Log.d(TAG, "Swipe refresh triggered");
+            loadAllItems();
+        });
 
+        // Optional: Set custom colors
+        swipeRefreshLayout.setColorSchemeResources(
+                android.R.color.holo_blue_bright,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light
+        );
         tvTotalItemsCount = findViewById(R.id.tvTotalItemsCount);
         tvPendingApprovalCount = findViewById(R.id.tvPendingApprovalCount);
         tvAvailableCount = findViewById(R.id.tvAvailableCount);
@@ -268,8 +281,15 @@ public class AdminDashboardActivity extends AppCompatActivity implements OnItemC
     }
 
     private void showLoading(boolean show) {
-        progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-        recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
+        if (show) {
+            progressBar.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+            swipeRefreshLayout.setRefreshing(false); // Stop SwipeRefresh when showing ProgressBar
+        } else {
+            progressBar.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+            swipeRefreshLayout.setRefreshing(false); // Stop SwipeRefresh when done loading
+        }
         Log.d(TAG, "Loading state: " + show);
     }
 

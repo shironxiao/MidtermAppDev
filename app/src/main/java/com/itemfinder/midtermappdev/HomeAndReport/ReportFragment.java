@@ -329,25 +329,26 @@ public class ReportFragment extends Fragment {
             return;
         }
 
+        // ✅ NEW REQUIREMENT: Make image upload mandatory
+        if (selectedImageUri == null) {
+            Toast.makeText(requireContext(), "Please upload an image of the item", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         // Log Cloudinary status
         Log.d("ReportFragment", "Cloudinary initialized: " + isCloudinaryInitialized);
         Log.d("ReportFragment", "Image selected: " + (selectedImageUri != null));
 
-        // If image is selected, upload to Cloudinary first, then submit to Firebase
-        if (selectedImageUri != null) {
-            if (isCloudinaryInitialized) {
-                uploadImageToCloudinary(category, itemName, description, location, dateFound, contact, isAnonymous);
-            } else {
-                Toast.makeText(requireContext(),
-                        "Image upload not available. Submitting without image.",
-                        Toast.LENGTH_SHORT).show();
-                submitToFirebase(category, itemName, description, location, dateFound, contact, isAnonymous, null);
-            }
+        // Proceed with Cloudinary upload
+        if (isCloudinaryInitialized) {
+            uploadImageToCloudinary(category, itemName, description, location, dateFound, contact, isAnonymous);
         } else {
-            // No image, submit directly to Firebase
-            submitToFirebase(category, itemName, description, location, dateFound, contact, isAnonymous, null);
+            Toast.makeText(requireContext(),
+                    "Image upload not available. Please try again later.",
+                    Toast.LENGTH_SHORT).show();
         }
     }
+
 
     // PART 1: Replace the uploadToCloudinaryDirect method in ReportFragment.java
 // This version works with content URIs directly instead of file paths

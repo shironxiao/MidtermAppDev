@@ -68,4 +68,10 @@ dependencies {
     implementation("jp.wasabeef:glide-transformations:4.3.0")
     implementation("com.google.code.gson:gson:2.10.1")
 
+    // SwipeRefreshLayout (AndroidX version)
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+// If you don't already have these, add them:
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.fragment:fragment:1.6.1")
+    implementation("androidx.recyclerview:recyclerview:1.3.1")
 }

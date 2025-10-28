@@ -87,4 +87,9 @@
     <string name="back_button">Back</string>
     <string name="my_reports">My Reports</string>
     <string name="track_your_reported_items">Track your reported items</string>
+    <!-- SwipeRefreshLayout Color Scheme -->
+    <color name="holo_blue_bright">#33B5E5</color>
+    <color name="holo_green_light">#99CC00</color>
+    <color name="holo_orange_light">#FFBB33</color>
+    <color name="holo_red_light">#FF4444</color>
 </resources>
