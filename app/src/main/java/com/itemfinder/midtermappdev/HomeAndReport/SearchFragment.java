@@ -29,6 +29,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import android.os.Handler;
+import android.os.Looper;
 
 public class    SearchFragment extends Fragment {
 
@@ -45,7 +48,7 @@ public class    SearchFragment extends Fragment {
     private String userEmail;
     private String studentId;
     private String fullName;
-
+    private SwipeRefreshLayout swipeRefreshLayout;
     public SearchFragment() {
         // Required empty public constructor
     }
@@ -62,7 +65,16 @@ public class    SearchFragment extends Fragment {
         // Initialize RecyclerView
         recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayoutSearch);
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            // Reload available items
+            loadAvailableItems();
 
+            // Stop refresh animation after a short delay
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                swipeRefreshLayout.setRefreshing(false);
+            }, 1000);
+        });
         // Initialize lists
         itemList = new ArrayList<>();
         filteredList = new ArrayList<>();
@@ -253,6 +265,10 @@ public class    SearchFragment extends Fragment {
                         Toast.makeText(requireContext(),
                                 "No available items at the moment.",
                                 Toast.LENGTH_SHORT).show();
+                        // ✅ Stop refresh animation after data is loaded
+                        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                            swipeRefreshLayout.setRefreshing(false);
+                        }
                     }
                 })
                 .addOnFailureListener(e -> {
@@ -260,7 +276,12 @@ public class    SearchFragment extends Fragment {
                     Toast.makeText(requireContext(),
                             "Failed to load items",
                             Toast.LENGTH_SHORT).show();
+                    // ✅ Stop refresh animation on error
+                    if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
                 });
+
     }
 
     private void setupButtonListeners() {

@@ -2,6 +2,8 @@ package com.itemfinder.midtermappdev.HomeAndReport;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,6 +23,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -43,7 +46,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import android.os.Handler;
+import android.os.Looper;
 public class HomeFragment extends Fragment {
 
     private static final String TAG = "HomeFragment";
@@ -70,7 +75,7 @@ public class HomeFragment extends Fragment {
 
     private AppNotificationManager appNotificationManager;
     private String currentUserId;
-
+    private SwipeRefreshLayout swipeRefreshLayout;
     public HomeFragment() {
         // Required empty public constructor
     }
@@ -89,6 +94,18 @@ public class HomeFragment extends Fragment {
         notificationButton = view.findViewById(R.id.notificationButton);
         notificationContainer = view.findViewById(R.id.notificationContainer);
 
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            // Reload all data
+            loadItemsFromRealtimeDatabase();
+            loadItemsFromFirestore();
+            loadClaimedItemsFromFirestore();
+
+            // Stop refresh animation after a short delay
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                swipeRefreshLayout.setRefreshing(false);
+            }, 1000);
+        });
         availableItemsPreviewContainer = view.findViewById(R.id.availableItemsContainer);
         claimedItemsPreviewContainer = view.findViewById(R.id.claimedItemsContainer);
         rvNotifications = view.findViewById(R.id.rvNotifications);
@@ -365,6 +382,9 @@ public class HomeFragment extends Fragment {
                 Log.e(TAG, "Error loading items: " + error.getMessage());
             }
         });
+        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+            swipeRefreshLayout.setRefreshing(false);
+        }
     }
 
     /**
@@ -414,6 +434,9 @@ public class HomeFragment extends Fragment {
                         mergeFirestoreItems(firestoreItems);
                     }
                 });
+        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+            swipeRefreshLayout.setRefreshing(false);
+        }
     }
 
     /**
@@ -475,6 +498,9 @@ public class HomeFragment extends Fragment {
                         }
                     }
                 });
+        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
+            swipeRefreshLayout.setRefreshing(false);
+        }
     }
 
     private void mergeFirestoreItems(List<Item> firestoreItems) {
