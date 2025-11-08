@@ -87,6 +87,8 @@ public class HomeFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
 
+        configurePicasso();
+
         // Initialize views
         btnLost = view.findViewById(R.id.btnLost);
         btnFound = view.findViewById(R.id.btnFound);
@@ -170,6 +172,27 @@ public class HomeFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private void configurePicasso() {
+        // ✅ Clear cache first
+        try {
+            Picasso.get().invalidate("https://firebasestorage.googleapis.com");
+        } catch (Exception e) {
+            Log.e(TAG, "Error clearing Picasso cache: " + e.getMessage());
+        }
+
+        // Configure Picasso for better performance
+        Picasso picasso = new Picasso.Builder(requireContext())
+                .indicatorsEnabled(true) // ✅ Enable temporarily to see debug info
+                .loggingEnabled(true)    // ✅ Enable temporarily for debugging
+                .build();
+
+        try {
+            Picasso.setSingletonInstance(picasso);
+        } catch (IllegalStateException e) {
+            Log.w(TAG, "Picasso instance already set");
+        }
     }
 
     /**
@@ -343,6 +366,7 @@ public class HomeFragment extends Fragment {
         }
     }
 
+
     /**
      * Load items from Firebase Realtime Database
      */
@@ -361,20 +385,31 @@ public class HomeFragment extends Fragment {
 
                 for (DataSnapshot itemSnap : snapshot.getChildren()) {
                     Item item = itemSnap.getValue(Item.class);
-                    if (item == null) continue;
+                    if (item == null)       continue;
 
                     item.setId(itemSnap.getKey());
 
-                    if (item.isClaimed() || "claimed".equalsIgnoreCase(item.getStatus())) {
+                    String status = item.getStatus();
+
+                    // ✅ More comprehensive claimed check
+                    if (item.isClaimed() ||
+                            "claimed".equalsIgnoreCase(status) ||
+                            "Claimed".equals(status)) {
                         claimedItems.add(item);
-                    } else if ("approved".equalsIgnoreCase(item.getStatus()) ||
-                            "available".equalsIgnoreCase(item.getStatus())) {
+                        Log.d(TAG, "✅ Added to CLAIMED: " + item.getName() + " | Status: " + status);
+                    } else if ("approved".equalsIgnoreCase(status) ||
+                            "available".equalsIgnoreCase(status)) {
                         availableItems.add(item);
+                        Log.d(TAG, "✅ Added to AVAILABLE: " + item.getName() + " | Status: " + status);
+                    } else {
+                        Log.w(TAG, "⚠️ Item SKIPPED - Unknown status: " + item.getName() + " | Status: " + status);
                     }
                 }
 
                 updateAvailableItemsUI(availableItems);
                 updateClaimedItemsUI(claimedItems);
+
+                Log.d(TAG, "📊 Final counts - Available: " + availableItems.size() + ", Claimed: " + claimedItems.size());
             }
 
             @Override
@@ -382,81 +417,120 @@ public class HomeFragment extends Fragment {
                 Log.e(TAG, "Error loading items: " + error.getMessage());
             }
         });
-        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
-            swipeRefreshLayout.setRefreshing(false);
-        }
     }
 
     /**
-     * Load approved items from Firestore
+     * ✅ Load approved items from Firestore (excluding ALL claimed ones from available section)
      */
     private void loadItemsFromFirestore() {
         if (approvedItemsListener != null) {
             approvedItemsListener.remove();
         }
 
-        approvedItemsListener = firestore.collection("approvedItems")
-                .orderBy("submittedAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                .limit(10)
-                .addSnapshotListener((snapshots, error) -> {
-                    if (!isAdded() || getActivity() == null) {
-                        Log.w(TAG, "Fragment not attached - skipping Firestore update");
-                        return;
-                    }
+        Log.d(TAG, "========================================");
+        Log.d(TAG, "📡 Loading items from Firestore");
+        Log.d(TAG, "========================================");
 
-                    if (error != null) {
-                        Log.e(TAG, "Error loading Firestore items: " + error.getMessage());
-                        return;
-                    }
+        // ✅ STEP 1: Get ALL claimed item IDs (from all users)
+        firestore.collection("claims")
+                .whereEqualTo("status", "Claimed")
+                .get()
+                .addOnSuccessListener(claimSnapshots -> {
+                    // Collect all claimed item IDs
+                    List<String> allClaimedItemIds = new ArrayList<>();
 
-                    if (snapshots != null && !snapshots.isEmpty()) {
-                        List<Item> firestoreItems = new ArrayList<>();
-
-                        for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
-                            Item item = new Item(
-                                    doc.getString("itemName"),
-                                    doc.getString("category"),
-                                    doc.getString("location"),
-                                    doc.getString("status"),
-                                    doc.getString("dateFound"),
-                                    doc.getString("imageUrl")
-                            );
-                            item.setId(doc.getId());
-
-                            Boolean isClaimed = doc.getBoolean("isClaimed");
-                            if (isClaimed != null && isClaimed) {
-                                item.setClaimed(true);
-                            }
-
-                            firestoreItems.add(item);
+                    for (com.google.firebase.firestore.DocumentSnapshot claimDoc : claimSnapshots.getDocuments()) {
+                        String itemId = claimDoc.getString("itemId");
+                        if (itemId != null && !allClaimedItemIds.contains(itemId)) {
+                            allClaimedItemIds.add(itemId);
                         }
-
-                        mergeFirestoreItems(firestoreItems);
                     }
+
+                    Log.d(TAG, "🚫 Total claimed item IDs to exclude from available: " + allClaimedItemIds.size());
+                    Log.d(TAG, "🚫 Claimed IDs: " + allClaimedItemIds);
+
+                    // ✅ STEP 2: Set up real-time listener for approved items
+                    approvedItemsListener = firestore.collection("approvedItems")
+                            .whereEqualTo("status", "approved")
+                            .orderBy("submittedAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                            .limit(10)
+                            .addSnapshotListener((snapshots, error) -> {
+                                if (!isAdded() || getActivity() == null) {
+                                    Log.w(TAG, "Fragment not attached - skipping Firestore update");
+                                    return;
+                                }
+
+                                if (error != null) {
+                                    Log.e(TAG, "❌ Error loading Firestore items: " + error.getMessage());
+                                    return;
+                                }
+
+                                if (snapshots != null && !snapshots.isEmpty()) {
+                                    List<Item> availableItems = new ArrayList<>();
+
+                                    Log.d(TAG, "🔄 Processing " + snapshots.size() + " approved items");
+
+                                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
+                                        String itemId = doc.getId();
+                                        String itemName = doc.getString("itemName");
+
+                                        // ✅ Skip if this item is claimed by ANYONE
+                                        if (allClaimedItemIds.contains(itemId)) {
+                                            Log.d(TAG, "⏭️ Skipping claimed item: " + itemName + " (ID: " + itemId + ")");
+                                            continue;
+                                        }
+
+                                        // ✅ Also check isClaimed field in approvedItems
+                                        Boolean isClaimed = doc.getBoolean("isClaimed");
+                                        if (isClaimed != null && isClaimed) {
+                                            Log.d(TAG, "⏭️ Skipping item with isClaimed=true: " + itemName);
+                                            continue;
+                                        }
+
+                                        // This is an available item
+                                        Item item = new Item(
+                                                itemName,
+                                                doc.getString("category"),
+                                                doc.getString("location"),
+                                                doc.getString("status"),
+                                                doc.getString("dateFound"),
+                                                doc.getString("imageUrl")
+                                        );
+                                        item.setId(itemId);
+                                        item.setClaimed(false);
+                                        availableItems.add(item);
+                                        Log.d(TAG, "✅ Added available item: " + itemName + " (ID: " + itemId + ")");
+                                    }
+
+                                    Log.d(TAG, "📊 FINAL AVAILABLE COUNT: " + availableItems.size());
+                                    updateAvailableItemsUI(availableItems);
+                                }
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "❌ Error fetching claimed items: " + e.getMessage());
                 });
-        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
-            swipeRefreshLayout.setRefreshing(false);
-        }
     }
 
+
     /**
-     * Load claimed items from Firestore
+     * ✅ Load ALL claimed items from claims collection (by ALL users)
+     * This shows recent claimed activity by everyone in the Recent Activity section
      */
     private void loadClaimedItemsFromFirestore() {
-        FirebaseAuth auth = FirebaseAuth.getInstance();
-        String userId = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
-
-        if (userId == null) {
-            Log.w(TAG, "No user logged in, skipping claimed items load");
-            return;
-        }
-
         if (claimedItemsListener != null) {
             claimedItemsListener.remove();
         }
 
+        Log.d(TAG, "========================================");
+        Log.d(TAG, "🔄 Loading ALL claimed items from claims collection (all users)");
+        Log.d(TAG, "========================================");
+
+        // ✅ Load ALL claimed items (not filtered by userId)
+        // ✅ REMOVED orderBy to avoid index/permission issues
         claimedItemsListener = firestore.collection("claims")
-                .whereEqualTo("userId", userId)
+                .whereEqualTo("status", "Claimed")
+                .limit(10)  // Show latest 10 claimed items
                 .addSnapshotListener((snapshots, error) -> {
                     if (!isAdded() || getActivity() == null) {
                         Log.w(TAG, "Fragment not attached - skipping claimed items update");
@@ -464,43 +538,69 @@ public class HomeFragment extends Fragment {
                     }
 
                     if (error != null) {
-                        Log.e(TAG, "Error loading claimed items: " + error.getMessage());
+                        Log.e(TAG, "❌ Error loading claimed items from claims: " + error.getMessage());
+                        error.printStackTrace();
+                        updateClaimedItemsUI(new ArrayList<>());
                         return;
                     }
 
+                    List<Item> allClaimedItems = new ArrayList<>();
+
                     if (snapshots != null && !snapshots.isEmpty()) {
-                        List<Item> claimedItems = new ArrayList<>();
+                        Log.d(TAG, "📦 Processing " + snapshots.size() + " claimed documents (ALL users)");
 
                         for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots.getDocuments()) {
-                            String status = doc.getString("status");
+                            String claimId = doc.getId();
+                            String itemId = doc.getString("itemId");
+                            String itemName = doc.getString("itemName");
+                            String claimantName = doc.getString("claimantName");
+                            String claimLocation = doc.getString("claimLocation");
+                            String imageUrl = doc.getString("itemImageUrl");
+                            String userId = doc.getString("userId");
 
-                            if ("Claimed".equalsIgnoreCase(status)) {
-                                String itemId = doc.getString("itemId");
-                                String itemName = doc.getString("itemName");
+                            Log.d(TAG, "📋 Processing: " + itemName + " (claimed by " + claimantName + ")");
 
-                                Item item = new Item(
-                                        itemName != null ? itemName : "Unknown Item",
-                                        doc.getString("category"),
-                                        doc.getString("claimLocation"),
-                                        "claimed",
-                                        doc.getString("claimedAt"),
-                                        doc.getString("itemImageUrl")
-                                );
-                                item.setId(itemId != null ? itemId : doc.getId());
-                                item.setClaimed(true);
-
-                                claimedItems.add(item);
+                            // Handle claimDate
+                            String claimDate = null;
+                            if (doc.contains("claimDate")) {
+                                Object claimDateObj = doc.get("claimDate");
+                                if (claimDateObj instanceof com.google.firebase.Timestamp) {
+                                    claimDate = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                                            .format(((com.google.firebase.Timestamp) claimDateObj).toDate());
+                                } else if (claimDateObj instanceof String) {
+                                    claimDate = (String) claimDateObj;
+                                }
                             }
+
+                            Item item = new Item(
+                                    itemName != null ? itemName : "Unknown Item",
+                                    doc.getString("category"),
+                                    claimLocation != null ? claimLocation : "N/A",
+                                    "claimed",
+                                    claimDate,
+                                    imageUrl
+                            );
+                            item.setId(itemId != null ? itemId : claimId);
+                            item.setClaimed(true);
+
+                            allClaimedItems.add(item);
+                            Log.d(TAG, "✅ Added claimed item: " + itemName);
                         }
 
-                        if (!claimedItems.isEmpty()) {
-                            updateClaimedItemsUI(claimedItems);
-                        }
+                        // ✅ Sort manually by claimDate if needed
+                        allClaimedItems.sort((item1, item2) -> {
+                            if (item1.getDate() == null) return 1;
+                            if (item2.getDate() == null) return -1;
+                            return item2.getDate().compareTo(item1.getDate()); // Descending
+                        });
+
+                    } else {
+                        Log.w(TAG, "⚠️ No claimed items found in claims collection");
                     }
+
+                    Log.d(TAG, "📊 TOTAL CLAIMED ITEMS (ALL USERS): " + allClaimedItems.size());
+                    updateClaimedItemsUI(allClaimedItems);
                 });
-        if (swipeRefreshLayout != null && swipeRefreshLayout.isRefreshing()) {
-            swipeRefreshLayout.setRefreshing(false);
-        }
     }
 
     private void mergeFirestoreItems(List<Item> firestoreItems) {
@@ -508,9 +608,14 @@ public class HomeFragment extends Fragment {
         List<Item> claimedItems = new ArrayList<>();
 
         for (Item item : firestoreItems) {
-            if (item.isClaimed() || "claimed".equalsIgnoreCase(item.getStatus())) {
+            String status = item.getStatus();
+
+            // ✅ Comprehensive claimed check
+            if (item.isClaimed() ||
+                    "claimed".equalsIgnoreCase(status) ||
+                    "Claimed".equals(status)) {
                 claimedItems.add(item);
-            } else if ("approved".equalsIgnoreCase(item.getStatus())) {
+            } else if ("approved".equalsIgnoreCase(status)) {
                 availableItems.add(item);
             }
         }
@@ -587,19 +692,36 @@ public class HomeFragment extends Fragment {
             statusBadge.setBackgroundResource(R.drawable.badge_background_blue);
         }
 
+        // ✅ Enhanced image loading with detailed logging
         if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+            Log.d(TAG, "📷 Loading image for " + item.getName() + ": " + item.getImageUrl());
+
             Picasso.get()
                     .load(item.getImageUrl())
+                    .resize(300, 300)
+                    .centerCrop()
                     .placeholder(R.drawable.ic_placeholder_image)
                     .error(R.drawable.ic_placeholder_image)
-                    .into(itemImage);
+                    .noFade()
+                    .into(itemImage, new com.squareup.picasso.Callback() {
+                        @Override
+                        public void onSuccess() {
+                            Log.d(TAG, "✅ Image loaded successfully: " + item.getName());
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            Log.e(TAG, "❌ Image load failed for " + item.getName() + ": " + e.getMessage());
+                            Log.e(TAG, "❌ Image URL: " + item.getImageUrl());
+                        }
+                    });
         } else {
+            Log.w(TAG, "⚠️ No image URL for " + item.getName());
             itemImage.setImageResource(R.drawable.ic_placeholder_image);
         }
 
         return itemView;
     }
-
     private void openFragment(Fragment fragment) {
         if (!isAdded()) return;
 
@@ -647,4 +769,5 @@ public class HomeFragment extends Fragment {
             appNotificationManager.cleanup();
         }
     }
+
 }

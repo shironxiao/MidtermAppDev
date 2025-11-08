@@ -165,7 +165,7 @@ public class ClaimedItemsDialog extends DialogFragment {
                             String status = doc.getString("status");
                             String claimLocation = doc.getString("claimLocation");
                             String itemName = doc.getString("itemName");
-                            String imageUrl = doc.getString("imageUrl");
+                            String imageUrl = doc.getString("itemImageUrl");
                             String claimDate = null;
                             if (doc.contains("claimDate")) {
                                 Object claimDateObj = doc.get("claimDate");
@@ -268,25 +268,41 @@ public class ClaimedItemsDialog extends DialogFragment {
         String details = "Claimed · " + (item.getLocation() != null ? item.getLocation() : "Unknown");
         itemDetails.setText(details);
 
-        // Show as Claimed
         statusBadge.setText("Claimed");
         statusBadge.setBackgroundResource(R.drawable.badge_background_yellow);
         statusBadge.setTextColor(getResources().getColor(android.R.color.darker_gray));
 
+        // ✅ Enhanced image loading
         if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+            Log.d(TAG, "📷 Loading image: " + item.getImageUrl());
+
             Picasso.get()
                     .load(item.getImageUrl())
+                    .resize(300, 300)
+                    .centerCrop()
                     .placeholder(R.drawable.ic_placeholder_image)
                     .error(R.drawable.ic_placeholder_image)
-                    .into(itemImage);
+                    .noFade()
+                    .into(itemImage, new com.squareup.picasso.Callback() {
+                        @Override
+                        public void onSuccess() {
+                            Log.d(TAG, "✅ Image loaded: " + item.getName());
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            Log.e(TAG, "❌ Image error: " + e.getMessage());
+                            Log.e(TAG, "URL: " + item.getImageUrl());
+                        }
+                    });
         } else {
+            Log.w(TAG, "⚠️ No image URL");
             itemImage.setImageResource(R.drawable.ic_placeholder_image);
         }
 
-        // Claimed items are not clickable (view only)
         itemView.setClickable(false);
         itemView.setFocusable(false);
-        itemView.setAlpha(0.8f); // Slightly transparent to indicate non-clickable
+        itemView.setAlpha(0.8f);
 
         return itemView;
     }
@@ -309,4 +325,6 @@ public class ClaimedItemsDialog extends DialogFragment {
             emptyStateText.setVisibility(View.GONE);
         }
     }
+
+
 }

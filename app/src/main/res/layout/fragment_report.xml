@@ -299,7 +299,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:background="#FFF3CD"
+                    android:background="#990B02"
                     android:padding="12dp"
                     android:layout_marginTop="20dp"
                     android:gravity="center_vertical">
@@ -308,7 +308,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@android:drawable/ic_dialog_info"
-                        app:tint="#856404" />
+                        app:tint="#FFFFFF" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -316,7 +316,7 @@
                         android:layout_weight="1"
                         android:layout_marginStart="8dp"
                         android:text="Please proceed to any SG office to hand in the item after submitting this report."
-                        android:textColor="#856404"
+                        android:textColor="#FFFFFF"
                         android:textSize="14sp"
                         android:fontFamily="sans-serif-medium" />
                 </LinearLayout>
